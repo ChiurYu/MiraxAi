@@ -7,6 +7,7 @@ import {
   KeyRound,
   Loader2,
   Play,
+  PlayCircle,
   RefreshCw,
   Settings2,
   Upload,
@@ -42,6 +43,7 @@ const publisher = createMockPublisher();
 const workflow = ref(createDefaultWorkflow("demo-project"));
 const activeStageId = ref<WorkflowStageId>("transcribe");
 const running = ref(false);
+const runningMode = ref<"single" | "all" | null>(null);
 const logs = ref<LogEntry[]>([]);
 const publishAccounts = ref<PublishAccount[]>([]);
 const generatedVideoPath = ref("");
@@ -75,7 +77,8 @@ const nextStage = computed(() => getNextStage(workflow.value));
 const activeStage = computed(() => workflow.value.stages.find((stage) => stage.id === activeStageId.value));
 const projectErrors = computed(() => validateProjectDraft(project));
 const providerErrors = computed(() => validateProviderConfig(providerConfig));
-const canRun = computed(() => !running.value && projectErrors.value.length === 0);
+const canRunNext = computed(() => !running.value && projectErrors.value.length === 0 && Boolean(nextStage.value));
+const canRunAll = computed(() => !running.value && projectErrors.value.length === 0 && Boolean(nextStage.value));
 const platformLabels = computed(() =>
   Object.fromEntries(SUPPORTED_PLATFORM_PROFILES.map((profile) => [profile.id, profile.label])),
 );
@@ -87,19 +90,33 @@ async function runNextStage() {
   }
 
   running.value = true;
-  activeStageId.value = stage.id;
-  workflow.value = updateStageStatus(workflow.value, stage.id, "running");
-  addLog(stage.title, "开始执行");
+  runningMode.value = "single";
 
   try {
-    const message = await executeStage(stage.id);
-    workflow.value = updateStageStatus(workflow.value, stage.id, "completed");
-    addLog(stage.title, message);
-  } catch (error) {
-    workflow.value = updateStageStatus(workflow.value, stage.id, "failed");
-    addLog(stage.title, error instanceof Error ? error.message : "执行失败");
+    await processStage(stage.id, stage.title);
   } finally {
     running.value = false;
+    runningMode.value = null;
+  }
+}
+
+async function runAllStages() {
+  if (running.value || projectErrors.value.length > 0) {
+    return;
+  }
+
+  running.value = true;
+  runningMode.value = "all";
+
+  try {
+    let stage = getNextStage(workflow.value);
+    while (stage) {
+      await processStage(stage.id, stage.title);
+      stage = getNextStage(workflow.value);
+    }
+  } finally {
+    running.value = false;
+    runningMode.value = null;
   }
 }
 
@@ -111,6 +128,23 @@ function resetWorkflow() {
   generatedCoverPath.value = "";
   generatedAudioPath.value = "";
   generatedAvatarPath.value = "";
+  publishAccounts.value = [];
+}
+
+async function processStage(stageId: WorkflowStageId, title: string) {
+  activeStageId.value = stageId;
+  workflow.value = updateStageStatus(workflow.value, stageId, "running");
+  addLog(title, "开始执行");
+
+  try {
+    const message = await executeStage(stageId);
+    workflow.value = updateStageStatus(workflow.value, stageId, "completed");
+    addLog(title, message);
+  } catch (error) {
+    workflow.value = updateStageStatus(workflow.value, stageId, "failed");
+    addLog(title, error instanceof Error ? error.message : "执行失败");
+    throw error;
+  }
 }
 
 async function executeStage(stageId: WorkflowStageId): Promise<string> {
@@ -257,10 +291,15 @@ function addLog(stage: string, message: string) {
           <button class="icon-button" title="重置流程" aria-label="重置流程" @click="resetWorkflow">
             <RefreshCw :size="18" />
           </button>
-          <button class="primary" :disabled="!canRun" @click="runNextStage">
-            <Loader2 v-if="running" :size="18" class="spin" />
+          <button class="secondary" :disabled="!canRunAll" @click="runAllStages">
+            <Loader2 v-if="runningMode === 'all'" :size="18" class="spin" />
+            <PlayCircle v-else :size="18" />
+            <span>{{ runningMode === "all" ? "运行中" : "运行全部" }}</span>
+          </button>
+          <button class="primary" :disabled="!canRunNext" @click="runNextStage">
+            <Loader2 v-if="runningMode === 'single'" :size="18" class="spin" />
             <Play v-else :size="18" />
-            <span>{{ running ? "执行中" : "运行下一步" }}</span>
+            <span>{{ runningMode === "single" ? "执行中" : "运行下一步" }}</span>
           </button>
         </div>
       </header>

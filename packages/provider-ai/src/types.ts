@@ -69,3 +69,9 @@ export interface AiProvider {
 export interface MockAiProviderOptions {
   artifactRoot?: string;
 }
+
+export interface OpenAiCompatibleProviderOptions {
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+}

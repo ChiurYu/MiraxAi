@@ -216,6 +216,20 @@ input:focus {
   font-weight: 700;
 }
 
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 112px;
+  height: 40px;
+  border: 1px solid #b7c3cf;
+  border-radius: 7px;
+  color: #27313d;
+  background: #ffffff;
+  font-weight: 700;
+}
+
 .progress-strip {
   display: grid;
   gap: 10px;
