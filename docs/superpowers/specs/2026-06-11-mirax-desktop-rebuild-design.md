@@ -45,6 +45,47 @@
 - 视频处理：本地 FFmpeg。
 - 自动发布：通过 Playwright 自动化抖音、快手、小红书、视频号等平台。
 
+## 旧废弃仓库补充结论
+
+旧仓库 `fa1314/KrLongAI` 的 README 与入口代码对本次重建有直接参考价值。它更像是旧产品的 Python/Gradio 原型或早期工程形态，明确说明了产品定位、核心链路和模块拆分。
+
+旧 README 中的产品定位：
+
+- 商业级 AI 数字人口播视频自动化生成工具。
+- 本地运行、模块化、可扩展。
+- 重点是工程整合和流程自动化，而不是单一模型能力。
+
+旧 README 中的核心链路：
+
+1. 自动提取对标文案。
+2. 自动进行文案仿写。
+3. 自动根据文案声音克隆。
+4. 自动生成数字人口播。
+5. 自动添加字幕。
+6. 自动添加背景音乐。
+7. 自动添加视频标题。
+8. 自动生成视频封面。
+9. 自动发布到抖音、视频号、快手、小红书等平台。
+
+旧代码入口 `app.py` 显示该版本使用 Gradio + FastAPI，并集成了以下模块：
+
+- `utils.video_processor.download_and_extract_text`：对标视频文案提取。
+- `ai_processing.text_rewriter`：文案仿写与优化。
+- `utils.voice_processor`：声音克隆、音频生成、BGM、字幕相关能力。
+- `video_tools.generate_video`：数字人视频生成。
+- `video_tools.subtitle_utils`：字幕样式和字幕合成。
+- `video_tools.publisher`：抖音、小红书、视频号等发布自动化。
+- `utils.service_launcher`：启动数字人和 CosyVoice 服务。
+
+旧启动器 `combined_launcher.py` 还体现了 Windows 版本的运行方式：
+
+- 检测并启动 Chrome 调试端口。
+- 使用 Playwright 连接本机 Chrome。
+- 访问本地客户端地址。
+- 通过配置文件管理 Chrome 路径和用户数据目录。
+
+这些信息说明：新版不应只复刻 DMG 里的 Electron 形态，还应保留旧 Python 原型中已经验证过的本地模块边界。新版桌面端可以把这些能力拆成独立 Provider 和 sidecar 服务，而不是把所有逻辑塞进 UI 层。
+
 ## 产品形态
 
 新版产品定位为桌面端内容生产工作流工具。
