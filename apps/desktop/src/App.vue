@@ -2,15 +2,24 @@
 import {
   CheckCircle2,
   Circle,
+  CloudUpload,
   ClipboardCheck,
   FileVideo,
+  FileText,
+  FolderOpen,
+  Image,
   KeyRound,
+  Link2,
   Loader2,
+  Music2,
   Play,
   PlayCircle,
   RefreshCw,
   Settings2,
+  ShieldCheck,
   Upload,
+  UserRound,
+  Volume2,
   WandSparkles,
 } from "lucide-vue-next";
 import { computed, reactive, ref, watch } from "vue";
@@ -57,6 +66,9 @@ const generatedVideoPath = ref("");
 const generatedCoverPath = ref("");
 const generatedAudioPath = ref("");
 const generatedAvatarPath = ref("");
+const publishTitle = ref("");
+const publishDescription = ref("");
+const publishTags = ref("通勤包, 大容量, 质感");
 
 const project = reactive<ProjectDraft>(
   createProjectDraft({
@@ -92,6 +104,19 @@ const canRunAll = computed(() => !running.value && projectErrors.value.length ==
 const platformLabels = computed(() =>
   Object.fromEntries(SUPPORTED_PLATFORM_PROFILES.map((profile) => [profile.id, profile.label])),
 );
+const stageStatus = computed(() =>
+  Object.fromEntries(workflow.value.stages.map((stage) => [stage.id, stage.status])),
+);
+const selectedAccountText = computed(() => {
+  if (publishAccounts.value.length === 0) {
+    return "选择账号";
+  }
+
+  return project.targetPlatforms
+    .map((platformId) => publishAccounts.value.find((account) => account.platformId === platformId)?.displayName)
+    .filter(Boolean)
+    .join("、");
+});
 
 watch(
   [project, providerConfig],
@@ -147,6 +172,8 @@ function resetWorkflow() {
   generatedAudioPath.value = "";
   generatedAvatarPath.value = "";
   publishAccounts.value = [];
+  publishTitle.value = "";
+  publishDescription.value = "";
 }
 
 function choosePath(field: "sourceVideoPath" | "voiceSamplePath") {
@@ -190,6 +217,8 @@ async function executeStage(stageId: WorkflowStageId): Promise<string> {
         productName: project.name,
         sellingPoints: ["通勤", "大容量", "质感"],
       });
+      publishTitle.value = result.titleSuggestions[0] ?? project.name;
+      publishDescription.value = result.script.slice(0, 100);
       return `生成 ${result.titleSuggestions.length} 个标题方向`;
     }
     case "voice-clone": {
@@ -236,8 +265,8 @@ async function executeStage(stageId: WorkflowStageId): Promise<string> {
       const result = await publisher.publish({
         projectId: workflow.value.projectId,
         videoPath: generatedVideoPath.value,
-        title: project.name,
-        description: project.notes ?? "",
+        title: publishTitle.value || project.name,
+        description: publishDescription.value || project.notes || "",
         platformIds: project.targetPlatforms,
         mode: "draft",
       });
@@ -319,207 +348,303 @@ function sanitizePlatforms(platforms: PublishPlatform[] | undefined): PublishPla
 </script>
 
 <template>
-  <main class="shell">
-    <aside class="sidebar">
+  <main class="app-shell">
+    <aside class="nav-rail">
       <div class="brand">
-        <div class="brand-mark">M</div>
-        <div>
-          <h1>Mirax AI</h1>
-          <p>短视频智能生产工作台</p>
+        <div class="brand-mark">
+          <PlayCircle :size="21" />
         </div>
+        <strong>轻语IP</strong>
       </div>
-
-      <section class="panel compact">
-        <div class="panel-title">
-          <FileVideo :size="18" />
-          <span>项目素材</span>
-          <small>{{ saveStatus }}</small>
-        </div>
-        <label>
-          <span>项目名称</span>
-          <input v-model="project.name" />
-        </label>
-        <label>
-          <span>对标视频</span>
-          <div class="path-row">
-            <input v-model="project.sourceVideoPath" />
-            <button aria-label="选择对标视频" title="选择对标视频" @click="choosePath('sourceVideoPath')">
-              <Upload :size="17" />
-            </button>
-          </div>
-        </label>
-        <label>
-          <span>声音样本</span>
-          <div class="path-row">
-            <input v-model="project.voiceSamplePath" />
-            <button aria-label="选择声音样本" title="选择声音样本" @click="choosePath('voiceSamplePath')">
-              <Upload :size="17" />
-            </button>
-          </div>
-        </label>
-        <label>
-          <span>卖点备注</span>
-          <textarea v-model="project.notes" rows="4" />
-        </label>
-      </section>
-
-      <section class="panel compact">
-        <div class="panel-title">
-          <Settings2 :size="18" />
-          <span>发布平台</span>
-        </div>
-        <div class="platforms">
-          <label><input v-model="project.targetPlatforms" type="checkbox" value="douyin" /> 抖音</label>
-          <label><input v-model="project.targetPlatforms" type="checkbox" value="xiaohongshu" /> 小红书</label>
-          <label><input v-model="project.targetPlatforms" type="checkbox" value="kuaishou" /> 快手</label>
-          <label><input v-model="project.targetPlatforms" type="checkbox" value="shipinhao" /> 视频号</label>
-        </div>
-      </section>
+      <nav>
+        <button class="nav-item active"><WandSparkles :size="18" /> 首页</button>
+        <button class="nav-item"><Volume2 :size="18" /> 声音管理</button>
+        <button class="nav-item"><UserRound :size="18" /> 形象管理</button>
+        <button class="nav-item"><FolderOpen :size="18" /> 素材管理</button>
+        <button class="nav-item"><ClipboardCheck :size="18" /> 任务中心</button>
+        <button class="nav-item"><KeyRound :size="18" /> 账号管理</button>
+        <button class="nav-item"><Settings2 :size="18" /> 设置</button>
+      </nav>
     </aside>
 
-    <section class="workspace">
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">生产流程</p>
-          <h2>{{ activeStage?.title }}</h2>
+    <section class="board-shell">
+      <header class="window-bar">
+        <div class="mode-switch">
+          <button class="selected"><Play :size="15" /> 手动</button>
+          <button><CloudUpload :size="15" /> 自动</button>
+          <button><Circle :size="15" /> 后台</button>
         </div>
-        <div class="actions">
-          <button class="icon-button" title="重置流程" aria-label="重置流程" @click="resetWorkflow">
-            <RefreshCw :size="18" />
+        <div class="toolbar-actions">
+          <span>{{ progress.percent }}% / {{ progress.completed }}/{{ progress.total }}</span>
+          <button class="ghost-button" @click="resetWorkflow">
+            <RefreshCw :size="16" />
+            清空数据
           </button>
           <button class="secondary" :disabled="!canRunAll" @click="runAllStages">
-            <Loader2 v-if="runningMode === 'all'" :size="18" class="spin" />
-            <PlayCircle v-else :size="18" />
-            <span>{{ runningMode === "all" ? "运行中" : "运行全部" }}</span>
+            <Loader2 v-if="runningMode === 'all'" :size="17" class="spin" />
+            <PlayCircle v-else :size="17" />
+            {{ runningMode === "all" ? "运行中" : "运行全部" }}
           </button>
           <button class="primary" :disabled="!canRunNext" @click="runNextStage">
-            <Loader2 v-if="runningMode === 'single'" :size="18" class="spin" />
-            <Play v-else :size="18" />
-            <span>{{ runningMode === "single" ? "执行中" : "运行下一步" }}</span>
+            <Loader2 v-if="runningMode === 'single'" :size="17" class="spin" />
+            <Play v-else :size="17" />
+            {{ runningMode === "single" ? "执行中" : "运行下一步" }}
           </button>
         </div>
       </header>
 
-      <div class="progress-strip">
-        <div>
-          <strong>{{ progress.percent }}%</strong>
-          <span>{{ progress.completed }}/{{ progress.total }} 已完成</span>
-        </div>
-        <div class="bar"><i :style="{ width: `${progress.percent}%` }" /></div>
-      </div>
+      <div class="workflow-board">
+        <section class="workflow-card learn-card">
+          <div class="card-heading">
+            <span class="card-icon"><Link2 :size="19" /></span>
+            <h2>1. 学习对标</h2>
+            <small>{{ saveStatus }}</small>
+          </div>
+          <div class="tabs">
+            <span class="active">提取文案</span>
+            <span>IP大脑</span>
+            <span>爆款选题</span>
+            <span>营销文案</span>
+          </div>
+          <label>
+            <span>项目名称</span>
+            <input v-model="project.name" />
+          </label>
+          <label>
+            <span>视频链接</span>
+            <div class="action-input">
+              <input v-model="project.sourceVideoPath" placeholder="请输入视频链接或本地路径" />
+              <button @click="choosePath('sourceVideoPath')">粘贴</button>
+            </div>
+          </label>
+          <label>
+            <span>原文案 / 卖点备注</span>
+            <textarea v-model="project.notes" placeholder="提取的文案将显示在这里..." />
+          </label>
+        </section>
 
-      <div class="stage-grid">
-        <button
-          v-for="stage in workflow.stages"
-          :key="stage.id"
-          class="stage"
-          :class="[stage.status, { active: activeStageId === stage.id }]"
-          @click="activeStageId = stage.id"
-        >
-          <CheckCircle2 v-if="stage.status === 'completed'" :size="22" />
-          <Loader2 v-else-if="stage.status === 'running'" :size="22" class="spin" />
-          <Circle v-else :size="22" />
-          <span>{{ stage.title }}</span>
-          <small>{{ stage.description }}</small>
-        </button>
-      </div>
+        <section class="workflow-card rewrite-card">
+          <div class="card-heading">
+            <span class="card-icon"><WandSparkles :size="19" /></span>
+            <h2>2. 改写文案</h2>
+          </div>
+          <div class="two-columns">
+            <label>
+              <span>写作提示词</span>
+              <select>
+                <option>默认文案写作提示词</option>
+              </select>
+            </label>
+            <label>
+              <span>字数</span>
+              <select>
+                <option>300字</option>
+              </select>
+            </label>
+          </div>
+          <div class="button-row">
+            <button class="primary compact-button" :disabled="stageStatus.rewrite === 'completed'" @click="runNextStage">
+              <WandSparkles :size="16" /> 改写文案
+            </button>
+            <button class="legal-button"><ShieldCheck :size="16" /> AI法务</button>
+          </div>
+          <label>
+            <span>改写内容</span>
+            <textarea v-model="publishDescription" placeholder="改写的文案将显示在这里..." />
+          </label>
+        </section>
 
-      <section class="run-log">
-        <div class="panel-title">
-          <ClipboardCheck :size="18" />
-          <span>执行记录</span>
-        </div>
-        <div v-if="logs.length === 0" class="empty">等待启动第一步流程</div>
-        <ul v-else>
-          <li v-for="log in logs" :key="log.id">
-            <strong>{{ log.stage }}</strong>
-            <span>{{ log.message }}</span>
-          </li>
-        </ul>
-      </section>
+        <section class="workflow-card voice-card">
+          <div class="card-heading">
+            <span class="card-icon"><Volume2 :size="19" /></span>
+            <h2>3. 声音生成</h2>
+            <button class="link-button" @click="choosePath('voiceSamplePath')">上传声音</button>
+          </div>
+          <label>
+            <span>选择声音</span>
+            <select>
+              <option>女-带货</option>
+              <option>男-讲解</option>
+            </select>
+          </label>
+          <div class="artifact-box">
+            <Volume2 :size="32" />
+            <strong>{{ generatedAudioPath ? "克隆结果已生成" : "克隆的音频将在这里显示" }}</strong>
+            <span>{{ generatedAudioPath || "完成克隆后可在此处播放预览" }}</span>
+          </div>
+        </section>
+
+        <section class="workflow-card avatar-card">
+          <div class="card-heading">
+            <span class="card-icon"><UserRound :size="19" /></span>
+            <h2>4. 视频生成</h2>
+            <button class="link-button">上传形象</button>
+          </div>
+          <div class="segmented">
+            <button class="selected">单形象</button>
+            <button>多镜头</button>
+          </div>
+          <label>
+            <span>选择形象</span>
+            <select>
+              <option>示例1-绿幕</option>
+            </select>
+          </label>
+          <label>
+            <span>模型版本</span>
+            <select>
+              <option>高清模型V2</option>
+            </select>
+          </label>
+          <div class="artifact-box preview-box">
+            <UserRound :size="44" />
+            <strong>{{ generatedAvatarPath ? "视频生成完成" : "暂无预览视频" }}</strong>
+            <span>{{ generatedAvatarPath || "生成视频后将在此处显示预览" }}</span>
+          </div>
+        </section>
+
+        <section class="workflow-card compose-card">
+          <div class="card-heading">
+            <span class="card-icon"><FileVideo :size="19" /></span>
+            <h2>5. 一键成片</h2>
+          </div>
+          <div class="compose-grid">
+            <div class="compose-controls">
+              <label>
+                <span>视频源</span>
+                <input :value="generatedAvatarPath || '自动使用上一步数字人视频，或手动选择'" readonly />
+              </label>
+              <div class="toggle-row"><input type="checkbox" checked /> 启用字幕 <button>字幕设置</button></div>
+              <label>
+                <span>混剪（画中画）素材</span>
+                <select><option>不混剪</option></select>
+              </label>
+              <label>
+                <span>背景音乐</span>
+                <div class="action-input">
+                  <input placeholder="选择背景音乐" />
+                  <button><Music2 :size="16" /></button>
+                </div>
+              </label>
+              <div class="slider-row">
+                <span>人声音量</span>
+                <input type="range" min="0" max="1" step="0.1" value="1" />
+                <b>1</b>
+              </div>
+              <div class="slider-row">
+                <span>BGM音量</span>
+                <input type="range" min="0" max="1" step="0.1" value="0.3" />
+                <b>0.3</b>
+              </div>
+              <button class="primary wide-button" :disabled="!generatedAvatarPath && !generatedVideoPath" @click="runNextStage">
+                <FileVideo :size="16" /> 剪辑视频
+              </button>
+            </div>
+            <div class="video-preview">
+              <FileVideo :size="52" />
+              <strong>{{ generatedVideoPath ? "成片已生成" : "暂无预览视频" }}</strong>
+              <span>{{ generatedVideoPath || "生成视频后将在此处显示预览" }}</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="workflow-card publish-meta-card">
+          <div class="card-heading">
+            <span class="card-icon"><FileText :size="19" /></span>
+            <h2>6. 标题封面（用于发布）</h2>
+          </div>
+          <label>
+            <span>标题</span>
+            <div class="action-input">
+              <input v-model="publishTitle" placeholder="输入视频标题" />
+              <button @click="publishTitle = project.name">一键生成</button>
+            </div>
+          </label>
+          <label>
+            <span>描述</span>
+            <textarea v-model="publishDescription" placeholder="输入视频描述..." />
+          </label>
+          <label>
+            <span>话题标签</span>
+            <input v-model="publishTags" placeholder="输入标签后回车，发布时自动拼接 #tag" />
+          </label>
+          <div class="cover-row">
+            <div class="cover-preview">
+              <Image :size="26" />
+              <span>{{ generatedCoverPath ? "封面已生成" : "暂无封面" }}</span>
+            </div>
+            <div class="cover-actions">
+              <button>封面设计</button>
+              <button :disabled="!generatedCoverPath">打开封面</button>
+              <button :disabled="!generatedCoverPath">导出封面</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="workflow-card publish-card">
+          <div class="card-heading">
+            <span class="card-icon"><CloudUpload :size="19" /></span>
+            <h2>7. 视频发布</h2>
+          </div>
+          <label>
+            <span>视频地址</span>
+            <div class="action-input">
+              <input :value="generatedVideoPath || '自动使用上一步视频，或手动选择'" readonly />
+              <button><FolderOpen :size="16" /></button>
+            </div>
+          </label>
+          <label>
+            <span>发布账号</span>
+            <select>
+              <option>{{ selectedAccountText }}</option>
+            </select>
+          </label>
+          <div class="platforms compact-platforms">
+            <label><input v-model="project.targetPlatforms" type="checkbox" value="douyin" /> 抖音</label>
+            <label><input v-model="project.targetPlatforms" type="checkbox" value="xiaohongshu" /> 小红书</label>
+            <label><input v-model="project.targetPlatforms" type="checkbox" value="kuaishou" /> 快手</label>
+            <label><input v-model="project.targetPlatforms" type="checkbox" value="shipinhao" /> 视频号</label>
+          </div>
+          <div class="radio-row">
+            <label><input type="radio" name="publish-mode" /> 直接发布</label>
+            <label><input type="radio" name="publish-mode" checked /> 草稿</label>
+          </div>
+          <button class="primary wide-button" :disabled="!generatedVideoPath && stageStatus.publish !== 'completed'" @click="runNextStage">
+            <CloudUpload :size="16" /> 立即发布
+          </button>
+        </section>
+
+        <section class="workflow-card settings-card">
+          <div class="card-heading">
+            <span class="card-icon"><KeyRound :size="19" /></span>
+            <h2>密钥配置</h2>
+          </div>
+          <div class="two-columns">
+            <label><span>配置名称</span><input v-model="providerConfig.label" /></label>
+            <label><span>模型</span><input v-model="providerConfig.model" /></label>
+          </div>
+          <label><span>Base URL</span><input v-model="providerConfig.baseUrl" /></label>
+          <label><span>API Key</span><input v-model="providerConfig.apiKey" type="password" placeholder="用户本地填写" autocomplete="off" /></label>
+          <div class="warning-list">
+            <p v-for="error in providerErrors" :key="error">{{ error }}</p>
+            <p v-for="error in projectErrors" :key="error">{{ error }}</p>
+          </div>
+        </section>
+
+        <section class="workflow-card log-card">
+          <div class="card-heading">
+            <span class="card-icon"><ClipboardCheck :size="19" /></span>
+            <h2>执行记录</h2>
+          </div>
+          <div v-if="logs.length === 0" class="empty-log">等待启动第一步流程</div>
+          <ul v-else class="log-list">
+            <li v-for="log in logs.slice(0, 8)" :key="log.id">
+              <strong>{{ log.stage }}</strong>
+              <span>{{ log.message }}</span>
+            </li>
+          </ul>
+        </section>
+      </div>
     </section>
-
-    <aside class="inspector">
-      <section class="panel">
-        <div class="panel-title">
-          <KeyRound :size="18" />
-          <span>密钥配置</span>
-        </div>
-        <label>
-          <span>配置名称</span>
-          <input v-model="providerConfig.label" />
-        </label>
-        <label>
-          <span>Base URL</span>
-          <input v-model="providerConfig.baseUrl" />
-        </label>
-        <label>
-          <span>API Key</span>
-          <input v-model="providerConfig.apiKey" type="password" placeholder="用户本地填写" autocomplete="off" />
-        </label>
-        <label>
-          <span>模型</span>
-          <input v-model="providerConfig.model" />
-        </label>
-        <div class="warning-list">
-          <p v-for="error in providerErrors" :key="error">{{ error }}</p>
-        </div>
-      </section>
-
-      <section class="panel">
-        <div class="panel-title">
-          <WandSparkles :size="18" />
-          <span>当前步骤</span>
-        </div>
-        <h3>{{ activeStage?.title }}</h3>
-        <p class="muted">{{ activeStage?.description }}</p>
-        <div class="warning-list">
-          <p v-for="error in projectErrors" :key="error">{{ error }}</p>
-        </div>
-      </section>
-
-      <section class="panel">
-        <div class="panel-title">
-          <FileVideo :size="18" />
-          <span>生成产物</span>
-        </div>
-        <dl class="artifact-list">
-          <div>
-            <dt>音频</dt>
-            <dd>{{ generatedAudioPath || "等待语音合成" }}</dd>
-          </div>
-          <div>
-            <dt>数字人</dt>
-            <dd>{{ generatedAvatarPath || "等待数字人口播" }}</dd>
-          </div>
-          <div>
-            <dt>成片</dt>
-            <dd>{{ generatedVideoPath || "等待视频合成" }}</dd>
-          </div>
-          <div>
-            <dt>封面</dt>
-            <dd>{{ generatedCoverPath || "等待视频合成" }}</dd>
-          </div>
-        </dl>
-      </section>
-
-      <section class="panel">
-        <div class="panel-title">
-          <Settings2 :size="18" />
-          <span>发布账号</span>
-        </div>
-        <div class="account-list">
-          <div v-for="platformId in project.targetPlatforms" :key="platformId">
-            <strong>{{ platformLabels[platformId] }}</strong>
-            <span>
-              {{
-                publishAccounts.find((account) => account.platformId === platformId)?.displayName ||
-                "发布时自动检查账号"
-              }}
-            </span>
-          </div>
-        </div>
-      </section>
-    </aside>
   </main>
 </template>
