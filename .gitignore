@@ -7,6 +7,9 @@ video-frames/
 # Superpowers brainstorming scratch files
 .superpowers/
 
+# Browser verification artifacts
+.playwright-mcp/
+
 # OS/editor noise
 .DS_Store
 Thumbs.db
@@ -16,6 +19,7 @@ node_modules/
 dist/
 build/
 target/
+*.tsbuildinfo
 
 # Logs and local env
 *.log

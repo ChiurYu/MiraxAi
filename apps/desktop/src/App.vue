@@ -1,0 +1,309 @@
+<script setup lang="ts">
+import {
+  CheckCircle2,
+  Circle,
+  ClipboardCheck,
+  FileVideo,
+  KeyRound,
+  Loader2,
+  Play,
+  RefreshCw,
+  Settings2,
+  Upload,
+  WandSparkles,
+} from "lucide-vue-next";
+import { computed, reactive, ref } from "vue";
+import {
+  createApiKeyProviderConfig,
+  createDefaultWorkflow,
+  createProjectDraft,
+  getNextStage,
+  getStageProgress,
+  updateStageStatus,
+  validateProjectDraft,
+  validateProviderConfig,
+  type ApiKeyProviderConfig,
+  type ProjectDraft,
+  type WorkflowStageId,
+} from "@mirax/core";
+import { createMockAiProvider } from "@mirax/provider-ai";
+
+type LogEntry = {
+  id: number;
+  stage: string;
+  message: string;
+};
+
+const aiProvider = createMockAiProvider({ artifactRoot: "/Users/Shared/MiraxAI" });
+const workflow = ref(createDefaultWorkflow("demo-project"));
+const activeStageId = ref<WorkflowStageId>("transcribe");
+const running = ref(false);
+const logs = ref<LogEntry[]>([]);
+
+const project = reactive<ProjectDraft>(
+  createProjectDraft({
+    name: "轻奢女包口播 0611",
+    targetPlatforms: ["douyin", "xiaohongshu"],
+    sourceVideoPath: "/素材/对标视频.mp4",
+    voiceSamplePath: "/素材/声音样本.wav",
+    notes: "强调通勤、大容量、上身质感。",
+  }),
+);
+
+const providerConfig = reactive<ApiKeyProviderConfig>(
+  createApiKeyProviderConfig({
+    id: "main-ai",
+    label: "主模型配置",
+    provider: "openai",
+    apiKey: "",
+    baseUrl: "https://api.openai.com/v1",
+    model: "gpt-4.1",
+  }),
+);
+
+const progress = computed(() => getStageProgress(workflow.value));
+const nextStage = computed(() => getNextStage(workflow.value));
+const activeStage = computed(() => workflow.value.stages.find((stage) => stage.id === activeStageId.value));
+const projectErrors = computed(() => validateProjectDraft(project));
+const providerErrors = computed(() => validateProviderConfig(providerConfig));
+const canRun = computed(() => !running.value && projectErrors.value.length === 0);
+
+async function runNextStage() {
+  const stage = nextStage.value;
+  if (!stage || running.value) {
+    return;
+  }
+
+  running.value = true;
+  activeStageId.value = stage.id;
+  workflow.value = updateStageStatus(workflow.value, stage.id, "running");
+  addLog(stage.title, "开始执行");
+
+  try {
+    const message = await executeStage(stage.id);
+    workflow.value = updateStageStatus(workflow.value, stage.id, "completed");
+    addLog(stage.title, message);
+  } catch (error) {
+    workflow.value = updateStageStatus(workflow.value, stage.id, "failed");
+    addLog(stage.title, error instanceof Error ? error.message : "执行失败");
+  } finally {
+    running.value = false;
+  }
+}
+
+function resetWorkflow() {
+  workflow.value = createDefaultWorkflow("demo-project");
+  activeStageId.value = "transcribe";
+  logs.value = [];
+}
+
+async function executeStage(stageId: WorkflowStageId): Promise<string> {
+  switch (stageId) {
+    case "transcribe": {
+      const result = await aiProvider.transcribe({
+        sourceVideoPath: project.sourceVideoPath ?? "",
+        language: "zh-CN",
+      });
+      return `已提取 ${result.segments.length} 段文案`;
+    }
+    case "rewrite": {
+      const result = await aiProvider.rewriteScript({
+        transcript: "模拟对标视频文案",
+        productName: project.name,
+        sellingPoints: ["通勤", "大容量", "质感"],
+      });
+      return `生成 ${result.titleSuggestions.length} 个标题方向`;
+    }
+    case "voice-clone": {
+      const result = await aiProvider.cloneVoice({
+        voiceSamplePath: project.voiceSamplePath ?? "",
+        projectId: workflow.value.projectId,
+      });
+      return `声音配置 ${result.voiceId} 已就绪`;
+    }
+    case "speech": {
+      const result = await aiProvider.synthesizeSpeech({
+        voiceId: "mock-voice-demo-project",
+        script: project.notes ?? project.name,
+        projectId: workflow.value.projectId,
+      });
+      return `音频已生成：${result.audioPath}`;
+    }
+    case "avatar": {
+      const result = await aiProvider.generateAvatarVideo({
+        audioPath: "/Users/Shared/MiraxAI/demo-project/speech.wav",
+        avatarId: "presenter-a",
+        projectId: workflow.value.projectId,
+      });
+      return `数字人片段已生成：${result.videoPath}`;
+    }
+    case "compose":
+      return "已合成字幕、封面和口播成片";
+    case "review":
+      return "人工复核清单已通过";
+    case "publish":
+      return `已创建 ${project.targetPlatforms.length} 个平台发布任务`;
+  }
+}
+
+function addLog(stage: string, message: string) {
+  logs.value.unshift({
+    id: Date.now() + logs.value.length,
+    stage,
+    message,
+  });
+}
+</script>
+
+<template>
+  <main class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">M</div>
+        <div>
+          <h1>Mirax AI</h1>
+          <p>短视频智能生产工作台</p>
+        </div>
+      </div>
+
+      <section class="panel compact">
+        <div class="panel-title">
+          <FileVideo :size="18" />
+          <span>项目素材</span>
+        </div>
+        <label>
+          <span>项目名称</span>
+          <input v-model="project.name" />
+        </label>
+        <label>
+          <span>对标视频</span>
+          <div class="path-row">
+            <input v-model="project.sourceVideoPath" />
+            <button aria-label="选择对标视频" title="选择对标视频">
+              <Upload :size="17" />
+            </button>
+          </div>
+        </label>
+        <label>
+          <span>声音样本</span>
+          <div class="path-row">
+            <input v-model="project.voiceSamplePath" />
+            <button aria-label="选择声音样本" title="选择声音样本">
+              <Upload :size="17" />
+            </button>
+          </div>
+        </label>
+      </section>
+
+      <section class="panel compact">
+        <div class="panel-title">
+          <Settings2 :size="18" />
+          <span>发布平台</span>
+        </div>
+        <div class="platforms">
+          <label><input v-model="project.targetPlatforms" type="checkbox" value="douyin" /> 抖音</label>
+          <label><input v-model="project.targetPlatforms" type="checkbox" value="xiaohongshu" /> 小红书</label>
+          <label><input v-model="project.targetPlatforms" type="checkbox" value="kuaishou" /> 快手</label>
+          <label><input v-model="project.targetPlatforms" type="checkbox" value="shipinhao" /> 视频号</label>
+        </div>
+      </section>
+    </aside>
+
+    <section class="workspace">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">生产流程</p>
+          <h2>{{ activeStage?.title }}</h2>
+        </div>
+        <div class="actions">
+          <button class="icon-button" title="重置流程" aria-label="重置流程" @click="resetWorkflow">
+            <RefreshCw :size="18" />
+          </button>
+          <button class="primary" :disabled="!canRun" @click="runNextStage">
+            <Loader2 v-if="running" :size="18" class="spin" />
+            <Play v-else :size="18" />
+            <span>{{ running ? "执行中" : "运行下一步" }}</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="progress-strip">
+        <div>
+          <strong>{{ progress.percent }}%</strong>
+          <span>{{ progress.completed }}/{{ progress.total }} 已完成</span>
+        </div>
+        <div class="bar"><i :style="{ width: `${progress.percent}%` }" /></div>
+      </div>
+
+      <div class="stage-grid">
+        <button
+          v-for="stage in workflow.stages"
+          :key="stage.id"
+          class="stage"
+          :class="[stage.status, { active: activeStageId === stage.id }]"
+          @click="activeStageId = stage.id"
+        >
+          <CheckCircle2 v-if="stage.status === 'completed'" :size="22" />
+          <Loader2 v-else-if="stage.status === 'running'" :size="22" class="spin" />
+          <Circle v-else :size="22" />
+          <span>{{ stage.title }}</span>
+          <small>{{ stage.description }}</small>
+        </button>
+      </div>
+
+      <section class="run-log">
+        <div class="panel-title">
+          <ClipboardCheck :size="18" />
+          <span>执行记录</span>
+        </div>
+        <div v-if="logs.length === 0" class="empty">等待启动第一步流程</div>
+        <ul v-else>
+          <li v-for="log in logs" :key="log.id">
+            <strong>{{ log.stage }}</strong>
+            <span>{{ log.message }}</span>
+          </li>
+        </ul>
+      </section>
+    </section>
+
+    <aside class="inspector">
+      <section class="panel">
+        <div class="panel-title">
+          <KeyRound :size="18" />
+          <span>密钥配置</span>
+        </div>
+        <label>
+          <span>配置名称</span>
+          <input v-model="providerConfig.label" />
+        </label>
+        <label>
+          <span>Base URL</span>
+          <input v-model="providerConfig.baseUrl" />
+        </label>
+        <label>
+          <span>API Key</span>
+          <input v-model="providerConfig.apiKey" type="password" placeholder="用户本地填写" autocomplete="off" />
+        </label>
+        <label>
+          <span>模型</span>
+          <input v-model="providerConfig.model" />
+        </label>
+        <div class="warning-list">
+          <p v-for="error in providerErrors" :key="error">{{ error }}</p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">
+          <WandSparkles :size="18" />
+          <span>当前步骤</span>
+        </div>
+        <h3>{{ activeStage?.title }}</h3>
+        <p class="muted">{{ activeStage?.description }}</p>
+        <div class="warning-list">
+          <p v-for="error in projectErrors" :key="error">{{ error }}</p>
+        </div>
+      </section>
+    </aside>
+  </main>
+</template>

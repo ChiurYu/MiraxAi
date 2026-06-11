@@ -1,4 +1,3 @@
-import path from "node:path";
 import type {
   AiProvider,
   CloneVoiceInput,
@@ -21,7 +20,7 @@ export function createMockAiProvider(options: MockAiProviderOptions = {}): AiPro
 
   return {
     async transcribe(input: TranscribeInput): Promise<TranscriptResult> {
-      const fileName = path.basename(input.sourceVideoPath);
+      const fileName = getFileName(input.sourceVideoPath);
 
       return {
         text: `这是从 ${fileName} 提取的模拟口播文案，语言为 ${input.language ?? "auto"}。`,
@@ -63,14 +62,14 @@ export function createMockAiProvider(options: MockAiProviderOptions = {}): AiPro
 
     async synthesizeSpeech(input: SynthesizeSpeechInput): Promise<SynthesizeSpeechResult> {
       return {
-        audioPath: path.join(artifactRoot, input.projectId, "speech.wav"),
+        audioPath: joinPath(artifactRoot, input.projectId, "speech.wav"),
         durationSeconds: estimateSpeechDuration(input.script),
       };
     },
 
     async generateAvatarVideo(input: GenerateAvatarVideoInput): Promise<GenerateAvatarVideoResult> {
       return {
-        videoPath: path.join(artifactRoot, input.projectId, "avatar.mp4"),
+        videoPath: joinPath(artifactRoot, input.projectId, "avatar.mp4"),
         durationSeconds: 18,
       };
     },
@@ -79,4 +78,16 @@ export function createMockAiProvider(options: MockAiProviderOptions = {}): AiPro
 
 function estimateSpeechDuration(script: string): number {
   return Math.max(3, Math.ceil(script.length / 5));
+}
+
+function getFileName(filePath: string): string {
+  return filePath.split(/[\\/]/).filter(Boolean).at(-1) ?? filePath;
+}
+
+function joinPath(...segments: string[]): string {
+  return segments
+    .map((segment) => segment.replace(/^\/+|\/+$/g, ""))
+    .filter(Boolean)
+    .join("/")
+    .replace(/^/, segments[0]?.startsWith("/") ? "/" : "");
 }
