@@ -13,7 +13,7 @@ import {
   Upload,
   WandSparkles,
 } from "lucide-vue-next";
-import { computed, reactive, ref } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import {
   createApiKeyProviderConfig,
   createDefaultWorkflow,
@@ -25,6 +25,7 @@ import {
   validateProviderConfig,
   type ApiKeyProviderConfig,
   type ProjectDraft,
+  type PublishPlatform,
   type WorkflowStageId,
 } from "@mirax/core";
 import { createMockMediaRenderer } from "@mirax/media-pipeline";
@@ -37,6 +38,12 @@ type LogEntry = {
   message: string;
 };
 
+type SavedDesktopDraft = {
+  project: ProjectDraft;
+  providerConfig: Omit<ApiKeyProviderConfig, "apiKey">;
+};
+
+const STORAGE_KEY = "mirax-ai.desktop-draft.v1";
 const aiProvider = createMockAiProvider({ artifactRoot: "/Users/Shared/MiraxAI" });
 const mediaRenderer = createMockMediaRenderer({ artifactRoot: "/Users/Shared/MiraxAI" });
 const publisher = createMockPublisher();
@@ -71,6 +78,9 @@ const providerConfig = reactive<ApiKeyProviderConfig>(
     model: "gpt-4.1",
   }),
 );
+const saveStatus = ref("未保存");
+
+restoreDraft();
 
 const progress = computed(() => getStageProgress(workflow.value));
 const nextStage = computed(() => getNextStage(workflow.value));
@@ -81,6 +91,14 @@ const canRunNext = computed(() => !running.value && projectErrors.value.length =
 const canRunAll = computed(() => !running.value && projectErrors.value.length === 0 && Boolean(nextStage.value));
 const platformLabels = computed(() =>
   Object.fromEntries(SUPPORTED_PLATFORM_PROFILES.map((profile) => [profile.id, profile.label])),
+);
+
+watch(
+  [project, providerConfig],
+  () => {
+    persistDraft();
+  },
+  { deep: true },
 );
 
 async function runNextStage() {
@@ -129,6 +147,16 @@ function resetWorkflow() {
   generatedAudioPath.value = "";
   generatedAvatarPath.value = "";
   publishAccounts.value = [];
+}
+
+function choosePath(field: "sourceVideoPath" | "voiceSamplePath") {
+  const label = field === "sourceVideoPath" ? "对标视频路径" : "声音样本路径";
+  const currentValue = project[field] ?? "";
+  const nextValue = window.prompt(label, currentValue);
+
+  if (nextValue !== null) {
+    project[field] = nextValue.trim();
+  }
 }
 
 async function processStage(stageId: WorkflowStageId, title: string) {
@@ -225,6 +253,69 @@ function addLog(stage: string, message: string) {
     message,
   });
 }
+
+function restoreDraft() {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      return;
+    }
+
+    const saved = JSON.parse(raw) as Partial<SavedDesktopDraft>;
+    if (saved.project) {
+      project.name = saved.project.name ?? project.name;
+      project.sourceVideoPath = saved.project.sourceVideoPath ?? project.sourceVideoPath;
+      project.voiceSamplePath = saved.project.voiceSamplePath ?? project.voiceSamplePath;
+      project.notes = saved.project.notes ?? project.notes;
+      project.targetPlatforms = sanitizePlatforms(saved.project.targetPlatforms);
+    }
+
+    if (saved.providerConfig) {
+      providerConfig.label = saved.providerConfig.label ?? providerConfig.label;
+      providerConfig.provider = saved.providerConfig.provider ?? providerConfig.provider;
+      providerConfig.baseUrl = saved.providerConfig.baseUrl ?? providerConfig.baseUrl;
+      providerConfig.model = saved.providerConfig.model ?? providerConfig.model;
+      providerConfig.enabled = saved.providerConfig.enabled ?? providerConfig.enabled;
+    }
+
+    saveStatus.value = "已恢复草稿";
+  } catch {
+    saveStatus.value = "草稿读取失败";
+  }
+}
+
+function persistDraft() {
+  const payload: SavedDesktopDraft = {
+    project: {
+      name: project.name,
+      sourceVideoPath: project.sourceVideoPath,
+      voiceSamplePath: project.voiceSamplePath,
+      targetPlatforms: project.targetPlatforms,
+      notes: project.notes,
+    },
+    providerConfig: {
+      id: providerConfig.id,
+      label: providerConfig.label,
+      provider: providerConfig.provider,
+      baseUrl: providerConfig.baseUrl,
+      model: providerConfig.model,
+      enabled: providerConfig.enabled,
+    },
+  };
+
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    saveStatus.value = "草稿已保存";
+  } catch {
+    saveStatus.value = "草稿保存失败";
+  }
+}
+
+function sanitizePlatforms(platforms: PublishPlatform[] | undefined): PublishPlatform[] {
+  const allowed = new Set(SUPPORTED_PLATFORM_PROFILES.map((profile) => profile.id));
+  const nextPlatforms = (platforms ?? []).filter((platform): platform is PublishPlatform => allowed.has(platform));
+  return nextPlatforms.length > 0 ? nextPlatforms : ["douyin"];
+}
 </script>
 
 <template>
@@ -242,6 +333,7 @@ function addLog(stage: string, message: string) {
         <div class="panel-title">
           <FileVideo :size="18" />
           <span>项目素材</span>
+          <small>{{ saveStatus }}</small>
         </div>
         <label>
           <span>项目名称</span>
@@ -251,7 +343,7 @@ function addLog(stage: string, message: string) {
           <span>对标视频</span>
           <div class="path-row">
             <input v-model="project.sourceVideoPath" />
-            <button aria-label="选择对标视频" title="选择对标视频">
+            <button aria-label="选择对标视频" title="选择对标视频" @click="choosePath('sourceVideoPath')">
               <Upload :size="17" />
             </button>
           </div>
@@ -260,10 +352,14 @@ function addLog(stage: string, message: string) {
           <span>声音样本</span>
           <div class="path-row">
             <input v-model="project.voiceSamplePath" />
-            <button aria-label="选择声音样本" title="选择声音样本">
+            <button aria-label="选择声音样本" title="选择声音样本" @click="choosePath('voiceSamplePath')">
               <Upload :size="17" />
             </button>
           </div>
+        </label>
+        <label>
+          <span>卖点备注</span>
+          <textarea v-model="project.notes" rows="4" />
         </label>
       </section>
 
