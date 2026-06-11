@@ -16,7 +16,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@mirax/core": fileURLToPath(new URL("../../packages/core/src/index.ts", import.meta.url)),
+      "@mirax/media-pipeline": fileURLToPath(new URL("../../packages/media-pipeline/src/index.ts", import.meta.url)),
       "@mirax/provider-ai": fileURLToPath(new URL("../../packages/provider-ai/src/index.ts", import.meta.url)),
+      "@mirax/provider-publish": fileURLToPath(new URL("../../packages/provider-publish/src/index.ts", import.meta.url)),
     },
   },
   build: {

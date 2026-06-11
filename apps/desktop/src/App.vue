@@ -26,7 +26,9 @@ import {
   type ProjectDraft,
   type WorkflowStageId,
 } from "@mirax/core";
+import { createMockMediaRenderer } from "@mirax/media-pipeline";
 import { createMockAiProvider } from "@mirax/provider-ai";
+import { SUPPORTED_PLATFORM_PROFILES, createMockPublisher, type PublishAccount } from "@mirax/provider-publish";
 
 type LogEntry = {
   id: number;
@@ -35,10 +37,17 @@ type LogEntry = {
 };
 
 const aiProvider = createMockAiProvider({ artifactRoot: "/Users/Shared/MiraxAI" });
+const mediaRenderer = createMockMediaRenderer({ artifactRoot: "/Users/Shared/MiraxAI" });
+const publisher = createMockPublisher();
 const workflow = ref(createDefaultWorkflow("demo-project"));
 const activeStageId = ref<WorkflowStageId>("transcribe");
 const running = ref(false);
 const logs = ref<LogEntry[]>([]);
+const publishAccounts = ref<PublishAccount[]>([]);
+const generatedVideoPath = ref("");
+const generatedCoverPath = ref("");
+const generatedAudioPath = ref("");
+const generatedAvatarPath = ref("");
 
 const project = reactive<ProjectDraft>(
   createProjectDraft({
@@ -67,6 +76,9 @@ const activeStage = computed(() => workflow.value.stages.find((stage) => stage.i
 const projectErrors = computed(() => validateProjectDraft(project));
 const providerErrors = computed(() => validateProviderConfig(providerConfig));
 const canRun = computed(() => !running.value && projectErrors.value.length === 0);
+const platformLabels = computed(() =>
+  Object.fromEntries(SUPPORTED_PLATFORM_PROFILES.map((profile) => [profile.id, profile.label])),
+);
 
 async function runNextStage() {
   const stage = nextStage.value;
@@ -95,6 +107,10 @@ function resetWorkflow() {
   workflow.value = createDefaultWorkflow("demo-project");
   activeStageId.value = "transcribe";
   logs.value = [];
+  generatedVideoPath.value = "";
+  generatedCoverPath.value = "";
+  generatedAudioPath.value = "";
+  generatedAvatarPath.value = "";
 }
 
 async function executeStage(stageId: WorkflowStageId): Promise<string> {
@@ -127,22 +143,44 @@ async function executeStage(stageId: WorkflowStageId): Promise<string> {
         script: project.notes ?? project.name,
         projectId: workflow.value.projectId,
       });
+      generatedAudioPath.value = result.audioPath;
       return `音频已生成：${result.audioPath}`;
     }
     case "avatar": {
       const result = await aiProvider.generateAvatarVideo({
-        audioPath: "/Users/Shared/MiraxAI/demo-project/speech.wav",
+        audioPath: generatedAudioPath.value || "/Users/Shared/MiraxAI/demo-project/speech.wav",
         avatarId: "presenter-a",
         projectId: workflow.value.projectId,
       });
+      generatedAvatarPath.value = result.videoPath;
       return `数字人片段已生成：${result.videoPath}`;
     }
-    case "compose":
-      return "已合成字幕、封面和口播成片";
+    case "compose": {
+      const result = await mediaRenderer.render({
+        projectId: workflow.value.projectId,
+        avatarVideoPath: generatedAvatarPath.value || "/Users/Shared/MiraxAI/demo-project/avatar.mp4",
+        audioPath: generatedAudioPath.value || "/Users/Shared/MiraxAI/demo-project/speech.wav",
+        subtitleText: project.notes ?? project.name,
+        coverText: project.name,
+      });
+      generatedVideoPath.value = result.videoPath;
+      generatedCoverPath.value = result.coverPath;
+      return `成片已生成：${result.videoPath}`;
+    }
     case "review":
       return "人工复核清单已通过";
-    case "publish":
-      return `已创建 ${project.targetPlatforms.length} 个平台发布任务`;
+    case "publish": {
+      publishAccounts.value = await publisher.listAccounts();
+      const result = await publisher.publish({
+        projectId: workflow.value.projectId,
+        videoPath: generatedVideoPath.value,
+        title: project.name,
+        description: project.notes ?? "",
+        platformIds: project.targetPlatforms,
+        mode: "draft",
+      });
+      return `${result.message}：${result.taskIds.join("、")}`;
+    }
   }
 }
 
@@ -302,6 +340,49 @@ function addLog(stage: string, message: string) {
         <p class="muted">{{ activeStage?.description }}</p>
         <div class="warning-list">
           <p v-for="error in projectErrors" :key="error">{{ error }}</p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">
+          <FileVideo :size="18" />
+          <span>生成产物</span>
+        </div>
+        <dl class="artifact-list">
+          <div>
+            <dt>音频</dt>
+            <dd>{{ generatedAudioPath || "等待语音合成" }}</dd>
+          </div>
+          <div>
+            <dt>数字人</dt>
+            <dd>{{ generatedAvatarPath || "等待数字人口播" }}</dd>
+          </div>
+          <div>
+            <dt>成片</dt>
+            <dd>{{ generatedVideoPath || "等待视频合成" }}</dd>
+          </div>
+          <div>
+            <dt>封面</dt>
+            <dd>{{ generatedCoverPath || "等待视频合成" }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">
+          <Settings2 :size="18" />
+          <span>发布账号</span>
+        </div>
+        <div class="account-list">
+          <div v-for="platformId in project.targetPlatforms" :key="platformId">
+            <strong>{{ platformLabels[platformId] }}</strong>
+            <span>
+              {{
+                publishAccounts.find((account) => account.platformId === platformId)?.displayName ||
+                "发布时自动检查账号"
+              }}
+            </span>
+          </div>
         </div>
       </section>
     </aside>

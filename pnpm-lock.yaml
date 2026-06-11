@@ -23,9 +23,15 @@ importers:
       '@mirax/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@mirax/media-pipeline':
+        specifier: workspace:*
+        version: link:../../packages/media-pipeline
       '@mirax/provider-ai':
         specifier: workspace:*
         version: link:../../packages/provider-ai
+      '@mirax/provider-publish':
+        specifier: workspace:*
+        version: link:../../packages/provider-publish
       '@tauri-apps/api':
         specifier: ^2.0.0
         version: 2.11.0
@@ -51,11 +57,23 @@ importers:
 
   packages/core: {}
 
+  packages/local-store: {}
+
+  packages/media-pipeline:
+    dependencies:
+      '@mirax/core':
+        specifier: workspace:*
+        version: link:../core
+
   packages/provider-ai:
     dependencies:
       '@mirax/core':
         specifier: workspace:*
         version: link:../core
+
+  packages/provider-publish: {}
+
+  packages/sidecar-manager: {}
 
 packages:
 

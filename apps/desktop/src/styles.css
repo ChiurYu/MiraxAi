@@ -336,6 +336,48 @@ input:focus {
   font-size: 13px;
 }
 
+.artifact-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.artifact-list div,
+.account-list div {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid #e2e7ee;
+  border-radius: 7px;
+  background: #fbfcfe;
+}
+
+.artifact-list dt {
+  color: #66717f;
+  font-size: 12px;
+}
+
+.artifact-list dd {
+  margin: 0;
+  color: #27313d;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.account-list {
+  display: grid;
+  gap: 8px;
+}
+
+.account-list strong {
+  font-size: 13px;
+}
+
+.account-list span {
+  color: #66717f;
+  font-size: 12px;
+}
+
 .spin {
   animation: spin 900ms linear infinite;
 }

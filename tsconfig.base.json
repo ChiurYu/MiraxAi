@@ -13,7 +13,9 @@
       "@mirax/core": ["packages/core/src/index.ts"],
       "@mirax/provider-ai": ["packages/provider-ai/src/index.ts"],
       "@mirax/media-pipeline": ["packages/media-pipeline/src/index.ts"],
-      "@mirax/provider-publish": ["packages/provider-publish/src/index.ts"]
+      "@mirax/provider-publish": ["packages/provider-publish/src/index.ts"],
+      "@mirax/local-store": ["packages/local-store/src/index.ts"],
+      "@mirax/sidecar-manager": ["packages/sidecar-manager/src/index.ts"]
     }
   }
 }
