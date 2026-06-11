@@ -1,0 +1,22 @@
+# Local reverse-engineering inputs and generated extracts
+*.dmg
+*.mp4
+reverse-engineering/app-asar/
+
+# Superpowers brainstorming scratch files
+.superpowers/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+
+# Node/Rust build outputs for the future app
+node_modules/
+dist/
+build/
+target/
+
+# Logs and local env
+*.log
+.env
+.env.*
