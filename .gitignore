@@ -2,6 +2,7 @@
 *.dmg
 *.mp4
 reverse-engineering/app-asar/
+video-frames/
 
 # Superpowers brainstorming scratch files
 .superpowers/
