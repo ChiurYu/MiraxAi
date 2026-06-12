@@ -675,7 +675,7 @@ pnpm typecheck
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/provider-ai/src/connectionTest.ts packages/provider-ai/src/index.ts packages/provider-ai/tests/connection-test.test.ts apps/desktop/src/App.vue
