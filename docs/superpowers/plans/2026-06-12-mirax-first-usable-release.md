@@ -462,7 +462,7 @@ git commit -m "feat: add workflow status badges"
 - Modify: `apps/desktop/package.json`
 - Modify: `apps/desktop/src/App.vue`
 
-- [ ] **Step 1: Add dialog plugin dependency**
+- [x] **Step 1: Add dialog plugin dependency**
 
 Run:
 
@@ -472,7 +472,7 @@ pnpm --filter @mirax/desktop add @tauri-apps/plugin-dialog
 
 Expected: `apps/desktop/package.json` includes `@tauri-apps/plugin-dialog`.
 
-- [ ] **Step 2: Create PathPickerButton**
+- [x] **Step 2: Create PathPickerButton**
 
 Create `apps/desktop/src/components/PathPickerButton.vue`:
 
@@ -518,7 +518,7 @@ async function pickPath() {
 </template>
 ```
 
-- [ ] **Step 3: Replace prompt-only buttons**
+- [x] **Step 3: Replace prompt-only buttons**
 
 Modify `apps/desktop/src/App.vue`:
 
@@ -533,7 +533,7 @@ Modify `apps/desktop/src/App.vue`:
 
 Use a similar button for `voiceSamplePath` with `wav`, `mp3`, `m4a`.
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 Run:
 

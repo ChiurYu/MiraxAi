@@ -44,6 +44,7 @@ import {
   sanitizeDesktopDraftForStorage,
   type PersistedDesktopDraft,
 } from "./runtime/desktopDraft.js";
+import PathPickerButton from "./components/PathPickerButton.vue";
 import StatusBadge from "./components/StatusBadge.vue";
 
 type LogEntry = {
@@ -188,16 +189,6 @@ function resetWorkflow() {
   publishDescription.value = "";
 }
 
-function choosePath(field: "sourceVideoPath" | "voiceSamplePath") {
-  const label = field === "sourceVideoPath" ? "对标视频路径" : "声音样本路径";
-  const currentValue = project[field] ?? "";
-  const nextValue = window.prompt(label, currentValue);
-
-  if (nextValue !== null) {
-    project[field] = nextValue.trim();
-  }
-}
-
 async function processStage(stageId: WorkflowStageId, title: string) {
   resetFailedStage(stageId);
   activeStageId.value = stageId;
@@ -338,7 +329,7 @@ function persistDraft() {
         <div class="brand-mark">
           <PlayCircle :size="21" />
         </div>
-        <strong>轻语IP</strong>
+        <strong>Mirax AI</strong>
       </div>
       <nav>
         <button class="nav-item active"><WandSparkles :size="18" /> 首页</button>
@@ -399,7 +390,12 @@ function persistDraft() {
             <span>视频链接</span>
             <div class="action-input">
               <input v-model="project.sourceVideoPath" placeholder="请输入视频链接或本地路径" />
-              <button @click="choosePath('sourceVideoPath')">粘贴</button>
+              <PathPickerButton
+                label="选择对标视频"
+                :value="project.sourceVideoPath"
+                :filters="[{ name: 'Video', extensions: ['mp4', 'mov', 'm4v'] }]"
+                @selected="project.sourceVideoPath = $event"
+              />
             </div>
           </label>
           <label>
@@ -458,7 +454,13 @@ function persistDraft() {
             <span class="card-icon"><Volume2 :size="19" /></span>
             <h2>3. 声音生成</h2>
             <StatusBadge :status="stageStatus.speech" />
-            <button class="link-button" @click="choosePath('voiceSamplePath')">上传声音</button>
+            <PathPickerButton
+              class="link-button"
+              label="选择声音样本"
+              :value="project.voiceSamplePath"
+              :filters="[{ name: 'Audio', extensions: ['wav', 'mp3', 'm4a'] }]"
+              @selected="project.voiceSamplePath = $event"
+            />
           </div>
           <label>
             <span>选择声音</span>
