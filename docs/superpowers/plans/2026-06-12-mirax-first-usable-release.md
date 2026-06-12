@@ -446,7 +446,7 @@ Expected:
 - Every card heading shows a status badge.
 - Clicking `运行全部` updates badges to `已完成`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/desktop/src/components/StatusBadge.vue apps/desktop/src/App.vue
