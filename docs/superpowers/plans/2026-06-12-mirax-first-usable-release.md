@@ -691,7 +691,7 @@ git commit -m "feat: add provider connection test"
 - Modify: `apps/desktop/src/App.vue`
 - Modify: `docs/reverse-engineering/demo-video-coverage.md`
 
-- [ ] **Step 1: Create component**
+- [x] **Step 1: Create component**
 
 Create `apps/desktop/src/components/DependencyChecklist.vue`:
 
@@ -718,7 +718,7 @@ const results = checkSidecarDependencies({
 </template>
 ```
 
-- [ ] **Step 2: Add component styles**
+- [x] **Step 2: Add component styles**
 
 Add to `apps/desktop/src/styles.css`:
 
@@ -745,7 +745,7 @@ Add to `apps/desktop/src/styles.css`:
 }
 ```
 
-- [ ] **Step 3: Add to settings card**
+- [x] **Step 3: Add to settings card**
 
 Modify `apps/desktop/src/App.vue` settings card:
 
@@ -753,7 +753,7 @@ Modify `apps/desktop/src/App.vue` settings card:
 <DependencyChecklist />
 ```
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 Run:
 

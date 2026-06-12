@@ -44,6 +44,7 @@ import {
   sanitizeDesktopDraftForStorage,
   type PersistedDesktopDraft,
 } from "./runtime/desktopDraft.js";
+import DependencyChecklist from "./components/DependencyChecklist.vue";
 import PathPickerButton from "./components/PathPickerButton.vue";
 import StatusBadge from "./components/StatusBadge.vue";
 
@@ -692,6 +693,7 @@ async function testConnection() {
             <button class="secondary" @click="testConnection">测试连接</button>
             <span class="connection-message">{{ connectionMessage }}</span>
           </div>
+          <DependencyChecklist />
           <div class="warning-list">
             <p v-for="error in providerErrors" :key="error">{{ error }}</p>
             <p v-for="error in projectErrors" :key="error">{{ error }}</p>

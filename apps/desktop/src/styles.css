@@ -562,3 +562,27 @@ input[readonly] {
     transform: rotate(360deg);
   }
 }
+
+.dependency-list {
+  display: grid;
+  gap: 8px;
+  padding: 0 12px 12px;
+}
+
+.dependency-list div {
+  display: grid;
+  gap: 4px;
+  border: 1px solid #3b4258;
+  border-radius: 6px;
+  padding: 8px;
+  background: #202536;
+}
+
+.dependency-list .ok {
+  border-color: rgba(47, 122, 93, 0.72);
+}
+
+.dependency-list span {
+  color: #aeb5c7;
+  font-size: 12px;
+}

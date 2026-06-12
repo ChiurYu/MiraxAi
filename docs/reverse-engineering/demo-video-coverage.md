@@ -19,7 +19,7 @@
 | 一键跑完整流程 | 顶部「运行全部」可从当前步骤跑到发布交接完成 | `apps/desktop/src/App.vue` | 已覆盖 | `legacy-ui-gap-list.md`：视频发布 |
 | 本地草稿恢复 | 项目、素材路径、卖点备注、平台和非敏感 provider 配置保存到 localStorage | `apps/desktop/src/App.vue` | 已覆盖 | `legacy-ui-gap-list.md`：设置 |
 | 本地数据设计 | `@mirax/local-store` 定义 SQLite schema 和仓储接口 | `packages/local-store/src/*` | 已覆盖设计 stub | `legacy-ui-gap-list.md`：视频发布 |
-| 本地服务依赖检查 | `@mirax/sidecar-manager` 定义 FFmpeg、Playwright、Python、HeyGem、CosyVoice 检查 | `packages/sidecar-manager/src/*` | 已覆盖设计 stub | `legacy-ui-gap-list.md`：依赖 |
+| 本地服务依赖检查 | 右侧「密钥配置」下方展示 FFmpeg、Playwright、Python、HeyGem、CosyVoice 检查状态和建议 | `apps/desktop/src/components/DependencyChecklist.vue` | 已覆盖 UI 面板 | `legacy-ui-gap-list.md`：依赖 |
 
 ## 第一版验收命令
 

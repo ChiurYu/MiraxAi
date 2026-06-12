@@ -17,6 +17,7 @@
     "@mirax/media-pipeline": "workspace:*",
     "@mirax/provider-ai": "workspace:*",
     "@mirax/provider-publish": "workspace:*",
+    "@mirax/sidecar-manager": "workspace:*",
     "@tauri-apps/api": "^2.0.0",
     "@tauri-apps/plugin-dialog": "^2.7.1",
     "lucide-vue-next": "^0.468.0",
