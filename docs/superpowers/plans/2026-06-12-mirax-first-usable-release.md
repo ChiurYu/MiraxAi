@@ -27,6 +27,7 @@
 - [x] 浏览器验收已跑通：`运行全部` 后进度 `100% / 8/8`，mock 发布任务生成。
 - [x] 旧版界面差距清单已补齐：`docs/reverse-engineering/legacy-ui-gap-list.md`。
 - [x] 桌面端草稿持久化已抽离：`apps/desktop/src/runtime/desktopDraft.ts`，API Key 不进入 localStorage。
+- [x] Task 3 每卡片状态与重试 UX 已完成：`apps/desktop/src/components/StatusBadge.vue` + `apps/desktop/src/App.vue`，7 个模块均显示 workflow stage 状态 badge 与单步/重试按钮。
 - [ ] 与旧版功能对齐的“可正常使用”收口尚未完成：需要补齐真实试用状态提示、素材选择体验、Provider 连接测试、依赖检查面板、任务中心记录和发布前确认。
 
 ## Target File Structure Changes
@@ -344,7 +345,7 @@ git commit -m "refactor: extract desktop draft persistence"
 - Create: `apps/desktop/src/components/StatusBadge.vue`
 - Modify: `apps/desktop/src/App.vue`
 
-- [ ] **Step 1: Create status badge component**
+- [x] **Step 1: Create status badge component**
 
 Create `apps/desktop/src/components/StatusBadge.vue`:
 
@@ -400,7 +401,7 @@ const labelMap: Record<WorkflowStageStatus, string> = {
 </style>
 ```
 
-- [ ] **Step 2: Add badges to every card heading**
+- [x] **Step 2: Add badges to every card heading**
 
 Modify `apps/desktop/src/App.vue` so each numbered card heading includes:
 
@@ -418,7 +419,7 @@ Use these mappings:
 - `6. 标题封面（用于发布）` → `review`
 - `7. 视频发布` → `publish`
 
-- [ ] **Step 3: Add retry behavior**
+- [x] **Step 3: Add retry behavior**
 
 Modify `processStage()` in `apps/desktop/src/App.vue` so failed stages can be retried by setting that stage back to `pending` before processing:
 
@@ -432,7 +433,7 @@ function resetFailedStage(stageId: WorkflowStageId) {
 
 Call `resetFailedStage(stageId)` before setting `running`.
 
-- [ ] **Step 4: Browser verify**
+- [x] **Step 4: Browser verify**
 
 Run:
 

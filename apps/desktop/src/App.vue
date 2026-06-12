@@ -44,6 +44,7 @@ import {
   sanitizeDesktopDraftForStorage,
   type PersistedDesktopDraft,
 } from "./runtime/desktopDraft.js";
+import StatusBadge from "./components/StatusBadge.vue";
 
 type LogEntry = {
   id: number;
@@ -146,6 +147,34 @@ async function runAllStages() {
   }
 }
 
+async function runStage(stageId: WorkflowStageId) {
+  if (running.value) {
+    return;
+  }
+
+  const status = stageStatus.value[stageId];
+  if (status === "completed" || status === "running") {
+    return;
+  }
+
+  const stage = workflow.value.stages.find((s) => s.id === stageId);
+  if (!stage) {
+    return;
+  }
+
+  running.value = true;
+  runningMode.value = "single";
+
+  try {
+    await processStage(stageId, stage.title);
+  } catch {
+    // processStage already updates status and logs; swallow here to keep UX on card.
+  } finally {
+    running.value = false;
+    runningMode.value = null;
+  }
+}
+
 function resetWorkflow() {
   workflow.value = createDefaultWorkflow("demo-project");
   activeStageId.value = "transcribe";
@@ -170,6 +199,7 @@ function choosePath(field: "sourceVideoPath" | "voiceSamplePath") {
 }
 
 async function processStage(stageId: WorkflowStageId, title: string) {
+  resetFailedStage(stageId);
   activeStageId.value = stageId;
   workflow.value = updateStageStatus(workflow.value, stageId, "running");
   addLog(title, "开始执行");
@@ -182,6 +212,12 @@ async function processStage(stageId: WorkflowStageId, title: string) {
     workflow.value = updateStageStatus(workflow.value, stageId, "failed");
     addLog(title, error instanceof Error ? error.message : "执行失败");
     throw error;
+  }
+}
+
+function resetFailedStage(stageId: WorkflowStageId) {
+  if (stageStatus.value[stageId] === "failed") {
+    workflow.value = updateStageStatus(workflow.value, stageId, "pending");
   }
 }
 
@@ -346,6 +382,7 @@ function persistDraft() {
           <div class="card-heading">
             <span class="card-icon"><Link2 :size="19" /></span>
             <h2>1. 学习对标</h2>
+            <StatusBadge :status="stageStatus.transcribe" />
             <small>{{ saveStatus }}</small>
           </div>
           <div class="tabs">
@@ -369,12 +406,22 @@ function persistDraft() {
             <span>原文案 / 卖点备注</span>
             <textarea v-model="project.notes" placeholder="提取的文案将显示在这里..." />
           </label>
+          <div class="button-row">
+            <button
+              class="primary compact-button"
+              :disabled="running || stageStatus.transcribe === 'completed'"
+              @click="runStage('transcribe')"
+            >
+              <Link2 :size="16" /> 提取文案
+            </button>
+          </div>
         </section>
 
         <section class="workflow-card rewrite-card">
           <div class="card-heading">
             <span class="card-icon"><WandSparkles :size="19" /></span>
             <h2>2. 改写文案</h2>
+            <StatusBadge :status="stageStatus.rewrite" />
           </div>
           <div class="two-columns">
             <label>
@@ -391,7 +438,11 @@ function persistDraft() {
             </label>
           </div>
           <div class="button-row">
-            <button class="primary compact-button" :disabled="stageStatus.rewrite === 'completed'" @click="runNextStage">
+            <button
+              class="primary compact-button"
+              :disabled="running || stageStatus.rewrite === 'completed'"
+              @click="runStage('rewrite')"
+            >
               <WandSparkles :size="16" /> 改写文案
             </button>
             <button class="legal-button"><ShieldCheck :size="16" /> AI法务</button>
@@ -406,6 +457,7 @@ function persistDraft() {
           <div class="card-heading">
             <span class="card-icon"><Volume2 :size="19" /></span>
             <h2>3. 声音生成</h2>
+            <StatusBadge :status="stageStatus.speech" />
             <button class="link-button" @click="choosePath('voiceSamplePath')">上传声音</button>
           </div>
           <label>
@@ -415,6 +467,15 @@ function persistDraft() {
               <option>男-讲解</option>
             </select>
           </label>
+          <div class="button-row">
+            <button
+              class="primary compact-button"
+              :disabled="running || stageStatus.speech === 'completed'"
+              @click="runStage('speech')"
+            >
+              <Volume2 :size="16" /> 生成音频
+            </button>
+          </div>
           <div class="artifact-box">
             <Volume2 :size="32" />
             <strong>{{ generatedAudioPath ? "克隆结果已生成" : "克隆的音频将在这里显示" }}</strong>
@@ -426,6 +487,7 @@ function persistDraft() {
           <div class="card-heading">
             <span class="card-icon"><UserRound :size="19" /></span>
             <h2>4. 视频生成</h2>
+            <StatusBadge :status="stageStatus.avatar" />
             <button class="link-button">上传形象</button>
           </div>
           <div class="segmented">
@@ -444,6 +506,15 @@ function persistDraft() {
               <option>高清模型V2</option>
             </select>
           </label>
+          <div class="button-row">
+            <button
+              class="primary compact-button"
+              :disabled="running || stageStatus.avatar === 'completed'"
+              @click="runStage('avatar')"
+            >
+              <UserRound :size="16" /> 生成视频
+            </button>
+          </div>
           <div class="artifact-box preview-box">
             <UserRound :size="44" />
             <strong>{{ generatedAvatarPath ? "视频生成完成" : "暂无预览视频" }}</strong>
@@ -455,6 +526,7 @@ function persistDraft() {
           <div class="card-heading">
             <span class="card-icon"><FileVideo :size="19" /></span>
             <h2>5. 一键成片</h2>
+            <StatusBadge :status="stageStatus.compose" />
           </div>
           <div class="compose-grid">
             <div class="compose-controls">
@@ -484,7 +556,11 @@ function persistDraft() {
                 <input type="range" min="0" max="1" step="0.1" value="0.3" />
                 <b>0.3</b>
               </div>
-              <button class="primary wide-button" :disabled="!generatedAvatarPath && !generatedVideoPath" @click="runNextStage">
+              <button
+                class="primary wide-button"
+                :disabled="running || stageStatus.compose === 'completed'"
+                @click="runStage('compose')"
+              >
                 <FileVideo :size="16" /> 剪辑视频
               </button>
             </div>
@@ -500,6 +576,7 @@ function persistDraft() {
           <div class="card-heading">
             <span class="card-icon"><FileText :size="19" /></span>
             <h2>6. 标题封面（用于发布）</h2>
+            <StatusBadge :status="stageStatus.review" />
           </div>
           <label>
             <span>标题</span>
@@ -526,6 +603,15 @@ function persistDraft() {
               <button :disabled="!generatedCoverPath">打开封面</button>
               <button :disabled="!generatedCoverPath">导出封面</button>
             </div>
+            <div class="button-row">
+              <button
+                class="primary compact-button"
+                :disabled="running || stageStatus.review === 'completed'"
+                @click="runStage('review')"
+              >
+                <ClipboardCheck :size="16" /> 复核通过
+              </button>
+            </div>
           </div>
         </section>
 
@@ -533,6 +619,7 @@ function persistDraft() {
           <div class="card-heading">
             <span class="card-icon"><CloudUpload :size="19" /></span>
             <h2>7. 视频发布</h2>
+            <StatusBadge :status="stageStatus.publish" />
           </div>
           <label>
             <span>视频地址</span>
@@ -557,7 +644,11 @@ function persistDraft() {
             <label><input type="radio" name="publish-mode" /> 直接发布</label>
             <label><input type="radio" name="publish-mode" checked /> 草稿</label>
           </div>
-          <button class="primary wide-button" :disabled="!generatedVideoPath && stageStatus.publish !== 'completed'" @click="runNextStage">
+          <button
+            class="primary wide-button"
+            :disabled="running || stageStatus.publish === 'completed'"
+            @click="runStage('publish')"
+          >
             <CloudUpload :size="16" /> 立即发布
           </button>
         </section>
