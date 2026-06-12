@@ -764,7 +764,7 @@ pnpm --filter @mirax/desktop build:web
 
 Expected: PASS, settings card displays dependency messages.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/desktop/src/components/DependencyChecklist.vue apps/desktop/src/App.vue apps/desktop/src/styles.css docs/reverse-engineering/demo-video-coverage.md
