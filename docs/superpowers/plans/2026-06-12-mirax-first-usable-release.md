@@ -561,7 +561,7 @@ git commit -m "feat: add desktop path picker"
 - Modify: `packages/provider-ai/src/index.ts`
 - Modify: `apps/desktop/src/App.vue`
 
-- [ ] **Step 1: Write connection tests**
+- [x] **Step 1: Write connection tests**
 
 Create `packages/provider-ai/tests/connection-test.test.ts`:
 
@@ -587,13 +587,13 @@ describe("ai provider connection test", () => {
       }),
     ).resolves.toEqual({
       ok: false,
-      message: "OpenAI-compatible provider is not wired yet. Use MockAiProvider in MVP.",
+      message: "OpenAI-compatible provider 尚未接入，MVP 请使用 Mock Provider。",
     });
   });
 });
 ```
 
-- [ ] **Step 2: Implement connectionTest**
+- [x] **Step 2: Implement connectionTest**
 
 Create `packages/provider-ai/src/connectionTest.ts`:
 
@@ -619,12 +619,12 @@ export async function testAiProviderConnection(input: AiConnectionTestInput): Pr
 
   return {
     ok: false,
-    message: "OpenAI-compatible provider is not wired yet. Use MockAiProvider in MVP.",
+    message: "OpenAI-compatible provider 尚未接入，MVP 请使用 Mock Provider。",
   };
 }
 ```
 
-- [ ] **Step 3: Export function**
+- [x] **Step 3: Export function**
 
 Modify `packages/provider-ai/src/index.ts`:
 
@@ -632,13 +632,13 @@ Modify `packages/provider-ai/src/index.ts`:
 export * from "./connectionTest.js";
 ```
 
-- [ ] **Step 4: Wire UI button**
+- [x] **Step 4: Wire UI button**
 
 Modify `apps/desktop/src/App.vue` settings card to include:
 
 ```vue
 <button class="secondary" @click="testConnection">测试连接</button>
-<p class="connection-message">{{ connectionMessage }}</p>
+<span class="connection-message">{{ connectionMessage }}</span>
 ```
 
 Add script:
@@ -647,12 +647,24 @@ Add script:
 const connectionMessage = ref("未测试");
 
 async function testConnection() {
-  const result = await testAiProviderConnection({ mode: "mock" });
+  connectionMessage.value = "检测中…";
+
+  const input =
+    providerConfig.provider === "openai"
+      ? {
+          mode: "openai-compatible" as const,
+          baseUrl: providerConfig.baseUrl ?? "",
+          apiKey: providerConfig.apiKey,
+          model: providerConfig.model ?? "",
+        }
+      : ({ mode: "mock" } as const);
+
+  const result = await testAiProviderConnection(input);
   connectionMessage.value = result.message;
 }
 ```
 
-- [ ] **Step 5: Verify**
+- [x] **Step 5: Verify**
 
 Run:
 

@@ -35,7 +35,7 @@ import {
   type WorkflowStageId,
 } from "@mirax/core";
 import { createMockMediaRenderer } from "@mirax/media-pipeline";
-import { createMockAiProvider } from "@mirax/provider-ai";
+import { createMockAiProvider, testAiProviderConnection } from "@mirax/provider-ai";
 import { SUPPORTED_PLATFORM_PROFILES, createMockPublisher, type PublishAccount } from "@mirax/provider-publish";
 import {
   DESKTOP_DRAFT_STORAGE_KEY,
@@ -76,6 +76,7 @@ const project = reactive<ProjectDraft>(defaultDraft.project);
 
 const providerConfig = reactive<ApiKeyProviderConfig>(defaultDraft.providerConfig);
 const saveStatus = ref("未保存");
+const connectionMessage = ref("未测试");
 
 restoreDraft();
 
@@ -318,6 +319,27 @@ function persistDraft() {
     saveStatus.value = "草稿已保存";
   } catch {
     saveStatus.value = "草稿保存失败";
+  }
+}
+
+async function testConnection() {
+  connectionMessage.value = "检测中…";
+
+  try {
+    const input =
+      providerConfig.provider === "openai"
+        ? ({
+            mode: "openai-compatible",
+            baseUrl: providerConfig.baseUrl ?? "",
+            apiKey: providerConfig.apiKey,
+            model: providerConfig.model ?? "",
+          } as const)
+        : ({ mode: "mock" } as const);
+
+    const result = await testAiProviderConnection(input);
+    connectionMessage.value = result.message;
+  } catch (error) {
+    connectionMessage.value = error instanceof Error ? error.message : "连接测试失败";
   }
 }
 </script>
@@ -666,6 +688,10 @@ function persistDraft() {
           </div>
           <label><span>Base URL</span><input v-model="providerConfig.baseUrl" /></label>
           <label><span>API Key</span><input v-model="providerConfig.apiKey" type="password" placeholder="用户本地填写" autocomplete="off" /></label>
+          <div class="connection-row">
+            <button class="secondary" @click="testConnection">测试连接</button>
+            <span class="connection-message">{{ connectionMessage }}</span>
+          </div>
           <div class="warning-list">
             <p v-for="error in providerErrors" :key="error">{{ error }}</p>
             <p v-for="error in projectErrors" :key="error">{{ error }}</p>
@@ -689,3 +715,17 @@ function persistDraft() {
     </section>
   </main>
 </template>
+
+<style scoped>
+.connection-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.connection-message {
+  font-size: 12px;
+  color: #aeb5c7;
+}
+</style>
