@@ -894,7 +894,7 @@ pnpm typecheck
 
 Browser expected: clicking publish asks for confirmation; confirming creates a task history item.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/desktop/src/features/task-center/taskHistory.ts apps/desktop/src/features/task-center/taskHistory.test.ts apps/desktop/src/App.vue
