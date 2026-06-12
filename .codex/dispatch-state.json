@@ -1,23 +1,30 @@
 {
   "version": 1,
   "repo": "/Users/yuzhenzhao/code/ai/Mirax AI",
-  "plan_source": "docs/reverse-engineering/legacy-ui-gap-list.md",
+  "plan_source": "docs/superpowers/plans/2026-06-12-mirax-first-usable-release.md",
+  "plan_synced_at": "2026-06-12T18:00:00Z",
   "workspace_ref": "workspace:7",
   "worker_surface_ref": "surface:14",
   "controller_thread_id": null,
   "current_task": {
-    "id": "legacy-ui-gap-2",
-    "title": "改写文案",
-    "status": "worker_done"
+    "id": "task-8-step-5",
+    "title": "Commit final progress",
+    "plan_ref": "Task 8 / Step 5",
+    "assignee": "controller",
+    "status": "pending"
   },
-  "queue": [
-    { "id": "legacy-ui-gap-3", "title": "声音生成", "status": "pending" },
-    { "id": "legacy-ui-gap-4", "title": "视频生成", "status": "pending" },
-    { "id": "legacy-ui-gap-5", "title": "一键成片", "status": "pending" },
-    { "id": "legacy-ui-gap-6", "title": "标题封面", "status": "pending" },
-    { "id": "legacy-ui-gap-7", "title": "视频发布", "status": "pending" },
-    { "id": "legacy-ui-gap-8", "title": "设置", "status": "pending" },
-    { "id": "legacy-ui-gap-9", "title": "依赖", "status": "pending" }
-  ],
-  "completed": ["legacy-ui-gap-1"]
+  "queue": [],
+  "completed": [
+    "task-1",
+    "task-2",
+    "task-3",
+    "task-4",
+    "task-5",
+    "task-6",
+    "task-7",
+    "task-8-step-1",
+    "task-8-step-2",
+    "task-8-step-3",
+    "task-8-step-4"
+  ]
 }
