@@ -11,12 +11,14 @@ import {
   KeyRound,
   Link2,
   Loader2,
+  Moon,
   Music2,
   Play,
   PlayCircle,
   RefreshCw,
   Settings2,
   ShieldCheck,
+  Sun,
   Upload,
   UserRound,
   Volume2,
@@ -80,6 +82,7 @@ const publishDescription = ref("");
 const publishTags = ref("通勤包, 大容量, 质感");
 const publishMode = ref<"direct" | "draft">("draft");
 const taskHistory = ref<PublishHistoryItem[]>(loadTaskHistory());
+const theme = ref<"light" | "dark">("dark");
 
 const defaultDraft = createDefaultDesktopDraft();
 
@@ -400,16 +403,23 @@ async function testConnection() {
     connectionMessage.value = error instanceof Error ? error.message : "连接测试失败";
   }
 }
+
+function toggleTheme() {
+  theme.value = theme.value === "dark" ? "light" : "dark";
+}
 </script>
 
 <template>
-  <main class="app-shell">
+  <main class="app-shell" :data-theme="theme">
     <aside class="nav-rail">
       <div class="brand">
         <div class="brand-mark">
-          <PlayCircle :size="21" />
+          <PlayCircle :size="20" />
         </div>
-        <strong>Mirax AI</strong>
+        <div class="brand-text">
+          <strong>Mirax AI</strong>
+          <small>短视频工作台</small>
+        </div>
       </div>
       <nav>
         <button class="nav-item active"><WandSparkles :size="18" /> 首页</button>
@@ -424,13 +434,23 @@ async function testConnection() {
 
     <section class="board-shell">
       <header class="window-bar">
+        <div class="project-overview">
+          <div class="project-title">
+            <strong>{{ project.name || "Mirax AI 项目" }}</strong>
+            <span>{{ activeStage?.title || "准备开始" }}</span>
+          </div>
+        </div>
         <div class="mode-switch">
           <button class="selected"><Play :size="15" /> 手动</button>
           <button><CloudUpload :size="15" /> 自动</button>
           <button><Circle :size="15" /> 后台</button>
         </div>
         <div class="toolbar-actions">
-          <span>{{ progress.percent }}% / {{ progress.completed }}/{{ progress.total }}</span>
+          <span class="progress-pill"><b>{{ progress.percent }}%</b> {{ progress.completed }}/{{ progress.total }}</span>
+          <button class="theme-toggle" :aria-label="theme === 'dark' ? '切换到白天' : '切换到黑夜'" @click="toggleTheme">
+            <Sun v-if="theme === 'dark'" :size="16" />
+            <Moon v-else :size="16" />
+          </button>
           <button class="ghost-button" @click="resetWorkflow">
             <RefreshCw :size="16" />
             清空数据
@@ -468,15 +488,12 @@ async function testConnection() {
           </label>
           <label>
             <span>视频链接</span>
-            <div class="action-input">
-              <input v-model="project.sourceVideoPath" placeholder="请输入视频链接或本地路径" />
-              <PathPickerButton
-                label="选择对标视频"
-                :value="project.sourceVideoPath"
-                :filters="[{ name: 'Video', extensions: ['mp4', 'mov', 'm4v'] }]"
-                @selected="project.sourceVideoPath = $event"
-              />
-            </div>
+            <PathPickerButton
+              v-model="project.sourceVideoPath"
+              label="选择对标视频"
+              placeholder="请输入视频链接或本地路径"
+              :filters="[{ name: 'Video', extensions: ['mp4', 'mov', 'm4v'] }]"
+            />
           </label>
           <label>
             <span>原文案 / 卖点备注</span>
@@ -534,14 +551,16 @@ async function testConnection() {
             <span class="card-icon"><Volume2 :size="19" /></span>
             <h2>3. 声音生成</h2>
             <StatusBadge :status="stageStatus.speech" />
-            <PathPickerButton
-              class="link-button"
-              label="选择声音样本"
-              :value="project.voiceSamplePath"
-              :filters="[{ name: 'Audio', extensions: ['wav', 'mp3', 'm4a'] }]"
-              @selected="project.voiceSamplePath = $event"
-            />
           </div>
+          <label>
+            <span>声音样本</span>
+            <PathPickerButton
+              v-model="project.voiceSamplePath"
+              label="选择声音样本"
+              placeholder="请选择或输入声音样本路径"
+              :filters="[{ name: 'Audio', extensions: ['wav', 'mp3', 'm4a'] }]"
+            />
+          </label>
           <label>
             <span>选择声音</span>
             <select>
@@ -796,13 +815,16 @@ async function testConnection() {
 
 .connection-message {
   font-size: 12px;
-  color: #aeb5c7;
+  color: var(--mx-text-tertiary);
 }
 
 .history-section h3 {
   margin: 12px 0 8px;
-  font-size: 13px;
-  color: #cdd3e2;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mx-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .history-list li {
@@ -810,7 +832,7 @@ async function testConnection() {
   flex-direction: column;
   gap: 2px;
   padding: 8px 0;
-  border-bottom: 1px solid #30364b;
+  border-bottom: 1px solid var(--mx-border-subtle);
 }
 
 .history-list li:last-child {
@@ -820,11 +842,11 @@ async function testConnection() {
 .history-video,
 .history-tasks {
   font-size: 11px;
-  color: #aeb5c7;
+  color: var(--mx-text-tertiary);
   word-break: break-all;
 }
 
 .history-tasks {
-  color: #ccffe7;
+  color: var(--mx-cyan);
 }
 </style>

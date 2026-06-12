@@ -24,26 +24,35 @@ const labelMap: Record<WorkflowStageStatus, string> = {
 .status-badge {
   display: inline-flex;
   align-items: center;
-  min-height: 22px;
+  min-height: 20px;
   border-radius: 999px;
-  padding: 0 8px;
-  font-size: 12px;
-  color: #cdd3e2;
-  background: #30364b;
+  padding: 0 7px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--mx-text-secondary, #9aa0ad);
+  background: var(--mx-bg-hover, #252931);
+  border: 1px solid transparent;
+  flex-shrink: 0;
 }
+
 .running {
-  color: #fff1d5;
-  background: rgba(240, 162, 32, 0.2);
+  color: var(--mx-accent-text, #ffffff);
+  background: var(--mx-accent, #5b8def);
 }
+
 .completed {
-  color: #ccffe7;
-  background: rgba(47, 122, 93, 0.32);
+  color: var(--mx-success, #34d399);
+  background: var(--mx-success-bg, rgba(52, 211, 153, 0.11));
+  border-color: rgba(52, 211, 153, 0.25);
 }
+
 .failed {
-  color: #ffd4cf;
-  background: rgba(177, 58, 42, 0.35);
+  color: var(--mx-error, #f87171);
+  background: var(--mx-error-bg, rgba(248, 113, 113, 0.12));
+  border-color: rgba(248, 113, 113, 0.2);
 }
+
 .skipped {
-  color: #c9d0dd;
+  color: var(--mx-text-tertiary, #6b7280);
 }
 </style>
