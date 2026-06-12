@@ -24,9 +24,7 @@ import {
 } from "lucide-vue-next";
 import { computed, reactive, ref, watch } from "vue";
 import {
-  createApiKeyProviderConfig,
   createDefaultWorkflow,
-  createProjectDraft,
   getNextStage,
   getStageProgress,
   updateStageStatus,
@@ -34,12 +32,18 @@ import {
   validateProviderConfig,
   type ApiKeyProviderConfig,
   type ProjectDraft,
-  type PublishPlatform,
   type WorkflowStageId,
 } from "@mirax/core";
 import { createMockMediaRenderer } from "@mirax/media-pipeline";
 import { createMockAiProvider } from "@mirax/provider-ai";
 import { SUPPORTED_PLATFORM_PROFILES, createMockPublisher, type PublishAccount } from "@mirax/provider-publish";
+import {
+  DESKTOP_DRAFT_STORAGE_KEY,
+  createDefaultDesktopDraft,
+  restoreDesktopDraft,
+  sanitizeDesktopDraftForStorage,
+  type PersistedDesktopDraft,
+} from "./runtime/desktopDraft.js";
 
 type LogEntry = {
   id: number;
@@ -47,12 +51,6 @@ type LogEntry = {
   message: string;
 };
 
-type SavedDesktopDraft = {
-  project: ProjectDraft;
-  providerConfig: Omit<ApiKeyProviderConfig, "apiKey">;
-};
-
-const STORAGE_KEY = "mirax-ai.desktop-draft.v1";
 const aiProvider = createMockAiProvider({ artifactRoot: "/Users/Shared/MiraxAI" });
 const mediaRenderer = createMockMediaRenderer({ artifactRoot: "/Users/Shared/MiraxAI" });
 const publisher = createMockPublisher();
@@ -70,26 +68,11 @@ const publishTitle = ref("");
 const publishDescription = ref("");
 const publishTags = ref("通勤包, 大容量, 质感");
 
-const project = reactive<ProjectDraft>(
-  createProjectDraft({
-    name: "轻奢女包口播 0611",
-    targetPlatforms: ["douyin", "xiaohongshu"],
-    sourceVideoPath: "/素材/对标视频.mp4",
-    voiceSamplePath: "/素材/声音样本.wav",
-    notes: "强调通勤、大容量、上身质感。",
-  }),
-);
+const defaultDraft = createDefaultDesktopDraft();
 
-const providerConfig = reactive<ApiKeyProviderConfig>(
-  createApiKeyProviderConfig({
-    id: "main-ai",
-    label: "主模型配置",
-    provider: "openai",
-    apiKey: "",
-    baseUrl: "https://api.openai.com/v1",
-    model: "gpt-4.1",
-  }),
-);
+const project = reactive<ProjectDraft>(defaultDraft.project);
+
+const providerConfig = reactive<ApiKeyProviderConfig>(defaultDraft.providerConfig);
 const saveStatus = ref("未保存");
 
 restoreDraft();
@@ -285,28 +268,15 @@ function addLog(stage: string, message: string) {
 
 function restoreDraft() {
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(DESKTOP_DRAFT_STORAGE_KEY);
     if (!raw) {
       return;
     }
 
-    const saved = JSON.parse(raw) as Partial<SavedDesktopDraft>;
-    if (saved.project) {
-      project.name = saved.project.name ?? project.name;
-      project.sourceVideoPath = saved.project.sourceVideoPath ?? project.sourceVideoPath;
-      project.voiceSamplePath = saved.project.voiceSamplePath ?? project.voiceSamplePath;
-      project.notes = saved.project.notes ?? project.notes;
-      project.targetPlatforms = sanitizePlatforms(saved.project.targetPlatforms);
-    }
-
-    if (saved.providerConfig) {
-      providerConfig.label = saved.providerConfig.label ?? providerConfig.label;
-      providerConfig.provider = saved.providerConfig.provider ?? providerConfig.provider;
-      providerConfig.baseUrl = saved.providerConfig.baseUrl ?? providerConfig.baseUrl;
-      providerConfig.model = saved.providerConfig.model ?? providerConfig.model;
-      providerConfig.enabled = saved.providerConfig.enabled ?? providerConfig.enabled;
-    }
-
+    const saved = JSON.parse(raw) as Partial<PersistedDesktopDraft>;
+    const restored = restoreDesktopDraft(saved);
+    Object.assign(project, restored.project);
+    Object.assign(providerConfig, restored.providerConfig);
     saveStatus.value = "已恢复草稿";
   } catch {
     saveStatus.value = "草稿读取失败";
@@ -314,36 +284,14 @@ function restoreDraft() {
 }
 
 function persistDraft() {
-  const payload: SavedDesktopDraft = {
-    project: {
-      name: project.name,
-      sourceVideoPath: project.sourceVideoPath,
-      voiceSamplePath: project.voiceSamplePath,
-      targetPlatforms: project.targetPlatforms,
-      notes: project.notes,
-    },
-    providerConfig: {
-      id: providerConfig.id,
-      label: providerConfig.label,
-      provider: providerConfig.provider,
-      baseUrl: providerConfig.baseUrl,
-      model: providerConfig.model,
-      enabled: providerConfig.enabled,
-    },
-  };
+  const payload = sanitizeDesktopDraftForStorage({ project, providerConfig });
 
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    window.localStorage.setItem(DESKTOP_DRAFT_STORAGE_KEY, JSON.stringify(payload));
     saveStatus.value = "草稿已保存";
   } catch {
     saveStatus.value = "草稿保存失败";
   }
-}
-
-function sanitizePlatforms(platforms: PublishPlatform[] | undefined): PublishPlatform[] {
-  const allowed = new Set(SUPPORTED_PLATFORM_PROFILES.map((profile) => profile.id));
-  const nextPlatforms = (platforms ?? []).filter((platform): platform is PublishPlatform => allowed.has(platform));
-  return nextPlatforms.length > 0 ? nextPlatforms : ["douyin"];
 }
 </script>
 
