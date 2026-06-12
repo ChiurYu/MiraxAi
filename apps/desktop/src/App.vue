@@ -32,6 +32,7 @@ import {
   validateProviderConfig,
   type ApiKeyProviderConfig,
   type ProjectDraft,
+  type PublishPlatform,
   type WorkflowStageId,
 } from "@mirax/core";
 import { createMockMediaRenderer } from "@mirax/media-pipeline";
@@ -44,6 +45,13 @@ import {
   sanitizeDesktopDraftForStorage,
   type PersistedDesktopDraft,
 } from "./runtime/desktopDraft.js";
+import {
+  appendPublishHistoryItem,
+  createPublishHistoryItem,
+  listLatestHistoryItems,
+  loadTaskHistory,
+  type PublishHistoryItem,
+} from "./features/task-center/taskHistory.js";
 import DependencyChecklist from "./components/DependencyChecklist.vue";
 import PathPickerButton from "./components/PathPickerButton.vue";
 import StatusBadge from "./components/StatusBadge.vue";
@@ -70,6 +78,8 @@ const generatedAvatarPath = ref("");
 const publishTitle = ref("");
 const publishDescription = ref("");
 const publishTags = ref("通勤包, 大容量, 质感");
+const publishMode = ref<"direct" | "draft">("draft");
+const taskHistory = ref<PublishHistoryItem[]>(loadTaskHistory());
 
 const defaultDraft = createDefaultDesktopDraft();
 
@@ -88,12 +98,16 @@ const projectErrors = computed(() => validateProjectDraft(project));
 const providerErrors = computed(() => validateProviderConfig(providerConfig));
 const canRunNext = computed(() => !running.value && projectErrors.value.length === 0 && Boolean(nextStage.value));
 const canRunAll = computed(() => !running.value && projectErrors.value.length === 0 && Boolean(nextStage.value));
-const platformLabels = computed(() =>
-  Object.fromEntries(SUPPORTED_PLATFORM_PROFILES.map((profile) => [profile.id, profile.label])),
+const platformLabels = computed<Record<PublishPlatform, string>>(() =>
+  Object.fromEntries(SUPPORTED_PLATFORM_PROFILES.map((profile) => [profile.id, profile.label])) as Record<
+    PublishPlatform,
+    string
+  >,
 );
 const stageStatus = computed(() =>
   Object.fromEntries(workflow.value.stages.map((stage) => [stage.id, stage.status])),
 );
+const latestHistoryItems = computed(() => listLatestHistoryItems(taskHistory.value).slice(0, 5));
 const selectedAccountText = computed(() => {
   if (publishAccounts.value.length === 0) {
     return "选择账号";
@@ -141,7 +155,16 @@ async function runAllStages() {
   try {
     let stage = getNextStage(workflow.value);
     while (stage) {
-      await processStage(stage.id, stage.title);
+      try {
+        await processStage(stage.id, stage.title);
+      } catch {
+        break;
+      }
+
+      if (stageStatus.value[stage.id] !== "completed") {
+        break;
+      }
+
       stage = getNextStage(workflow.value);
     }
   } finally {
@@ -202,6 +225,12 @@ async function processStage(stageId: WorkflowStageId, title: string) {
     workflow.value = updateStageStatus(workflow.value, stageId, "completed");
     addLog(title, message);
   } catch (error) {
+    if (error instanceof Error && error.message === "PUBLISH_CANCELLED") {
+      workflow.value = updateStageStatus(workflow.value, stageId, "pending");
+      addLog(title, "已取消发布");
+      return;
+    }
+
     workflow.value = updateStageStatus(workflow.value, stageId, "failed");
     addLog(title, error instanceof Error ? error.message : "执行失败");
     throw error;
@@ -274,17 +303,45 @@ async function executeStage(stageId: WorkflowStageId): Promise<string> {
       return "人工复核清单已通过";
     case "publish": {
       publishAccounts.value = await publisher.listAccounts();
+
+      const platformText = project.targetPlatforms.map((platform) => platformLabels.value[platform]).join("、") || "未选择";
+      const accountText = selectedAccountText.value || "选择账号";
+      const modeText = publishMode.value === "direct" ? "直接发布" : "草稿";
+      const videoPath = generatedVideoPath.value || "未生成";
+
+      const confirmed = window.confirm(
+        `确认创建 ${project.targetPlatforms.length} 个发布任务？\n\n账号：${accountText}\n平台：${platformText}\n发布模式：${modeText}\n视频路径：${videoPath}`,
+      );
+
+      if (!confirmed) {
+        throw new Error("PUBLISH_CANCELLED");
+      }
+
       const result = await publisher.publish({
         projectId: workflow.value.projectId,
         videoPath: generatedVideoPath.value,
         title: publishTitle.value || project.name,
         description: publishDescription.value || project.notes || "",
         platformIds: project.targetPlatforms,
-        mode: "draft",
+        mode: publishMode.value,
       });
+
+      const historyItem = createPublishHistoryItem({
+        projectId: workflow.value.projectId,
+        taskIds: result.taskIds,
+        videoPath: generatedVideoPath.value,
+        platforms: project.targetPlatforms,
+      });
+      appendPublishHistoryItem(historyItem);
+      taskHistory.value = loadTaskHistory();
+
       return `${result.message}：${result.taskIds.join("、")}`;
     }
   }
+}
+
+function getPlatformLabel(platform: PublishPlatform): string {
+  return platformLabels.value[platform];
 }
 
 function addLog(stage: string, message: string) {
@@ -666,8 +723,8 @@ async function testConnection() {
             <label><input v-model="project.targetPlatforms" type="checkbox" value="shipinhao" /> 视频号</label>
           </div>
           <div class="radio-row">
-            <label><input type="radio" name="publish-mode" /> 直接发布</label>
-            <label><input type="radio" name="publish-mode" checked /> 草稿</label>
+            <label><input v-model="publishMode" type="radio" value="direct" name="publish-mode" /> 直接发布</label>
+            <label><input v-model="publishMode" type="radio" value="draft" name="publish-mode" /> 草稿</label>
           </div>
           <button
             class="primary wide-button"
@@ -712,6 +769,17 @@ async function testConnection() {
               <span>{{ log.message }}</span>
             </li>
           </ul>
+          <div v-if="latestHistoryItems.length > 0" class="history-section">
+            <h3>最近任务历史</h3>
+            <ul class="history-list">
+              <li v-for="item in latestHistoryItems" :key="item.id">
+                <strong>{{ item.title }}</strong>
+                <span>{{ item.platforms.map((p) => getPlatformLabel(p)).join("、") }} · {{ item.createdAt }}</span>
+                <span class="history-video">视频：{{ item.videoPath }}</span>
+                <span class="history-tasks">任务：{{ item.taskIds.join("、") }}</span>
+              </li>
+            </ul>
+          </div>
         </section>
       </div>
     </section>
@@ -729,5 +797,34 @@ async function testConnection() {
 .connection-message {
   font-size: 12px;
   color: #aeb5c7;
+}
+
+.history-section h3 {
+  margin: 12px 0 8px;
+  font-size: 13px;
+  color: #cdd3e2;
+}
+
+.history-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 0;
+  border-bottom: 1px solid #30364b;
+}
+
+.history-list li:last-child {
+  border-bottom: none;
+}
+
+.history-video,
+.history-tasks {
+  font-size: 11px;
+  color: #aeb5c7;
+  word-break: break-all;
+}
+
+.history-tasks {
+  color: #ccffe7;
 }
 </style>

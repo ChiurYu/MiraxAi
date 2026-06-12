@@ -780,7 +780,7 @@ git commit -m "feat: show dependency checklist"
 - Create: `apps/desktop/src/features/task-center/taskHistory.test.ts`
 - Modify: `apps/desktop/src/App.vue`
 
-- [ ] **Step 1: Write task history tests**
+- [x] **Step 1: Write task history tests**
 
 Create `apps/desktop/src/features/task-center/taskHistory.test.ts`:
 
@@ -822,7 +822,7 @@ describe("task history", () => {
 });
 ```
 
-- [ ] **Step 2: Implement task history**
+- [x] **Step 2: Implement task history**
 
 Create `apps/desktop/src/features/task-center/taskHistory.ts`:
 
@@ -866,7 +866,7 @@ export function listLatestHistoryItems(items: PublishHistoryItem[]): PublishHist
 }
 ```
 
-- [ ] **Step 3: Add publish confirmation**
+- [x] **Step 3: Add publish confirmation**
 
 Modify `apps/desktop/src/App.vue` publish branch:
 
@@ -879,11 +879,11 @@ if (!confirmed) {
 
 When publish succeeds, push `createPublishHistoryItem(...)` into `taskHistory`.
 
-- [ ] **Step 4: Show task history card**
+- [x] **Step 4: Show task history card**
 
 Modify `apps/desktop/src/App.vue` log card to include latest 5 publish history items under execution logs.
 
-- [ ] **Step 5: Verify**
+- [x] **Step 5: Verify**
 
 Run:
 
