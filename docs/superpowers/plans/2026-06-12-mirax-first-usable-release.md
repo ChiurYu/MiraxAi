@@ -544,7 +544,7 @@ pnpm --filter @mirax/desktop build
 
 Expected: PASS. In browser dev mode, fallback prompt still works. In Tauri app, system picker opens.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/desktop/package.json pnpm-lock.yaml apps/desktop/src/components/PathPickerButton.vue apps/desktop/src/App.vue
