@@ -25,6 +25,8 @@
 - [x] 桌面端可打包并启动：`apps/desktop/src-tauri/target/release/bundle/macos/Mirax AI.app`。
 - [x] 首页已改为旧版风格：左侧导航、顶部手动/自动/后台、7 个编号模块卡片。
 - [x] 浏览器验收已跑通：`运行全部` 后进度 `100% / 8/8`，mock 发布任务生成。
+- [x] 旧版界面差距清单已补齐：`docs/reverse-engineering/legacy-ui-gap-list.md`。
+- [x] 桌面端草稿持久化已抽离：`apps/desktop/src/runtime/desktopDraft.ts`，API Key 不进入 localStorage。
 - [ ] 与旧版功能对齐的“可正常使用”收口尚未完成：需要补齐真实试用状态提示、素材选择体验、Provider 连接测试、依赖检查面板、任务中心记录和发布前确认。
 
 ## Target File Structure Changes
@@ -97,7 +99,7 @@ pnpm build
 - Create: `docs/reverse-engineering/legacy-ui-gap-list.md`
 - Modify: `docs/reverse-engineering/demo-video-coverage.md`
 
-- [ ] **Step 1: Write the legacy gap inventory**
+- [x] **Step 1: Write the legacy gap inventory**
 
 Create `docs/reverse-engineering/legacy-ui-gap-list.md` with this structure:
 
@@ -126,11 +128,11 @@ Create `docs/reverse-engineering/legacy-ui-gap-list.md` with this structure:
 | 依赖 | sidecar 检查只在包内，UI 无入口 | UI 展示 FFmpeg/Playwright/Python/HeyGem/CosyVoice 状态 | 未开始 |
 ```
 
-- [ ] **Step 2: Update coverage matrix**
+- [x] **Step 2: Update coverage matrix**
 
 Modify `docs/reverse-engineering/demo-video-coverage.md` so every `部分覆盖` or `mock` item links to a row in `legacy-ui-gap-list.md`.
 
-- [ ] **Step 3: Verify docs**
+- [x] **Step 3: Verify docs**
 
 Run:
 
@@ -140,7 +142,7 @@ rg "未开始|部分覆盖|mock" docs/reverse-engineering
 
 Expected: output lists the planned gaps; no vague unfinished-marker wording remains.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add docs/reverse-engineering/legacy-ui-gap-list.md docs/reverse-engineering/demo-video-coverage.md
@@ -156,7 +158,7 @@ git commit -m "docs: add legacy ui gap inventory"
 - Modify: `apps/desktop/src/App.vue`
 - Test: `apps/desktop/src/runtime/desktopDraft.test.ts`
 
-- [ ] **Step 1: Write failing tests for draft persistence**
+- [x] **Step 1: Write failing tests for draft persistence**
 
 Create `apps/desktop/src/runtime/desktopDraft.test.ts`:
 
@@ -197,7 +199,7 @@ describe("desktop draft persistence", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -207,7 +209,7 @@ pnpm test -- apps/desktop/src/runtime/desktopDraft.test.ts
 
 Expected: FAIL because `desktopDraft.ts` does not exist.
 
-- [ ] **Step 3: Implement draft module**
+- [x] **Step 3: Implement draft module**
 
 Create `apps/desktop/src/runtime/desktopDraft.ts`:
 
@@ -301,7 +303,7 @@ function sanitizePlatforms(platforms: PublishPlatform[] | undefined): PublishPla
 }
 ```
 
-- [ ] **Step 4: Wire App.vue to module**
+- [x] **Step 4: Wire App.vue to module**
 
 Modify `apps/desktop/src/App.vue`:
 
@@ -316,7 +318,7 @@ import {
 
 Replace inline `STORAGE_KEY`, `SavedDesktopDraft`, `restoreDraft`, `persistDraft`, and `sanitizePlatforms` with calls to the module.
 
-- [ ] **Step 5: Run tests and typecheck**
+- [x] **Step 5: Run tests and typecheck**
 
 Run:
 
@@ -327,7 +329,7 @@ pnpm typecheck
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/desktop/src/runtime/desktopDraft.ts apps/desktop/src/runtime/desktopDraft.test.ts apps/desktop/src/App.vue
