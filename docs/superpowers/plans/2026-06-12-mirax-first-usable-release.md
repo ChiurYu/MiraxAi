@@ -28,7 +28,7 @@
 - [x] 旧版界面差距清单已补齐：`docs/reverse-engineering/legacy-ui-gap-list.md`。
 - [x] 桌面端草稿持久化已抽离：`apps/desktop/src/runtime/desktopDraft.ts`，API Key 不进入 localStorage。
 - [x] Task 3 每卡片状态与重试 UX 已完成：`apps/desktop/src/components/StatusBadge.vue` + `apps/desktop/src/App.vue`，7 个模块均显示 workflow stage 状态 badge 与单步/重试按钮。
-- [ ] 与旧版功能对齐的“可正常使用”收口尚未完成：需要补齐真实试用状态提示、素材选择体验、Provider 连接测试、依赖检查面板、任务中心记录和发布前确认。
+- [x] 与旧版功能对齐的“可正常使用”收口已完成：真实试用状态提示、素材选择体验、Provider 连接测试、依赖检查面板、任务中心记录和发布前确认均通过浏览器验收。
 
 ## Target File Structure Changes
 
@@ -909,7 +909,7 @@ git commit -m "feat: add publish confirmation and task history"
 - Modify: `docs/superpowers/plans/2026-06-12-mirax-first-usable-release.md`
 - Modify: `docs/reverse-engineering/demo-video-coverage.md`
 
-- [ ] **Step 1: Run complete verification**
+- [x] **Step 1: Run complete verification**
 
 Run:
 
@@ -926,7 +926,7 @@ Expected:
 - Vitest reports all test files pass.
 - Tauri outputs `Mirax AI.app`.
 
-- [ ] **Step 2: Run browser workflow verification**
+- [x] **Step 2: Run browser workflow verification**
 
 Run:
 
@@ -943,7 +943,7 @@ In browser:
 - Verify dependency checklist displays five rows.
 - Verify refreshing page restores draft fields.
 
-- [ ] **Step 3: Run release binary smoke test**
+- [x] **Step 3: Run release binary smoke test**
 
 Run:
 
@@ -953,7 +953,7 @@ Run:
 
 Expected: process remains alive for at least 3 seconds and does not print a panic.
 
-- [ ] **Step 4: Update progress checkboxes**
+- [x] **Step 4: Update progress checkboxes**
 
 Modify this plan so completed tasks use `[x]`. Keep unfinished future tasks as `[ ]`.
 
