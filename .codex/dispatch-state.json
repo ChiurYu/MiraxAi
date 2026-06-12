@@ -6,7 +6,7 @@
   "workspace_ref": "workspace:7",
   "worker_surface_ref": "surface:14",
   "worker_name": "claude",
-  "controller_thread_id": null,
+  "controller_thread_id": "019ebb02-8bb9-72b2-a369-f8522bf517d8",
   "wake": {
     "mode": "heartbeat",
     "automation_id": "mirax-dispatch",
@@ -14,18 +14,14 @@
     "fallback_file": ".codex/wake/pending.json"
   },
   "current_task": {
-    "id": "legacy-ui-gap-1",
-    "title": "学习对标",
-    "status": "accepted",
-    "worker_reported_at": "2026-06-12T09:06:00Z",
-    "accepted_at": "2026-06-12T16:30:00Z"
+    "id": "legacy-ui-gap-2",
+    "title": "改写文案",
+    "status": "dispatched",
+    "worker_reported_at": null,
+    "accepted_at": null,
+    "dispatched_at": "2026-06-12T17:25:00Z"
   },
   "queue": [
-    {
-      "id": "legacy-ui-gap-2",
-      "title": "改写文案",
-      "status": "pending"
-    },
     {
       "id": "legacy-ui-gap-3",
       "title": "声音生成",

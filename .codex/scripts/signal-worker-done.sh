@@ -9,35 +9,30 @@ WAKE_FILE="$WAKE_DIR/pending.json"
 
 mkdir -p "$WAKE_DIR"
 
-TASK_ID="$(python3 -c "import json; print(json.load(open('$STATE_FILE')).get('current_task',{}).get('id','unknown'))")"
-TASK_TITLE="$(python3 -c "import json; print(json.load(open('$STATE_FILE')).get('current_task',{}).get('title',''))")"
 NOW="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
-python3 - <<PY
+python3 - "$STATE_FILE" "$WAKE_FILE" "$REPO_ROOT" "$NOW" <<'PY'
 import json
+import sys
 from pathlib import Path
+
+state_file, wake_file, repo_root, now = sys.argv[1:5]
+state = json.loads(Path(state_file).read_text(encoding="utf-8"))
+task = state.get("current_task", {})
 
 wake = {
     "version": 1,
     "signal": "worker_done",
-    "task_id": "$TASK_ID",
-    "task_title": "$TASK_TITLE",
-    "signaled_at": "$NOW",
-    "repo": "$REPO_ROOT",
+    "task_id": task.get("id", "unknown"),
+    "task_title": task.get("title", ""),
+    "signaled_at": now,
+    "repo": repo_root,
 }
-Path("$WAKE_FILE").write_text(json.dumps(wake, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-PY
+Path(wake_file).write_text(json.dumps(wake, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
-# 更新 state：工位已报告完成，等待总控验收
-python3 - <<'PY'
-import json
-from pathlib import Path
-
-state_path = Path("$STATE_FILE")
-state = json.loads(state_path.read_text(encoding="utf-8"))
 state.setdefault("current_task", {})["status"] = "worker_done"
-state["current_task"]["worker_reported_at"] = "$NOW"
-state_path.write_text(json.dumps(state, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+state["current_task"]["worker_reported_at"] = now
+Path(state_file).write_text(json.dumps(state, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 PY
 
 echo "wake signal written: $WAKE_FILE"
