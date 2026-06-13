@@ -1,0 +1,32 @@
+{
+  "name": "@mirax/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tauri dev",
+    "dev:web": "vite --host 127.0.0.1 --port 1420",
+    "build": "pnpm build:web && tauri build",
+    "build:web": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 1421",
+    "typecheck": "vue-tsc --noEmit",
+    "lint": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "@mirax/core": "workspace:*",
+    "@mirax/media-pipeline": "workspace:*",
+    "@mirax/provider-ai": "workspace:*",
+    "@mirax/provider-publish": "workspace:*",
+    "@mirax/sidecar-manager": "workspace:*",
+    "@tauri-apps/api": "^2.0.0",
+    "@tauri-apps/plugin-dialog": "^2.7.1",
+    "lucide-vue-next": "^0.468.0",
+    "vue": "^3.5.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0",
+    "@vitejs/plugin-vue": "^5.2.0",
+    "vite": "^5.4.0",
+    "vue-tsc": "^2.1.0"
+  }
+}
