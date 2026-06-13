@@ -1,6 +1,6 @@
 # Stage 0 Inventory Tools Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Create the stage 0 project-state entry point, evidence indexes, documentation templates, and recovery rules needed before old-app runtime inspection begins.
 
@@ -107,7 +107,7 @@ Expected: every `test -f` exits 0; `rg` finds all listed IDs and stage handoff t
 **Files:**
 - Create: `docs/superpowers/PROJECT-STATE.md`
 
-- [ ] **Step 1: Verify the state entry does not already exist**
+- [x] **Step 1: Verify the state entry does not already exist**
 
 Run:
 
@@ -117,7 +117,7 @@ test ! -f docs/superpowers/PROJECT-STATE.md
 
 Expected: PASS. If the file already exists, read it and merge the content below without deleting existing decisions.
 
-- [ ] **Step 2: Create the project state document**
+- [x] **Step 2: Create the project state document**
 
 Create `docs/superpowers/PROJECT-STATE.md` with:
 
@@ -208,7 +208,7 @@ Finish Stage 0 by executing `docs/superpowers/plans/2026-06-13-stage-0-inventory
 After Stage 0 is committed and reviewed, invoke `superpowers:writing-plans` again to create Stage 1: 旧版运行态全量巡检 implementation plan.
 ```
 
-- [ ] **Step 3: Verify project state content**
+- [x] **Step 3: Verify project state content**
 
 Run:
 
@@ -218,7 +218,7 @@ rg -n "Current Goal|Current Stage|Current Automatic Dispatch Entry|New Session R
 
 Expected: all five section names are found.
 
-- [ ] **Step 4: Commit project state entry**
+- [x] **Step 4: Commit project state entry**
 
 ```bash
 git add docs/superpowers/PROJECT-STATE.md
@@ -233,7 +233,7 @@ git commit -m "docs: add project state entry"
 - Create: `docs/reverse-engineering/evidence-index.md`
 - Create: `docs/reverse-engineering/assets-index.md`
 
-- [ ] **Step 1: Verify indexes do not already exist**
+- [x] **Step 1: Verify indexes do not already exist**
 
 Run:
 
@@ -244,7 +244,7 @@ test ! -f docs/reverse-engineering/assets-index.md
 
 Expected: PASS. If either file exists, merge the content below without deleting existing evidence rows.
 
-- [ ] **Step 2: Create evidence index**
+- [x] **Step 2: Create evidence index**
 
 Create `docs/reverse-engineering/evidence-index.md` with:
 
@@ -296,7 +296,7 @@ Prefer sources closer to real runtime behavior: E1 over E2, E2 over E3, E3 over 
 | EV-DOC-004 | E4 | high | Current repo spec | Evidence-driven roadmap defines evidence levels, confidence rules, templates, phase order, and recovery requirements. | `docs/superpowers/specs/2026-06-13-mirax-evidence-driven-roadmap-design.md` | N/A | N/A | Codex | 2026-06-13 |
 ```
 
-- [ ] **Step 3: Create asset index**
+- [x] **Step 3: Create asset index**
 
 Create `docs/reverse-engineering/assets-index.md` with:
 
@@ -331,7 +331,7 @@ Small reviewed screenshots may enter Git only when useful for documentation. Sto
 | ASSET-DOC-004 | EV-DOC-004 | Markdown spec | Tracked | `docs/superpowers/specs/2026-06-13-mirax-evidence-driven-roadmap-design.md` | Current evidence-driven roadmap spec. | `docs/reverse-engineering/evidence-index.md` | 2026-06-13 |
 ```
 
-- [ ] **Step 4: Verify seeded evidence and assets**
+- [x] **Step 4: Verify seeded evidence and assets**
 
 Run:
 
@@ -342,7 +342,7 @@ rg -n "ASSET-DOC-001|ASSET-DOC-002|ASSET-DOC-003|ASSET-DOC-004" docs/reverse-eng
 
 Expected: all seeded IDs are found.
 
-- [ ] **Step 5: Commit indexes**
+- [x] **Step 5: Commit indexes**
 
 ```bash
 git add docs/reverse-engineering/evidence-index.md docs/reverse-engineering/assets-index.md
@@ -359,7 +359,7 @@ git commit -m "docs: add evidence and asset indexes"
 - Create: `docs/reverse-engineering/static-analysis/.gitkeep`
 - Create: `docs/reverse-engineering/assets/screenshots/.gitkeep`
 
-- [ ] **Step 1: Create directory keep files**
+- [x] **Step 1: Create directory keep files**
 
 Create the four `.gitkeep` files as empty files:
 
@@ -370,7 +370,7 @@ docs/reverse-engineering/static-analysis/.gitkeep
 docs/reverse-engineering/assets/screenshots/.gitkeep
 ```
 
-- [ ] **Step 2: Verify directory keep files**
+- [x] **Step 2: Verify directory keep files**
 
 Run:
 
@@ -383,7 +383,7 @@ test -f docs/reverse-engineering/assets/screenshots/.gitkeep
 
 Expected: every command exits 0.
 
-- [ ] **Step 3: Commit inventory directories**
+- [x] **Step 3: Commit inventory directories**
 
 ```bash
 git add docs/reverse-engineering/function-cards/.gitkeep docs/reverse-engineering/pages/.gitkeep docs/reverse-engineering/static-analysis/.gitkeep docs/reverse-engineering/assets/screenshots/.gitkeep
@@ -398,7 +398,7 @@ git commit -m "docs: add reverse engineering inventory directories"
 - Create: `docs/reverse-engineering/templates/function-card-template.md`
 - Create: `docs/reverse-engineering/templates/page-inspection-template.md`
 
-- [ ] **Step 1: Create function card template**
+- [x] **Step 1: Create function card template**
 
 Create `docs/reverse-engineering/templates/function-card-template.md` with:
 
@@ -481,7 +481,7 @@ Reason:
 | Owner Scope |  |
 ```
 
-- [ ] **Step 2: Create page inspection template**
+- [x] **Step 2: Create page inspection template**
 
 Create `docs/reverse-engineering/templates/page-inspection-template.md` with:
 
@@ -559,7 +559,7 @@ Copy this file into `docs/reverse-engineering/pages/` and rename it using a stab
 - N/A
 ```
 
-- [ ] **Step 3: Verify templates have required fields**
+- [x] **Step 3: Verify templates have required fields**
 
 Run:
 
@@ -570,7 +570,7 @@ rg -n "Page ID|Visible Controls|Form Fields|Restricted Actions|Related Function 
 
 Expected: all field names are found.
 
-- [ ] **Step 4: Commit function and page templates**
+- [x] **Step 4: Commit function and page templates**
 
 ```bash
 git add docs/reverse-engineering/templates/function-card-template.md docs/reverse-engineering/templates/page-inspection-template.md
@@ -586,7 +586,7 @@ git commit -m "docs: add function and page inventory templates"
 - Create: `docs/reverse-engineering/templates/runtime-blocker-template.md`
 - Create: `docs/reverse-engineering/templates/static-analysis-template.md`
 
-- [ ] **Step 1: Create runtime blocker index**
+- [x] **Step 1: Create runtime blocker index**
 
 Create `docs/reverse-engineering/runtime-blockers.md` with:
 
@@ -616,7 +616,7 @@ Blockers are not bypass tasks. They record what is blocked, what remains visible
 | RB-000 | unknown | N/A | N/A | No runtime blocker recorded yet. | N/A | N/A | N/A | no |
 ```
 
-- [ ] **Step 2: Create runtime blocker template**
+- [x] **Step 2: Create runtime blocker template**
 
 Create `docs/reverse-engineering/templates/runtime-blocker-template.md` with:
 
@@ -661,7 +661,7 @@ Copy this section into `docs/reverse-engineering/runtime-blockers.md` or a dedic
 | Related Function Card |  |
 ```
 
-- [ ] **Step 3: Create static analysis template**
+- [x] **Step 3: Create static analysis template**
 
 Create `docs/reverse-engineering/templates/static-analysis-template.md` with:
 
@@ -714,7 +714,7 @@ Copy this file into `docs/reverse-engineering/static-analysis/` and rename it us
 | Mirax AI Design Impact |  |
 ```
 
-- [ ] **Step 4: Verify blocker and static templates**
+- [x] **Step 4: Verify blocker and static templates**
 
 Run:
 
@@ -726,7 +726,7 @@ rg -n "Analysis ID|Findings|Evidence Impact|Mirax AI Design Impact" docs/reverse
 
 Expected: all field names are found.
 
-- [ ] **Step 5: Commit blocker and static templates**
+- [x] **Step 5: Commit blocker and static templates**
 
 ```bash
 git add docs/reverse-engineering/runtime-blockers.md docs/reverse-engineering/templates/runtime-blocker-template.md docs/reverse-engineering/templates/static-analysis-template.md
@@ -740,7 +740,7 @@ git commit -m "docs: add blocker and static analysis templates"
 **Files:**
 - Modify: `docs/superpowers/PROJECT-STATE.md`
 
-- [ ] **Step 1: Update current task and next action**
+- [x] **Step 1: Update current task and next action**
 
 Modify the `Latest Executable Task` section in `docs/superpowers/PROJECT-STATE.md` to:
 
@@ -762,7 +762,7 @@ Run the Stage 0 validation commands from `docs/superpowers/plans/2026-06-13-stag
 After Stage 0 is committed and reviewed, invoke `superpowers:writing-plans` again to create Stage 1: 旧版运行态全量巡检 implementation plan.
 ```
 
-- [ ] **Step 2: Verify handoff wording**
+- [x] **Step 2: Verify handoff wording**
 
 Run:
 
@@ -772,7 +772,7 @@ rg -n "Stage 1 runtime inspection plan|Do not inspect the old app until the Stag
 
 Expected: all handoff phrases are found.
 
-- [ ] **Step 3: Commit stage handoff update**
+- [x] **Step 3: Commit stage handoff update**
 
 ```bash
 git add docs/superpowers/PROJECT-STATE.md
@@ -786,7 +786,7 @@ git commit -m "docs: point project state to stage 1 planning"
 **Files:**
 - Verify only.
 
-- [ ] **Step 1: Run file existence checks**
+- [x] **Step 1: Run file existence checks**
 
 Run:
 
@@ -807,7 +807,7 @@ test -f docs/reverse-engineering/assets/screenshots/.gitkeep
 
 Expected: every command exits 0.
 
-- [ ] **Step 2: Run evidence and handoff checks**
+- [x] **Step 2: Run evidence and handoff checks**
 
 Run:
 
@@ -819,7 +819,7 @@ rg -n "Current Automatic Dispatch Entry|Stage 0|Stage 1 runtime inspection plan|
 
 Expected: all IDs and handoff phrases are found.
 
-- [ ] **Step 3: Run unfinished-marker scan**
+- [x] **Step 3: Run unfinished-marker scan**
 
 Run:
 
@@ -829,7 +829,7 @@ rg -n "(TO""DO)|(TB""D)|待""定" docs/superpowers/PROJECT-STATE.md docs/reverse
 
 Expected: no output.
 
-- [ ] **Step 4: Confirm gap list was not updated**
+- [x] **Step 4: Confirm gap list was not updated**
 
 Run:
 
@@ -839,7 +839,7 @@ git diff -- docs/reverse-engineering/legacy-ui-gap-list.md
 
 Expected: no output.
 
-- [ ] **Step 5: Inspect working tree**
+- [x] **Step 5: Inspect working tree**
 
 Run:
 
@@ -849,7 +849,7 @@ git status --short
 
 Expected: no uncommitted Stage 0 docs remain. Existing unrelated user changes may still appear; do not revert or stage them.
 
-- [ ] **Step 6: Report Stage 0 completion**
+- [x] **Step 6: Report Stage 0 completion**
 
 In the final report, include:
 
