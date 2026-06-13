@@ -18,9 +18,9 @@ When automatic dispatch is requested, use the newest plan in `docs/superpowers/p
 
 ## Latest Executable Task
 
-Execute `docs/superpowers/plans/2026-06-13-stage-0-inventory-tools.md` from Task 1 through Task 7.
+Finish Stage 0 validation in `docs/superpowers/plans/2026-06-13-stage-0-inventory-tools.md`, then create the Stage 1 runtime inspection plan with `superpowers:writing-plans`.
 
-Do not inspect the old app yet. Do not update `docs/reverse-engineering/legacy-ui-gap-list.md` status during Stage 0.
+Do not inspect the old app until the Stage 1 plan exists. Do not update `docs/reverse-engineering/legacy-ui-gap-list.md` status during Stage 0.
 
 ## Progress Links
 
@@ -79,6 +79,6 @@ Stage 0 is complete only when:
 
 ## Next Action
 
-Finish Stage 0 by executing `docs/superpowers/plans/2026-06-13-stage-0-inventory-tools.md`.
+Run the Stage 0 validation commands from `docs/superpowers/plans/2026-06-13-stage-0-inventory-tools.md`.
 
 After Stage 0 is committed and reviewed, invoke `superpowers:writing-plans` again to create Stage 1: 旧版运行态全量巡检 implementation plan.
