@@ -22,4 +22,6 @@
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | RB-HOME-001 | login | PAGE-HOME-WORKBENCH、整体应用 | EV-RUNTIME-001 | 启动旧版 App，自动登录失败 | 登录页提示「登录已过期或权限不足，请重新登录」 | 检查本地数据库中账号/Token 表结构和登录流程 | Mirax AI 第一版不强制云端登录，本地 mock 流程优先 | no |
 | RB-HOME-002 | activation | PAGE-HOME-WORKBENCH、完整功能 | EV-RUNTIME-001 | 启动旧版 App 后弹出激活弹窗 | 弹窗提示「请输入激活码激活会员以使用完整功能」 | 检查激活校验逻辑和会员权益配置 | Mirax AI 第一版不做激活码限制，仅通过本地依赖检查控制功能可用性 | no |
-| RB-000 | unknown | N/A | N/A | 暂无运行障碍记录。 | N/A | N/A | N/A | no |
+| RB-PUBLISH-001 | platform-rule | PAGE-ACCOUNT-MANAGEMENT、FC-ASSET-MANAGEMENT | EV-RUNTIME-140 | 在账号管理页点击「添加账号」 | 页面提示「已登录成功的账号才会在发布时可以选择」，当前「暂无账号」 | 检查旧包中平台账号表结构、授权窗口和浏览器 profile 调用 | Mirax AI 第一版先支持 mock 账号和 mock publisher；真实平台授权后续通过 Playwright sidecar 实现 | no |
+| RB-PUBLISH-002 | platform-rule | PAGE-PUBLISH-FLOW、FC-PUBLISH-PREP | EV-RUNTIME-020、EV-RUNTIME-140 | 在首页第 7 步点击「立即发布」 | 当前无可用发布账号，发布账号下拉框可能为空 | 检查发布任务创建逻辑、平台 API 或浏览器自动化入口 | Mirax AI 第一版用 mock publisher 跑通任务状态，不执行真实平台发布 | no |
+| RB-PUBLISH-003 | unknown | PAGE-PUBLISH-FLOW、FC-PUBLISH-PREP | EV-RUNTIME-020 | 点击「立即发布」后是否出现独立确认页 | 截图未展示发布前确认页 | 阶段 2 静态分析检查首页到发布任务的调用链和弹窗路由 | Mirax AI 第一版先在首页卡片内完成发布准备；如确认存在独立确认页，再增加确认步骤 | no |
