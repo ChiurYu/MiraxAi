@@ -6,26 +6,27 @@
 
 ## 当前阶段
 
-阶段 0：整理现状与盘点工具。
+阶段 1：旧版运行态全量巡检。
 
-阶段 0 已完成基础脚手架：恢复入口、证据索引、资产索引、运行障碍记录、模板和后续巡检目录已经建立。下一步应创建阶段 1：旧版运行态全量巡检计划。
+阶段 1 的目标是在可打开但可能受限的旧版 App 中记录页面、控件、状态、提示、受限动作和初版功能卡。本阶段只做运行态观察，不做静态分析和权限绕过。
 
 ## 当前自动调度入口
 
-`docs/superpowers/plans/2026-06-13-stage-0-inventory-tools.md`
+`docs/superpowers/plans/2026-06-13-stage-1-runtime-inspection.md`
 
-该计划已经完成。创建阶段 1 计划后，新的 `docs/superpowers/plans/YYYY-MM-DD-stage-1-*.md` 会成为自动调度入口。
+该计划是当前阶段的自动调度入口。自动调度时按此计划执行 P0 → P1 → P2 旧版运行态巡检。
 
 ## 最新可执行任务
 
-使用 `superpowers:writing-plans` 创建阶段 1：旧版运行态全量巡检 implementation plan。
+执行 `docs/superpowers/plans/2026-06-13-stage-1-runtime-inspection.md`，先完成 Task 1 的巡检准备，再按 P0 → P1 → P2 页面优先级巡检旧版 App。
 
-在阶段 1 计划创建前，不要开始旧版 App 巡检。阶段 0 不更新 `docs/reverse-engineering/legacy-ui-gap-list.md` 的状态列。
+不要更新 `docs/reverse-engineering/legacy-ui-gap-list.md` 的状态列。发现差距只记录到页面卡、功能卡或运行障碍记录。
 
 ## 进度入口
 
 - 路线图设计：`docs/superpowers/specs/2026-06-13-mirax-evidence-driven-roadmap-design.md`
-- 当前已完成计划：`docs/superpowers/plans/2026-06-13-stage-0-inventory-tools.md`
+- 当前计划：`docs/superpowers/plans/2026-06-13-stage-1-runtime-inspection.md`
+- 已完成阶段 0 计划：`docs/superpowers/plans/2026-06-13-stage-0-inventory-tools.md`
 - 桌面重建设计：`docs/superpowers/specs/2026-06-11-mirax-desktop-rebuild-design.md`
 - 第一版可用计划：`docs/superpowers/plans/2026-06-12-mirax-first-usable-release.md`
 - 演示视频时间轴：`docs/reverse-engineering/demo-video-timeline.md`
@@ -79,4 +80,6 @@
 
 ## 下一步
 
-使用 `superpowers:writing-plans` 创建阶段 1：旧版运行态全量巡检 implementation plan。
+执行 `docs/superpowers/plans/2026-06-13-stage-1-runtime-inspection.md`。
+
+阶段 1 完成后，使用 `superpowers:writing-plans` 创建阶段 2：旧包静态分析补盲区实施计划。
