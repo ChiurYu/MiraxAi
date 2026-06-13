@@ -1,46 +1,46 @@
-# Static Analysis Template
+# 静态分析模板
 
-Copy this file into `docs/reverse-engineering/static-analysis/` and rename it using a stable analysis ID, for example `SA-PRELOAD-API.md`.
+复制本文件到 `docs/reverse-engineering/static-analysis/`，并使用稳定的分析 ID 命名，例如 `SA-PRELOAD-API.md`。
 
-## Identity
+## 身份信息
 
-| Field | Value |
+| 字段 | 值 |
 | --- | --- |
-| Analysis ID |  |
-| Analysis Object |  |
-| Source Path Or Location |  |
-| Analysis Method |  |
+| 分析 ID |  |
+| 分析对象 |  |
+| 来源路径或位置 |  |
+| 分析方法 |  |
 
-## Evidence
+## 证据
 
-| Field | Value |
+| 字段 | 值 |
 | --- | --- |
-| Evidence IDs |  |
-| Highest Evidence Level | E3 |
-| Confidence | medium |
+| 证据 ID |  |
+| 最高证据等级 | E3 |
+| 可信度 | medium |
 
-## Findings
+## 发现
 
-| Finding Type | Name Or Path | Details |
+| 发现类型 | 名称或路径 | 说明 |
 | --- | --- | --- |
-| Module |  |  |
+| 模块 |  |  |
 | API |  |  |
-| Field |  |  |
-| Resource |  |  |
-| Config |  |  |
+| 字段 |  |  |
+| 资源 |  |  |
+| 配置 |  |  |
 
-## Related Records
+## 关联记录
 
-| Record Type | Path Or ID |
+| 记录类型 | 路径或 ID |
 | --- | --- |
-| Page Inspection |  |
-| Function Card |  |
-| Runtime Blocker |  |
+| 页面巡检 |  |
+| 功能卡 |  |
+| 运行障碍 |  |
 
-## Evidence Impact
+## 证据影响
 
-| Field | Value |
+| 字段 | 值 |
 | --- | --- |
-| Can Strengthen Evidence Level |  |
-| Remaining Uncertainty |  |
-| Mirax AI Design Impact |  |
+| 可增强的证据等级 |  |
+| 剩余不确定点 |  |
+| 对 Mirax AI 设计的影响 |  |

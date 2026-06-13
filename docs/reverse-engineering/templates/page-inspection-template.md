@@ -1,71 +1,71 @@
-# Page Inspection Template
+# 页面巡检模板
 
-Copy this file into `docs/reverse-engineering/pages/` and rename it using a stable page ID, for example `PAGE-HOME.md`.
+复制本文件到 `docs/reverse-engineering/pages/`，并使用稳定的页面 ID 命名，例如 `PAGE-HOME.md`。
 
-## Identity
+## 身份信息
 
-| Field | Value |
+| 字段 | 值 |
 | --- | --- |
-| Page ID |  |
-| Page Name |  |
-| Old App Entry Path |  |
-| Inspection Priority | P0 |
+| 页面 ID |  |
+| 页面名称 |  |
+| 旧版入口路径 |  |
+| 巡检优先级 | P0 |
 
-## Evidence
+## 证据
 
-| Field | Value |
+| 字段 | 值 |
 | --- | --- |
-| Evidence IDs |  |
-| Highest Evidence Level | E5 |
-| Confidence | low |
-| Related Assets |  |
+| 证据 ID |  |
+| 最高证据等级 | E5 |
+| 可信度 | low |
+| 关联资产 |  |
 
-## Page Areas
+## 页面区域
 
-| Area | Visible Content | Notes |
+| 区域 | 可见内容 | 备注 |
 | --- | --- | --- |
 |  |  |  |
 
-## Visible Controls
+## 可见控件
 
-| Control | Type | Enabled State | Observed Behavior |
+| 控件 | 类型 | 启用状态 | 观察到的行为 |
 | --- | --- | --- | --- |
 |  |  |  |  |
 
-## Form Fields
+## 表单字段
 
-| Field | Input Type | Default Or Example Value | Validation Or Help Text |
+| 字段 | 输入类型 | 默认值或示例值 | 校验或帮助文案 |
 | --- | --- | --- | --- |
 |  |  |  |  |
 
-## Dialogs And Prompts
+## 弹窗与提示
 
-| Trigger | Dialog Or Prompt | Action Buttons | Result |
+| 触发方式 | 弹窗或提示 | 操作按钮 | 结果 |
 | --- | --- | --- | --- |
 |  |  |  |  |
 
-## State Changes
+## 状态变化
 
-| Action | Before | After | Evidence ID |
+| 操作 | 操作前 | 操作后 | 证据 ID |
 | --- | --- | --- | --- |
 |  |  |  |  |
 
-## Executable Actions
+## 可执行动作
 
-| Action | Result | Related Function Card |
+| 动作 | 结果 | 关联功能卡 |
 | --- | --- | --- |
 |  |  |  |
 
-## Restricted Actions
+## 受限动作
 
-| Action | Blocker | Runtime Blocker ID |
+| 动作 | 障碍 | 运行障碍 ID |
 | --- | --- | --- |
 |  |  |  |
 
-## Related Function Cards
+## 关联功能卡
 
 - N/A
 
-## Open Questions
+## 待确认问题
 
 - N/A

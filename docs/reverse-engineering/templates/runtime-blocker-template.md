@@ -1,38 +1,38 @@
-# Runtime Blocker Template
+# 运行障碍模板
 
-Copy this section into `docs/reverse-engineering/runtime-blockers.md` or a dedicated blocker file if the blocker needs a long analysis.
+如果障碍较简单，可把本模板内容复制到 `docs/reverse-engineering/runtime-blockers.md`；如果需要长分析，可单独建文件记录。
 
-## Identity
+## 身份信息
 
-| Field | Value |
+| 字段 | 值 |
 | --- | --- |
-| Blocker ID |  |
-| Type | unknown |
-| Related Page Or Function |  |
-| Blocks Current Stage | no |
+| 障碍 ID |  |
+| 类型 | unknown |
+| 关联页面或功能 |  |
+| 是否阻塞当前阶段 | no |
 
-## Evidence
+## 证据
 
-| Field | Value |
+| 字段 | 值 |
 | --- | --- |
-| Evidence IDs |  |
-| Highest Evidence Level | E2 |
-| Confidence | low |
+| 证据 ID |  |
+| 最高证据等级 | E2 |
+| 可信度 | low |
 
-## Observation
+## 观察记录
 
-| Field | Value |
+| 字段 | 值 |
 | --- | --- |
-| Appears At |  |
-| Trigger Steps |  |
-| Visible Message Or Error Code |  |
-| Request Or Network Symptom | N/A |
-| Page Information Still Visible |  |
+| 出现位置 |  |
+| 触发步骤 |  |
+| 可见提示或错误码 |  |
+| 请求或网络现象 | N/A |
+| 仍可观察到的页面信息 |  |
 
-## Follow-Up
+## 后续处理
 
-| Field | Value |
+| 字段 | 值 |
 | --- | --- |
-| Static Evidence Direction |  |
-| Mirax AI Replacement Recommendation |  |
-| Related Function Card |  |
+| 静态补证方向 |  |
+| Mirax AI 替代实现建议 |  |
+| 关联功能卡 |  |

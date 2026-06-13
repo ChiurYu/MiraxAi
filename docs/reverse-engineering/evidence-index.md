@@ -1,45 +1,45 @@
-# Evidence Index
+# 证据索引
 
-This is the canonical evidence registry for the Mirax AI old-product reconstruction.
+本文是 Mirax AI 旧产品重建工作的统一证据登记表。
 
-Function cards, page inspection records, runtime blocker records, and static analysis records should reference evidence IDs from this file instead of copying long paths or repeated descriptions.
+功能卡、页面巡检记录、运行障碍记录和静态分析记录都应引用这里的证据 ID，不要在各处重复粘贴长路径或大段说明。
 
-## Evidence Levels
+## 证据等级
 
-| Level | Name | Meaning |
+| 等级 | 名称 | 含义 |
 | --- | --- | --- |
-| E1 | 运行态已验证 | Old app page, control, interaction, or state change was directly observed. |
-| E2 | 运行态可见但受限 | Old app page, control, or field is visible, but execution is blocked by login, activation, cloud, model, platform, or local dependency constraints. |
-| E3 | 静态分析确认 | Static package, preload API, resource, database, config, or code analysis confirms the module, API, field, or resource. |
-| E4 | 旧仓库或文档线索 | Old README, early source, demo video, comments, or historical documents provide the evidence. |
-| E5 | 合理推断 | Inference based on naming, module boundaries, page structure, or comparable product behavior. |
+| E1 | 运行态已验证 | 已在旧版 App 中直接看到页面、控件、交互或状态变化。 |
+| E2 | 运行态可见但受限 | 页面、控件或字段可见，但登录、激活、云服务、模型、平台或本地依赖限制导致动作不能完成。 |
+| E3 | 静态分析确认 | 旧包、解包资源、preload API、本地配置、数据库或代码分析确认了模块、接口、字段或资源。 |
+| E4 | 旧仓库或文档线索 | 旧 README、早期源码、演示视频、注释或历史文档提供的线索。 |
+| E5 | 合理推断 | 基于命名、模块边界、页面结构或同类产品行为得出的推断。 |
 
-## Confidence
+## 可信度
 
-| Confidence | Meaning |
+| 可信度 | 含义 |
 | --- | --- |
-| high | Direct, reviewable evidence with no conflicting source. |
-| medium | Credible but incomplete evidence, or evidence needing another source to confirm inputs, outputs, states, or dependencies. |
-| low | Inference, stale documentation, blocked runtime observation, or an observation that cannot be reviewed. |
+| high | 证据直接、可复查，且没有相互冲突的来源。 |
+| medium | 证据可信但不完整，仍需要其他来源确认输入、输出、状态或依赖。 |
+| low | 来自推断、过期文档、受限运行态观察，或暂时无法复查的观察。 |
 
-## Conflict Rule
+## 冲突判定规则
 
-Prefer sources closer to real runtime behavior: E1 over E2, E2 over E3, E3 over E4, and E4 over E5. For conflicts within the same level, prefer the newer, more reviewable, and more complete source. Preserve the conflict note in the related function card.
+优先采用更接近真实运行行为的来源：E1 优先于 E2，E2 优先于 E3，E3 优先于 E4，E4 优先于 E5。同等级冲突时，优先采用时间更新、可复查性更强、信息更完整的证据，并在关联功能卡中保留冲突说明。
 
-## ID Ranges
+## ID 范围
 
-| Prefix | Source Type |
+| 前缀 | 来源类型 |
 | --- | --- |
-| EV-RUNTIME | Runtime observation, screenshots, recordings, and page operation notes. |
-| EV-STATIC | Old package, unpacked resources, preload API, local config, database, or code analysis. |
-| EV-DOC | Old repository docs, current project docs, historical notes, and demo-video timelines. |
-| EV-INFER | Explicitly marked inference. |
+| EV-RUNTIME | 运行态观察、截图、录屏、页面操作记录。 |
+| EV-STATIC | 旧包、解包资源、preload API、本地配置、数据库或代码分析。 |
+| EV-DOC | 旧仓库文档、当前项目文档、历史记录和演示视频时间轴。 |
+| EV-INFER | 明确标注为推断的分析结论。 |
 
-## Records
+## 记录
 
-| Evidence ID | Level | Confidence | Source Type | Summary | Asset Path Or External Location | Related Page | Related Function Card | Recorder | Date |
+| 证据 ID | 等级 | 可信度 | 来源类型 | 摘要 | 资产路径或外部位置 | 关联页面 | 关联功能卡 | 记录人 | 日期 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| EV-DOC-001 | E4 | medium | Current repo doc | Demo video timeline records visible old-product workflow segments and priorities. | `docs/reverse-engineering/demo-video-timeline.md` | N/A | N/A | Codex | 2026-06-13 |
-| EV-DOC-002 | E4 | medium | Current repo doc | Demo coverage matrix maps demo-visible features to current Mirax AI implementation and mock boundaries. | `docs/reverse-engineering/demo-video-coverage.md` | N/A | N/A | Codex | 2026-06-13 |
-| EV-DOC-003 | E4 | medium | Current repo doc | Legacy UI gap list records known UI and workflow gaps from the first usable release effort. | `docs/reverse-engineering/legacy-ui-gap-list.md` | N/A | N/A | Codex | 2026-06-13 |
-| EV-DOC-004 | E4 | high | Current repo spec | Evidence-driven roadmap defines evidence levels, confidence rules, templates, phase order, and recovery requirements. | `docs/superpowers/specs/2026-06-13-mirax-evidence-driven-roadmap-design.md` | N/A | N/A | Codex | 2026-06-13 |
+| EV-DOC-001 | E4 | medium | 当前仓库文档 | 演示视频时间轴记录了旧产品可见工作流片段和优先级。 | `docs/reverse-engineering/demo-video-timeline.md` | N/A | N/A | Codex | 2026-06-13 |
+| EV-DOC-002 | E4 | medium | 当前仓库文档 | 演示覆盖矩阵把视频可见功能映射到当前 Mirax AI 实现和 mock 边界。 | `docs/reverse-engineering/demo-video-coverage.md` | N/A | N/A | Codex | 2026-06-13 |
+| EV-DOC-003 | E4 | medium | 当前仓库文档 | 旧版 UI 差距清单记录第一版可用阶段已知的 UI 和流程差距。 | `docs/reverse-engineering/legacy-ui-gap-list.md` | N/A | N/A | Codex | 2026-06-13 |
+| EV-DOC-004 | E4 | high | 当前仓库设计文档 | 证据驱动路线图定义了证据等级、可信度规则、模板、阶段顺序和恢复要求。 | `docs/superpowers/specs/2026-06-13-mirax-evidence-driven-roadmap-design.md` | N/A | N/A | Codex | 2026-06-13 |

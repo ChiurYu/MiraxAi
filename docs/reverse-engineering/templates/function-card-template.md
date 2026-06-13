@@ -1,76 +1,76 @@
-# Function Card Template
+# 功能卡模板
 
-Copy this file into `docs/reverse-engineering/function-cards/` and rename it using a stable feature ID, for example `FC-HOME-WORKBENCH.md`.
+复制本文件到 `docs/reverse-engineering/function-cards/`，并使用稳定的功能 ID 命名，例如 `FC-HOME-WORKBENCH.md`。
 
-## Identity
+## 身份信息
 
-| Field | Value |
+| 字段 | 值 |
 | --- | --- |
-| Function ID |  |
-| Function Name |  |
-| Old App Entry |  |
-| Mirax AI Module |  |
-| Priority | P0 |
-| Related Gap List Row | N/A |
+| 功能 ID |  |
+| 功能名称 |  |
+| 旧版入口 |  |
+| Mirax AI 归属模块 |  |
+| 优先级 | P0 |
+| 关联 gap-list 行 | N/A |
 
-## Evidence
+## 证据
 
-| Field | Value |
+| 字段 | 值 |
 | --- | --- |
-| Evidence IDs |  |
-| Highest Evidence Level | E5 |
-| Confidence | low |
-| Conflict Notes | N/A |
+| 证据 ID |  |
+| 最高证据等级 | E5 |
+| 可信度 | low |
+| 冲突说明 | N/A |
 
-## User Goal
+## 用户目标
 
-Describe the user outcome this function supports in one or two sentences.
+用 1 到 2 句话说明用户使用这个功能想达成什么结果。
 
-## Page Structure
+## 页面结构
 
-Record information organization and interaction behavior only. Do not copy old visual style, colors, typography, spacing, or decorative treatment.
+只记录信息组织和交互行为。不要复制旧版视觉风格、颜色、字体、间距或装饰效果。
 
-| Area | Controls Or Fields | Behavior |
+| 区域 | 控件或字段 | 行为 |
 | --- | --- | --- |
 |  |  |  |
 
-## Inputs And Outputs
+## 输入与输出
 
-| Type | Details |
+| 类型 | 说明 |
 | --- | --- |
-| User Inputs |  |
-| System Outputs |  |
-| Downstream Dependencies |  |
+| 用户输入 |  |
+| 系统输出 |  |
+| 下游依赖 |  |
 
-## Execution Chain
+## 执行链路
 
-| Layer | Evidence Or Expected Role |
+| 层级 | 证据或预期职责 |
 | --- | --- |
-| Frontend |  |
+| 前端 |  |
 | Provider |  |
 | Sidecar |  |
-| Local Storage |  |
-| External Service |  |
+| 本地存储 |  |
+| 外部服务 |  |
 
-## Limits And Risks
+## 限制与风险
 
-| Risk | Impact | Handling |
+| 风险 | 影响 | 处理方式 |
 | --- | --- | --- |
 |  |  |  |
 
-## Mirax AI Implementation Recommendation
+## Mirax AI 实现建议
 
-Choose one: keep, redesign, merge, defer, replace.
+可选值：保留、重做、合并、延期、替代实现。
 
-Decision:
+决策：
 
-Reason:
+理由：
 
-## Dispatch Notes
+## 派工信息
 
-| Field | Value |
+| 字段 | 值 |
 | --- | --- |
-| Suggested Files |  |
-| Verification Commands |  |
-| Acceptance Criteria |  |
-| Owner Scope |  |
+| 建议修改文件 |  |
+| 验证命令 |  |
+| 验收标准 |  |
+| 任务边界 |  |

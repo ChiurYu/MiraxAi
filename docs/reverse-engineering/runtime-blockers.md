@@ -1,23 +1,23 @@
-# Runtime Blockers
+# 运行障碍记录
 
-This file records access and execution limits observed while inspecting the old app.
+本文记录巡检旧版 App 时遇到的访问限制和执行限制。
 
-Blockers are not bypass tasks. They record what is blocked, what remains visible, which evidence IDs support the observation, and how Mirax AI should replace or redesign the blocked capability.
+运行障碍不是绕过任务。这里记录的是：什么被挡住、仍然能看到什么、哪些证据支持这个观察，以及 Mirax AI 应如何替代或重新设计这项能力。
 
-## Blocker Types
+## 障碍类型
 
-| Type | Meaning |
+| 类型 | 含义 |
 | --- | --- |
-| login | Login or account session is required. |
-| activation | Activation, license, membership, or entitlement prevents execution. |
-| cloud-service | Old cloud API, hosted asset, or backend service is unavailable or restricted. |
-| model | AI, voice, avatar, ASR, or rendering model is unavailable or not configured. |
-| platform-rule | Social platform login, policy, browser automation, or publishing rule prevents completion. |
-| local-dependency | Local FFmpeg, Python service, browser, model file, or app runtime dependency is missing. |
-| unknown | The app shows a blocker but the category is not yet clear. |
+| login | 需要登录或账号会话。 |
+| activation | 激活、许可证、会员或权益限制阻止执行。 |
+| cloud-service | 旧云端 API、托管资源或后端服务不可用或受限。 |
+| model | AI、声音、数字人、ASR 或渲染模型不可用或未配置。 |
+| platform-rule | 平台登录、平台规则、浏览器自动化或发布规则导致流程无法完成。 |
+| local-dependency | 本地 FFmpeg、Python 服务、浏览器、模型文件或 App 运行依赖缺失。 |
+| unknown | App 显示了阻碍，但类型尚不明确。 |
 
-## Records
+## 记录
 
-| Blocker ID | Type | Related Page Or Function | Evidence IDs | Trigger | Visible Information | Static Follow-Up | Mirax AI Replacement | Blocks Current Stage |
+| 障碍 ID | 类型 | 关联页面或功能 | 证据 ID | 触发方式 | 可见信息 | 静态补证方向 | Mirax AI 替代方案 | 是否阻塞当前阶段 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| RB-000 | unknown | N/A | N/A | No runtime blocker recorded yet. | N/A | N/A | N/A | no |
+| RB-000 | unknown | N/A | N/A | 暂无运行障碍记录。 | N/A | N/A | N/A | no |
