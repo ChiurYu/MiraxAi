@@ -129,7 +129,7 @@ git diff -- docs/reverse-engineering/legacy-ui-gap-list.md
 - 修改：`docs/reverse-engineering/evidence-index.md`
 - 修改：`docs/reverse-engineering/assets-index.md`
 
-- [ ] **Step 1：更新项目状态为阶段 1**
+- [x] **Step 1：更新项目状态为阶段 1**
 
 把 `docs/superpowers/PROJECT-STATE.md` 中的「当前阶段」更新为：
 
@@ -151,7 +151,7 @@ git diff -- docs/reverse-engineering/legacy-ui-gap-list.md
 不要更新 `docs/reverse-engineering/legacy-ui-gap-list.md` 的状态列。发现差距只记录到页面卡、功能卡或运行障碍记录。
 ```
 
-- [ ] **Step 2：登记阶段 1 证据范围**
+- [x] **Step 2：登记阶段 1 证据范围**
 
 在 `docs/reverse-engineering/evidence-index.md` 的 `## Records` 表格末尾追加：
 
@@ -163,7 +163,7 @@ git diff -- docs/reverse-engineering/legacy-ui-gap-list.md
 | EV-RUNTIME-200 | E2 | low | 运行态观察 | P2 辅助入口和弹窗巡检证据占位，执行 Task 6 时补充帮助、关于、低频入口和边缘状态。 | `docs/reverse-engineering/pages/PAGE-SECONDARY-ENTRYPOINTS.md` | PAGE-SECONDARY-ENTRYPOINTS | N/A | Codex | 2026-06-13 |
 ```
 
-- [ ] **Step 3：提交巡检准备**
+- [x] **Step 3：提交巡检准备**
 
 ```bash
 git add docs/superpowers/PROJECT-STATE.md docs/reverse-engineering/evidence-index.md docs/reverse-engineering/assets-index.md
@@ -484,4 +484,3 @@ git diff -- docs/reverse-engineering/legacy-ui-gap-list.md
 git add docs/superpowers/PROJECT-STATE.md docs/reverse-engineering/evidence-index.md docs/reverse-engineering/assets-index.md
 git commit -m "docs: complete legacy runtime inspection"
 ```
-
