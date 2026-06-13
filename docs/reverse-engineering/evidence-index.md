@@ -43,7 +43,7 @@
 | EV-DOC-002 | E4 | medium | 当前仓库文档 | 演示覆盖矩阵把视频可见功能映射到当前 Mirax AI 实现和 mock 边界。 | `docs/reverse-engineering/demo-video-coverage.md` | N/A | N/A | Codex | 2026-06-13 |
 | EV-DOC-003 | E4 | medium | 当前仓库文档 | 旧版 UI 差距清单记录第一版可用阶段已知的 UI 和流程差距。 | `docs/reverse-engineering/legacy-ui-gap-list.md` | N/A | N/A | Codex | 2026-06-13 |
 | EV-DOC-004 | E4 | high | 当前仓库设计文档 | 证据驱动路线图定义了证据等级、可信度规则、模板、阶段顺序和恢复要求。 | `docs/superpowers/specs/2026-06-13-mirax-evidence-driven-roadmap-design.md` | N/A | N/A | Codex | 2026-06-13 |
-| EV-RUNTIME-001 | E1 | medium | 运行态观察 | P0 首页工作台巡检证据占位，执行 Task 2 时补充截图或观察路径。 | `docs/reverse-engineering/pages/PAGE-HOME-WORKBENCH.md` | PAGE-HOME-WORKBENCH | FC-HOME-PIPELINE | Codex | 2026-06-13 |
+| EV-RUNTIME-001 | E1 | medium | 运行态观察 | 旧版 App 首页工作台完整界面：左侧导航含首页/形象/素材/创作/任务/账号/设置/帮助；顶部手动/自动/草稿模式；主工作区 7 步生产流程（学习对标、改写文章、声音生成、视频生成、一键成片、标题封面、视频发布）。当前因登录/激活限制无法触发真实生成。 | `docs/reverse-engineering/assets/screenshots/2026-06-13-home-workbench-overview.png` | PAGE-HOME-WORKBENCH | FC-HOME-PIPELINE | Codex | 2026-06-13 |
 | EV-RUNTIME-010 | E2 | medium | 运行态观察 | P0 设置页巡检证据占位，执行 Task 3 时补充受限动作。 | `docs/reverse-engineering/pages/PAGE-SETTINGS.md` | PAGE-SETTINGS | FC-PROVIDER-SETTINGS | Codex | 2026-06-13 |
 | EV-RUNTIME-020 | E2 | medium | 运行态观察 | P0 发布流程巡检证据占位，执行 Task 4 时补充平台账号和发布受限情况。 | `docs/reverse-engineering/pages/PAGE-PUBLISH-FLOW.md` | PAGE-PUBLISH-FLOW | FC-PUBLISH-PREP | Codex | 2026-06-13 |
 | EV-RUNTIME-100 | E2 | medium | 运行态观察 | P1 管理页面巡检证据占位，执行 Task 5 时补充声音、形象、素材、任务和账号页面。 | `docs/reverse-engineering/pages/` | P1-MANAGEMENT-PAGES | FC-ASSET-MANAGEMENT | Codex | 2026-06-13 |

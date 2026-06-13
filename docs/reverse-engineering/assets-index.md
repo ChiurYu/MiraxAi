@@ -26,3 +26,5 @@
 | ASSET-DOC-002 | EV-DOC-002 | Markdown 文档 | 已跟踪 | `docs/reverse-engineering/demo-video-coverage.md` | 现有演示覆盖矩阵。 | `docs/reverse-engineering/evidence-index.md` | 2026-06-13 |
 | ASSET-DOC-003 | EV-DOC-003 | Markdown 文档 | 已跟踪 | `docs/reverse-engineering/legacy-ui-gap-list.md` | 现有旧版 UI 差距清单。 | `docs/reverse-engineering/evidence-index.md` | 2026-06-13 |
 | ASSET-DOC-004 | EV-DOC-004 | Markdown 设计文档 | 已跟踪 | `docs/superpowers/specs/2026-06-13-mirax-evidence-driven-roadmap-design.md` | 当前证据驱动路线图设计。 | `docs/reverse-engineering/evidence-index.md` | 2026-06-13 |
+| ASSET-RUNTIME-001 | EV-RUNTIME-001 | 截图 | 已跟踪 | `docs/reverse-engineering/assets/screenshots/2026-06-13-home-workbench-overview.png` | 旧版 App 首页工作台完整界面，显示左侧导航、顶部模式和 7 步生产流程。 | `docs/reverse-engineering/pages/PAGE-HOME-WORKBENCH.md` | 2026-06-13 |
+| ASSET-RUNTIME-002 | EV-RUNTIME-001 | 截图 | 已跟踪 | `docs/reverse-engineering/assets/screenshots/2026-06-13-login-blocker.png` | 旧版 App 启动后因 token 失效进入登录页，并弹出激活会员弹窗。 | `docs/reverse-engineering/runtime-blockers.md` | 2026-06-13 |
