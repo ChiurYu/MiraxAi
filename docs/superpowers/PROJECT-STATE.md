@@ -8,17 +8,17 @@
 
 阶段 1：旧版运行态全量巡检。
 
-阶段 1 的目标是在可打开但可能受限的旧版 App 中记录页面、控件、状态、提示、受限动作和初版功能卡。本阶段只做运行态观察，不做静态分析和权限绕过。
+阶段 1 的目标是优先使用 `docs/截图/` 中的人工截图记录旧版 App 页面、控件、状态、提示、受限动作和初版功能卡。截图缺失、信息不清或需要确认真实交互时，再补充打开可见但可能受限的旧版 App。本阶段只做运行态观察，不做静态分析和权限绕过。
 
 ## 当前自动调度入口
 
 `docs/superpowers/plans/2026-06-13-stage-1-runtime-inspection.md`
 
-该计划是当前阶段的自动调度入口。自动调度时按此计划执行 P0 → P1 → P2 旧版运行态巡检。
+该计划是当前阶段的自动调度入口。自动调度时按此计划先读取 `docs/截图/`，再执行 P0 → P1 → P2 旧版运行态补证。
 
 ## 最新可执行任务
 
-执行 `docs/superpowers/plans/2026-06-13-stage-1-runtime-inspection.md`，先完成 Task 1 的巡检准备，再按 P0 → P1 → P2 页面优先级巡检旧版 App。
+执行 `docs/superpowers/plans/2026-06-13-stage-1-runtime-inspection.md`，优先使用 `docs/截图/` 的人工截图创建页面卡和功能卡，再按 P0 → P1 → P2 页面优先级补充截图无法确认的旧版 App 运行态观察。
 
 不要更新 `docs/reverse-engineering/legacy-ui-gap-list.md` 的状态列。发现差距只记录到页面卡、功能卡或运行障碍记录。
 
@@ -34,6 +34,7 @@
 - 旧版 UI 差距清单：`docs/reverse-engineering/legacy-ui-gap-list.md`
 - 证据索引：`docs/reverse-engineering/evidence-index.md`
 - 资产索引：`docs/reverse-engineering/assets-index.md`
+- 人工截图输入：`docs/截图/`
 - 运行障碍记录：`docs/reverse-engineering/runtime-blockers.md`
 - 功能卡目录：`docs/reverse-engineering/function-cards/`
 - 页面巡检目录：`docs/reverse-engineering/pages/`
@@ -53,6 +54,7 @@
 
 - 大型逆向输入不要进入 Git：DMG、完整录屏、解包 ASAR、模型文件、大型资源目录和批量抽帧图片。
 - 小体积截图只有在文档确实需要时才进入 Git，放在 `docs/reverse-engineering/assets/screenshots/`，并同时登记到 `assets-index.md` 和 `evidence-index.md`。
+- 用户手动提供的旧版界面截图可保留在 `docs/截图/` 作为原始输入；已登记到 `assets-index.md` 和 `evidence-index.md` 后即可被 Codex 或 Claude Code 直接引用。
 - CodeGraph MCP 工具不一定每次会话都可用；不可用时使用本地文件和 `rg`。
 - cmux 调度必须遵守 `AGENTS.md`：计划从 `docs/superpowers/plans/` 取最新文件，运行状态放在 `.codex/dispatch-state.json`，heartbeat id 为 `mirax-dispatch`。
 - 不要回滚或夹带和当前任务无关的未提交改动。
@@ -80,6 +82,6 @@
 
 ## 下一步
 
-执行 `docs/superpowers/plans/2026-06-13-stage-1-runtime-inspection.md`。
-
 阶段 1 完成后，使用 `superpowers:writing-plans` 创建阶段 2：旧包静态分析补盲区实施计划。
+
+阶段 2 只处理阶段 1 中的 E2、E4、E5 以及信息不足的 E3 证据，不复用旧版混淆代码或生产代码。
