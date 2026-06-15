@@ -4,7 +4,7 @@
 
 将已经丢失源码的「轻语IP智能体」重建为一个新的桌面优先产品，并把核心能力设计成可复用模块，为后续 Web 端做准备。
 
-第一版目标是复刻 `功能演示视频.mp4` 中所有用户可见的流程。旧 DMG 包只作为产品行为、资源、模块名和架构线索的参考，不直接复用混淆后的生产代码。
+第一版目标是复刻 `/Users/yuzhenzhao/code/ai/功能演示视频.mp4` 中所有用户可见的流程。旧 DMG 包只作为产品行为、资源、模块名和架构线索的参考，不直接复用混淆后的生产代码。
 
 ## 范围
 
@@ -235,7 +235,7 @@ Provider 配置由用户自行管理。API Key 等敏感信息尽量本地加密
 
 ## 下一步
 
-审查 `功能演示视频.mp4`，创建 `docs/reverse-engineering/demo-video-timeline.md`。
+审查 `/Users/yuzhenzhao/code/ai/功能演示视频.mp4`，创建 `docs/reverse-engineering/demo-video-timeline.md`。
 
 时间轴文档需要记录：
 
