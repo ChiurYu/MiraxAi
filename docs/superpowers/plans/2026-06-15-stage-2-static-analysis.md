@@ -16,11 +16,11 @@
 
 **当前阶段：** 阶段 2：旧包静态分析补盲区。
 
-**已完成任务：** 阶段 1 运行态全量巡检已完成；阶段 2 Task 1/2 已完成，已登记旧版 DMG 资产、阶段 2 证据范围，并建立解包与搜索工作流笔记。
+**已完成任务：** 阶段 1 运行态全量巡检已完成；阶段 2 Task 1/2/3 已完成，已登记旧版 DMG 资产、阶段 2 证据范围，建立解包与搜索工作流笔记，并完成 P0 发布流程静态补证。
 
-**当前任务：** 从 Task 3 开始：P0 发布流程静态补证。
+**当前任务：** 从 Task 4 开始：P1 资产管理静态补证。
 
-**下一步：** 按 Task 3 → Task 6 顺序执行。
+**下一步：** 按 Task 4 → Task 6 顺序执行。
 
 **验证命令：**
 
@@ -300,7 +300,7 @@ git status --short
 - 修改：`docs/reverse-engineering/runtime-blockers.md`
 - 修改：`docs/reverse-engineering/evidence-index.md`
 
-- [ ] **Step 1：搜索发布相关字符串和调用链**
+- [x] **Step 1：搜索发布相关字符串和调用链**
 
 在解包目录中运行：
 
@@ -310,7 +310,7 @@ rg -i "publish|发布|立即发布|publishMode|publishAccount|platform|douyin|xi
 
 记录出现的文件路径、函数名、API endpoint、平台标识、发布模式字段。
 
-- [ ] **Step 2：检查发布任务与账号存储结构**
+- [x] **Step 2：检查发布任务与账号存储结构**
 
 搜索数据库/本地存储相关：
 
@@ -320,7 +320,7 @@ rg -i "publish_task|publish_account|task|账号|account|workflow_task" "$EXTRACT
 
 如存在 SQLite 数据库文件或 JSON 配置，用 `sqlite3 .schema` 或 `cat`/`plutil` 查看表结构。
 
-- [ ] **Step 3：确认发布前是否有独立确认页**
+- [x] **Step 3：确认发布前是否有独立确认页**
 
 根据 RB-PUBLISH-003 的缺口，重点检查首页到发布任务的调用链：
 
@@ -328,7 +328,7 @@ rg -i "publish_task|publish_account|task|账号|account|workflow_task" "$EXTRACT
 rg -i "立即发布|publishNow|confirm|确认发布|publish.*confirm" "$EXTRACT_DIR" --type-add 'js:*.{js,ts}' -t js | head -50
 ```
 
-- [ ] **Step 4：写入静态分析记录**
+- [x] **Step 4：写入静态分析记录**
 
 创建 `docs/reverse-engineering/static-analysis/SA-PUBLISH-FLOW.md`，使用 `static-analysis-template.md` 字段，至少包括：
 
@@ -379,13 +379,13 @@ rg -i "立即发布|publishNow|confirm|确认发布|publish.*confirm" "$EXTRACT_
 | 对 Mirax AI 设计的影响 | （例如：确认 PublishOptions 字段、平台 ID 枚举、任务中心状态字段） |
 ```
 
-- [ ] **Step 5：更新发布准备功能卡和运行障碍**
+- [x] **Step 5：更新发布准备功能卡和运行障碍**
 
 如静态分析确认了新字段或调用链，更新 `FC-PUBLISH-PREP.md` 的「执行链路」「旧版发布能力到 Mirax AI 的映射」「限制与风险」等表格。
 
 如 RB-PUBLISH-003 的「发布前确认页」问题得到解决，更新其静态补证方向和 Mirax AI 替代方案。
 
-- [ ] **Step 6：运行验证**
+- [x] **Step 6：运行验证**
 
 ```bash
 test -f docs/reverse-engineering/static-analysis/SA-PUBLISH-FLOW.md
@@ -393,7 +393,7 @@ rg -n "EV-STATIC-002" docs/reverse-engineering/evidence-index.md
 rg -n "SA-PUBLISH-FLOW" docs/reverse-engineering/function-cards/FC-PUBLISH-PREP.md docs/reverse-engineering/runtime-blockers.md
 ```
 
-- [ ] **Step 7：运行验证并汇报 diff**
+- [x] **Step 7：运行验证并汇报 diff**
 
 运行本任务验证命令，确认静态分析文件和功能卡/运行障碍已更新。然后汇报当前 diff 摘要，等待总控验收，不要自行 commit：
 
