@@ -16,11 +16,11 @@
 
 **当前阶段：** 阶段 2：旧包静态分析补盲区。
 
-**已完成任务：** 阶段 1 运行态全量巡检已完成；阶段 2 Task 1/2/3/4/5 已完成，已登记旧版 DMG 资产、阶段 2 证据范围，建立解包与搜索工作流笔记，完成 P0 发布流程静态补证、P1 资产管理静态补证（声音/形象、素材/任务、账号/授权）和 P2 辅助入口与边缘状态静态补证。
+**已完成任务：** 阶段 1 运行态全量巡检已完成；阶段 2 Task 1/2/3/4/5/6 已完成，已登记旧版 DMG 资产、阶段 2 证据范围，建立解包与搜索工作流笔记，完成 P0 发布流程静态补证、P1 资产管理静态补证（声音/形象、素材/任务、账号/授权）、P2 辅助入口与边缘状态静态补证，并完成阶段 2 汇总与项目状态更新。
 
-**当前任务：** 从 Task 6 开始：阶段 2 汇总与项目状态更新。
+**当前任务：** 阶段 2 已完成，无未完成 Task。
 
-**下一步：** 执行 Task 6，完成阶段 2 汇总与项目状态更新。
+**下一步：** 使用 `superpowers:writing-plans` 创建阶段 3：Mirax AI 新版产品架构映射实施计划。
 
 **验证命令：**
 
@@ -573,11 +573,11 @@ git status --short
 - 修改：`docs/reverse-engineering/evidence-index.md`
 - 修改：`docs/reverse-engineering/assets-index.md`
 
-- [ ] **Step 1：补齐索引链接**
+- [x] **Step 1：补齐索引链接**
 
 确认 `evidence-index.md` 中所有 EV-STATIC 记录都能跳转到对应的 static-analysis 文件；确认 `assets-index.md` 中 ASSET-PKG-001 记录完整。
 
-- [ ] **Step 2：更新项目状态**
+- [x] **Step 2：更新项目状态**
 
 把 `docs/superpowers/PROJECT-STATE.md` 更新为：
 
@@ -609,7 +609,7 @@ git status --short
 阶段 3 把旧版功能卡映射到新版信息架构和工程模块，包括桌面工作台、素材管理、声音管理、形象管理、任务中心、账号管理、设置、Provider、sidecar、本地数据和发布链路。
 ```
 
-- [ ] **Step 3：运行最终验证**
+- [x] **Step 3：运行最终验证**
 
 ```bash
 test -f docs/reverse-engineering/static-analysis/SA-PUBLISH-FLOW.md
@@ -624,7 +624,7 @@ git diff -- docs/reverse-engineering/legacy-ui-gap-list.md
 
 预期：所有静态分析文件存在；证据索引可查；`PROJECT-STATE.md` 指向阶段 2 计划；`legacy-ui-gap-list.md` 无状态变更。
 
-- [ ] **Step 4：运行最终验证并汇报 diff**
+- [x] **Step 4：运行最终验证并汇报 diff**
 
 运行最终验证命令，确认所有静态分析文件、证据索引和项目状态符合阶段 2 完成标准。然后汇报当前 diff 摘要，等待总控验收，不要自行 commit：
 

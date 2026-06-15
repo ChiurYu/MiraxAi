@@ -6,21 +6,27 @@
 
 ## 当前阶段
 
-阶段 2：旧包静态分析补盲区。
+阶段 2：旧包静态分析补盲区 **已完成**。
 
 阶段 2 的目标是针对阶段 1 中的 E2、E4、E5 以及信息不足的 E3 证据，分析旧版 DMG、解包 ASAR、preload API、本地配置和旧仓库线索，确认模块名、接口名、字段、服务依赖和数据流。本阶段不复用旧版混淆代码或生产代码。
+
+阶段 2 已产出 `EV-STATIC-001` 到 `EV-STATIC-200`，完成发布流程、资产管理（声音/形象、素材/任务、账号/授权）以及辅助入口与边缘状态的静态补证。
 
 ## 当前自动调度入口
 
 `docs/superpowers/plans/2026-06-15-stage-2-static-analysis.md`
 
-该计划是当前阶段的自动调度入口。自动调度时按此计划执行 Task 1 → Task 6，完成旧包静态分析。
+该计划是阶段 2 的完成记录。自动调度恢复时不要重复执行 Task 1 → Task 6；下一步应使用 `superpowers:writing-plans` 创建阶段 3 计划。
 
 ## 最新可执行任务
 
-执行 `docs/superpowers/plans/2026-06-15-stage-2-static-analysis.md`，按 Task 1 → Task 6 完成旧包静态分析，产出 `EV-STATIC-*` 证据和 `SA-*.md` 静态分析记录，并反向更新功能卡、页面卡、运行障碍记录和证据索引。
+阶段 2 静态分析已全部完成：
 
-不要更新 `docs/reverse-engineering/legacy-ui-gap-list.md` 的状态列。静态补证只升级证据等级或明确记录缺口。
+- `EV-STATIC-001` 到 `EV-STATIC-200` 已登记。
+- `SA-PUBLISH-FLOW.md`、`SA-VOICE-AVATAR.md`、`SA-MATERIALS-TASKS.md`、`SA-ACCOUNTS-AUTH.md`、`SA-SECONDARY-ENTRYPOINTS.md` 已创建。
+- 功能卡、页面卡和运行障碍记录已按静态发现更新。
+
+下一阶段使用 `superpowers:writing-plans` 创建阶段 3：Mirax AI 新版产品架构映射实施计划。
 
 ## 进度入口
 
