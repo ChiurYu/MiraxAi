@@ -6,26 +6,27 @@
 
 ## 当前阶段
 
-阶段 1：旧版运行态全量巡检。
+阶段 2：旧包静态分析补盲区。
 
-阶段 1 的目标是优先使用 `docs/截图/` 中的人工截图记录旧版 App 页面、控件、状态、提示、受限动作和初版功能卡。截图缺失、信息不清或需要确认真实交互时，再补充打开可见但可能受限的旧版 App。本阶段只做运行态观察，不做静态分析和权限绕过。
+阶段 2 的目标是针对阶段 1 中的 E2、E4、E5 以及信息不足的 E3 证据，分析旧版 DMG、解包 ASAR、preload API、本地配置和旧仓库线索，确认模块名、接口名、字段、服务依赖和数据流。本阶段不复用旧版混淆代码或生产代码。
 
 ## 当前自动调度入口
 
-`docs/superpowers/plans/2026-06-13-stage-1-runtime-inspection.md`
+`docs/superpowers/plans/2026-06-15-stage-2-static-analysis.md`
 
-该计划是当前阶段的自动调度入口。自动调度时按此计划先读取 `docs/截图/`，再执行 P0 → P1 → P2 旧版运行态补证。
+该计划是当前阶段的自动调度入口。自动调度时按此计划执行 Task 1 → Task 6，完成旧包静态分析。
 
 ## 最新可执行任务
 
-执行 `docs/superpowers/plans/2026-06-13-stage-1-runtime-inspection.md`，优先使用 `docs/截图/` 的人工截图创建页面卡和功能卡，再按 P0 → P1 → P2 页面优先级补充截图无法确认的旧版 App 运行态观察。
+执行 `docs/superpowers/plans/2026-06-15-stage-2-static-analysis.md`，按 Task 1 → Task 6 完成旧包静态分析，产出 `EV-STATIC-*` 证据和 `SA-*.md` 静态分析记录，并反向更新功能卡、页面卡、运行障碍记录和证据索引。
 
-不要更新 `docs/reverse-engineering/legacy-ui-gap-list.md` 的状态列。发现差距只记录到页面卡、功能卡或运行障碍记录。
+不要更新 `docs/reverse-engineering/legacy-ui-gap-list.md` 的状态列。静态补证只升级证据等级或明确记录缺口。
 
 ## 进度入口
 
 - 路线图设计：`docs/superpowers/specs/2026-06-13-mirax-evidence-driven-roadmap-design.md`
-- 当前计划：`docs/superpowers/plans/2026-06-13-stage-1-runtime-inspection.md`
+- 当前计划：`docs/superpowers/plans/2026-06-15-stage-2-static-analysis.md`
+- 已完成阶段 1 计划：`docs/superpowers/plans/2026-06-13-stage-1-runtime-inspection.md`
 - 已完成阶段 0 计划：`docs/superpowers/plans/2026-06-13-stage-0-inventory-tools.md`
 - 桌面重建设计：`docs/superpowers/specs/2026-06-11-mirax-desktop-rebuild-design.md`
 - 第一版可用计划：`docs/superpowers/plans/2026-06-12-mirax-first-usable-release.md`
@@ -82,6 +83,6 @@
 
 ## 下一步
 
-阶段 1 完成后，使用 `superpowers:writing-plans` 创建阶段 2：旧包静态分析补盲区实施计划。
+阶段 2 完成后，使用 `superpowers:writing-plans` 创建阶段 3：Mirax AI 新版产品架构映射实施计划。
 
-阶段 2 只处理阶段 1 中的 E2、E4、E5 以及信息不足的 E3 证据，不复用旧版混淆代码或生产代码。
+阶段 3 把旧版功能卡映射到新版信息架构和工程模块，包括桌面工作台、素材管理、声音管理、形象管理、任务中心、账号管理、设置、Provider、sidecar、本地数据和发布链路。
