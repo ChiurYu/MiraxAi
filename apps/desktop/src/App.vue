@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import {
-  AlertCircle,
   CheckCircle2,
   Circle,
   CloudUpload,
@@ -73,7 +72,6 @@ const activeStageId = ref<WorkflowStageId>("transcribe");
 const running = ref(false);
 const runningMode = ref<"single" | "all" | null>(null);
 const logs = ref<LogEntry[]>([]);
-const stageErrors = ref<Partial<Record<WorkflowStageId, string>>>({});
 const publishAccounts = ref<PublishAccount[]>([]);
 const generatedVideoPath = ref("");
 const generatedCoverPath = ref("");
@@ -112,7 +110,6 @@ const platformLabels = computed<Record<PublishPlatform, string>>(() =>
 const stageStatus = computed(() =>
   Object.fromEntries(workflow.value.stages.map((stage) => [stage.id, stage.status])),
 );
-const lastRewriteError = computed(() => stageErrors.value.rewrite ?? "");
 const latestHistoryItems = computed(() => listLatestHistoryItems(taskHistory.value).slice(0, 5));
 const selectedAccountText = computed(() => {
   if (publishAccounts.value.length === 0) {
@@ -237,10 +234,8 @@ async function processStage(stageId: WorkflowStageId, title: string) {
       return;
     }
 
-    const errorMessage = error instanceof Error ? error.message : "执行失败";
     workflow.value = updateStageStatus(workflow.value, stageId, "failed");
-    stageErrors.value = { ...stageErrors.value, [stageId]: errorMessage };
-    addLog(title, errorMessage);
+    addLog(title, error instanceof Error ? error.message : "执行失败");
     throw error;
   }
 }
@@ -248,7 +243,6 @@ async function processStage(stageId: WorkflowStageId, title: string) {
 function resetFailedStage(stageId: WorkflowStageId) {
   if (stageStatus.value[stageId] === "failed") {
     workflow.value = updateStageStatus(workflow.value, stageId, "pending");
-    stageErrors.value = { ...stageErrors.value, [stageId]: undefined };
   }
 }
 
@@ -539,28 +533,12 @@ function toggleTheme() {
           <div class="button-row">
             <button
               class="primary compact-button"
-              :class="{ retry: stageStatus.rewrite === 'failed' }"
-              :disabled="running || stageStatus.rewrite === 'running' || stageStatus.rewrite === 'completed'"
+              :disabled="running || stageStatus.rewrite === 'completed'"
               @click="runStage('rewrite')"
             >
-              <Loader2 v-if="stageStatus.rewrite === 'running'" :size="16" class="spin" />
-              <RefreshCw v-else-if="stageStatus.rewrite === 'failed'" :size="16" />
-              <WandSparkles v-else :size="16" />
-              {{
-                stageStatus.rewrite === "running"
-                  ? "改写中…"
-                  : stageStatus.rewrite === "failed"
-                    ? "重试改写"
-                    : stageStatus.rewrite === "completed"
-                      ? "已改写"
-                      : "改写文案"
-              }}
+              <WandSparkles :size="16" /> 改写文案
             </button>
             <button class="legal-button"><ShieldCheck :size="16" /> AI法务</button>
-          </div>
-          <div v-if="stageStatus.rewrite === 'failed' && lastRewriteError" class="stage-error">
-            <AlertCircle :size="14" />
-            <span>{{ lastRewriteError }}</span>
           </div>
           <label>
             <span>改写内容</span>

@@ -82,7 +82,7 @@
 
 | 字段 | 值 |
 | --- | --- |
-| 建议修改文件 | `desktop/src/App.vue`、`packages/provider-publish/`、`packages/local-store/src/schema.ts`、`packages/core/src/types.ts` |
+| 建议修改文件 | `apps/desktop/src/App.vue`、`packages/provider-publish/`、`packages/local-store/src/schema.ts`、`packages/core/src/types.ts` |
 | 验证命令 | `pnpm typecheck`、`pnpm test`、`pnpm --filter @mirax/desktop dev:web` |
 | 验收标准 | 桌面端首页第 6、7 步能填写发布元数据；mock 账号可选中；点击「立即发布」后任务中心出现发布任务记录；任务状态可展示成功 / 失败 / 草稿 |
 | 任务边界 | 第一版不实现真实平台登录、授权和上传；只做 mock 发布任务流转和状态展示；不绕过旧版平台授权限制 |

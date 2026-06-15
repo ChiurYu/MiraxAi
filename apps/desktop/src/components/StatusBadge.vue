@@ -49,8 +49,7 @@ const labelMap: Record<WorkflowStageStatus, string> = {
 .failed {
   color: var(--mx-error, #f87171);
   background: var(--mx-error-bg, rgba(248, 113, 113, 0.12));
-  border-color: var(--mx-error, #f87171);
-  font-weight: 700;
+  border-color: rgba(248, 113, 113, 0.2);
 }
 
 .skipped {

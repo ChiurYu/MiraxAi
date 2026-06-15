@@ -72,7 +72,7 @@
 
 | 字段 | 值 |
 | --- | --- |
-| 建议修改文件 | `desktop/src/views/AssetManagement.vue`（或按资源拆分：VoiceView、AvatarView、MaterialView、TaskView、AccountView）、`packages/local-store/` 相关 repository、`packages/provider-ai/` 和 `packages/provider-publish/` 接口 |
+| 建议修改文件 | `apps/desktop/src/views/AssetManagement.vue`（或按资源拆分：VoiceView、AvatarView、MaterialView、TaskView、AccountView）、`packages/local-store/` 相关 repository、`packages/provider-ai/` 和 `packages/provider-publish/` 接口 |
 | 验证命令 | `pnpm typecheck`、`pnpm test packages/local-store/`（如存在） |
 | 验收标准 | 页面结构与截图一致；声音/形象/素材/任务/账号的 CRUD 和列表状态可用；任务状态与 workflow 阶段对应；设置页输出目录作为媒体文件根目录 |
 | 任务边界 | 只做 UI 结构、本地状态和资源管理抽象；真实声音克隆、数字人训练、平台授权在第一版用 mock 或占位 |

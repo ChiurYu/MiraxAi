@@ -22,18 +22,18 @@
 - [x] Mock publish provider 已完成：`packages/provider-publish/src/*`，覆盖平台资料、账号列表、草稿发布任务。
 - [x] Local store schema stub 已完成：`packages/local-store/src/*`，覆盖第一版核心表结构。
 - [x] Sidecar dependency check stub 已完成：`packages/sidecar-manager/src/*`，覆盖 FFmpeg、Playwright、Python、HeyGem、CosyVoice 检查。
-- [x] 桌面端可打包并启动：`desktop/src-tauri/target/release/bundle/macos/Mirax AI.app`。
+- [x] 桌面端可打包并启动：`apps/desktop/src-tauri/target/release/bundle/macos/Mirax AI.app`。
 - [x] 首页已改为旧版风格：左侧导航、顶部手动/自动/后台、7 个编号模块卡片。
 - [x] 浏览器验收已跑通：`运行全部` 后进度 `100% / 8/8`，mock 发布任务生成。
 - [x] 旧版界面差距清单已补齐：`docs/reverse-engineering/legacy-ui-gap-list.md`。
-- [x] 桌面端草稿持久化已抽离：`desktop/src/runtime/desktopDraft.ts`，API Key 不进入 localStorage。
-- [x] Task 3 每卡片状态与重试 UX 已完成：`desktop/src/components/StatusBadge.vue` + `desktop/src/App.vue`，7 个模块均显示 workflow stage 状态 badge 与单步/重试按钮。
+- [x] 桌面端草稿持久化已抽离：`apps/desktop/src/runtime/desktopDraft.ts`，API Key 不进入 localStorage。
+- [x] Task 3 每卡片状态与重试 UX 已完成：`apps/desktop/src/components/StatusBadge.vue` + `apps/desktop/src/App.vue`，7 个模块均显示 workflow stage 状态 badge 与单步/重试按钮。
 - [x] 与旧版功能对齐的“可正常使用”收口已完成：真实试用状态提示、素材选择体验、Provider 连接测试、依赖检查面板、任务中心记录和发布前确认均通过浏览器验收。
 
 ## Target File Structure Changes
 
 ```text
-desktop/src/
+apps/desktop/src/
   App.vue                         继续作为第一版单页工作台，后续拆分前保持功能完整
   styles.css                      继续承载旧版风格布局和控件样式
   runtime/
@@ -87,7 +87,7 @@ pnpm --filter @mirax/desktop dev:web
 
 ```bash
 pnpm build
-"desktop/src-tauri/target/release/mirax-ai-desktop"
+"apps/desktop/src-tauri/target/release/mirax-ai-desktop"
 ```
 
 预期：二进制保持运行至少 3 秒，不出现 Tauri icon panic 或窗口初始化崩溃。
@@ -155,13 +155,13 @@ git commit -m "docs: add legacy ui gap inventory"
 ### Task 2: Draft Persistence Module
 
 **Files:**
-- Create: `desktop/src/runtime/desktopDraft.ts`
-- Modify: `desktop/src/App.vue`
-- Test: `desktop/src/runtime/desktopDraft.test.ts`
+- Create: `apps/desktop/src/runtime/desktopDraft.ts`
+- Modify: `apps/desktop/src/App.vue`
+- Test: `apps/desktop/src/runtime/desktopDraft.test.ts`
 
 - [x] **Step 1: Write failing tests for draft persistence**
 
-Create `desktop/src/runtime/desktopDraft.test.ts`:
+Create `apps/desktop/src/runtime/desktopDraft.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -205,14 +205,14 @@ describe("desktop draft persistence", () => {
 Run:
 
 ```bash
-pnpm test -- desktop/src/runtime/desktopDraft.test.ts
+pnpm test -- apps/desktop/src/runtime/desktopDraft.test.ts
 ```
 
 Expected: FAIL because `desktopDraft.ts` does not exist.
 
 - [x] **Step 3: Implement draft module**
 
-Create `desktop/src/runtime/desktopDraft.ts`:
+Create `apps/desktop/src/runtime/desktopDraft.ts`:
 
 ```ts
 import {
@@ -306,7 +306,7 @@ function sanitizePlatforms(platforms: PublishPlatform[] | undefined): PublishPla
 
 - [x] **Step 4: Wire App.vue to module**
 
-Modify `desktop/src/App.vue`:
+Modify `apps/desktop/src/App.vue`:
 
 ```ts
 import {
@@ -324,7 +324,7 @@ Replace inline `STORAGE_KEY`, `SavedDesktopDraft`, `restoreDraft`, `persistDraft
 Run:
 
 ```bash
-pnpm test -- desktop/src/runtime/desktopDraft.test.ts
+pnpm test -- apps/desktop/src/runtime/desktopDraft.test.ts
 pnpm typecheck
 ```
 
@@ -333,7 +333,7 @@ Expected: PASS.
 - [x] **Step 6: Commit**
 
 ```bash
-git add desktop/src/runtime/desktopDraft.ts desktop/src/runtime/desktopDraft.test.ts desktop/src/App.vue
+git add apps/desktop/src/runtime/desktopDraft.ts apps/desktop/src/runtime/desktopDraft.test.ts apps/desktop/src/App.vue
 git commit -m "refactor: extract desktop draft persistence"
 ```
 
@@ -342,12 +342,12 @@ git commit -m "refactor: extract desktop draft persistence"
 ### Task 3: Per-Card Status and Retry UX
 
 **Files:**
-- Create: `desktop/src/components/StatusBadge.vue`
-- Modify: `desktop/src/App.vue`
+- Create: `apps/desktop/src/components/StatusBadge.vue`
+- Modify: `apps/desktop/src/App.vue`
 
 - [x] **Step 1: Create status badge component**
 
-Create `desktop/src/components/StatusBadge.vue`:
+Create `apps/desktop/src/components/StatusBadge.vue`:
 
 ```vue
 <script setup lang="ts">
@@ -403,7 +403,7 @@ const labelMap: Record<WorkflowStageStatus, string> = {
 
 - [x] **Step 2: Add badges to every card heading**
 
-Modify `desktop/src/App.vue` so each numbered card heading includes:
+Modify `apps/desktop/src/App.vue` so each numbered card heading includes:
 
 ```vue
 <StatusBadge :status="stageStatus.transcribe" />
@@ -421,7 +421,7 @@ Use these mappings:
 
 - [x] **Step 3: Add retry behavior**
 
-Modify `processStage()` in `desktop/src/App.vue` so failed stages can be retried by setting that stage back to `pending` before processing:
+Modify `processStage()` in `apps/desktop/src/App.vue` so failed stages can be retried by setting that stage back to `pending` before processing:
 
 ```ts
 function resetFailedStage(stageId: WorkflowStageId) {
@@ -449,7 +449,7 @@ Expected:
 - [x] **Step 5: Commit**
 
 ```bash
-git add desktop/src/components/StatusBadge.vue desktop/src/App.vue
+git add apps/desktop/src/components/StatusBadge.vue apps/desktop/src/App.vue
 git commit -m "feat: add workflow status badges"
 ```
 
@@ -458,9 +458,9 @@ git commit -m "feat: add workflow status badges"
 ### Task 4: Path Picker and Tauri Fallback
 
 **Files:**
-- Create: `desktop/src/components/PathPickerButton.vue`
-- Modify: `desktop/package.json`
-- Modify: `desktop/src/App.vue`
+- Create: `apps/desktop/src/components/PathPickerButton.vue`
+- Modify: `apps/desktop/package.json`
+- Modify: `apps/desktop/src/App.vue`
 
 - [x] **Step 1: Add dialog plugin dependency**
 
@@ -470,11 +470,11 @@ Run:
 pnpm --filter @mirax/desktop add @tauri-apps/plugin-dialog
 ```
 
-Expected: `desktop/package.json` includes `@tauri-apps/plugin-dialog`.
+Expected: `apps/desktop/package.json` includes `@tauri-apps/plugin-dialog`.
 
 - [x] **Step 2: Create PathPickerButton**
 
-Create `desktop/src/components/PathPickerButton.vue`:
+Create `apps/desktop/src/components/PathPickerButton.vue`:
 
 ```vue
 <script setup lang="ts">
@@ -520,7 +520,7 @@ async function pickPath() {
 
 - [x] **Step 3: Replace prompt-only buttons**
 
-Modify `desktop/src/App.vue`:
+Modify `apps/desktop/src/App.vue`:
 
 ```vue
 <PathPickerButton
@@ -547,7 +547,7 @@ Expected: PASS. In browser dev mode, fallback prompt still works. In Tauri app, 
 - [x] **Step 5: Commit**
 
 ```bash
-git add desktop/package.json pnpm-lock.yaml desktop/src/components/PathPickerButton.vue desktop/src/App.vue
+git add apps/desktop/package.json pnpm-lock.yaml apps/desktop/src/components/PathPickerButton.vue apps/desktop/src/App.vue
 git commit -m "feat: add desktop path picker"
 ```
 
@@ -559,7 +559,7 @@ git commit -m "feat: add desktop path picker"
 - Create: `packages/provider-ai/src/connectionTest.ts`
 - Create: `packages/provider-ai/tests/connection-test.test.ts`
 - Modify: `packages/provider-ai/src/index.ts`
-- Modify: `desktop/src/App.vue`
+- Modify: `apps/desktop/src/App.vue`
 
 - [x] **Step 1: Write connection tests**
 
@@ -634,7 +634,7 @@ export * from "./connectionTest.js";
 
 - [x] **Step 4: Wire UI button**
 
-Modify `desktop/src/App.vue` settings card to include:
+Modify `apps/desktop/src/App.vue` settings card to include:
 
 ```vue
 <button class="secondary" @click="testConnection">测试连接</button>
@@ -678,7 +678,7 @@ Expected: PASS.
 - [x] **Step 6: Commit**
 
 ```bash
-git add packages/provider-ai/src/connectionTest.ts packages/provider-ai/src/index.ts packages/provider-ai/tests/connection-test.test.ts desktop/src/App.vue
+git add packages/provider-ai/src/connectionTest.ts packages/provider-ai/src/index.ts packages/provider-ai/tests/connection-test.test.ts apps/desktop/src/App.vue
 git commit -m "feat: add provider connection test"
 ```
 
@@ -687,13 +687,13 @@ git commit -m "feat: add provider connection test"
 ### Task 6: Dependency Checklist Panel
 
 **Files:**
-- Create: `desktop/src/components/DependencyChecklist.vue`
-- Modify: `desktop/src/App.vue`
+- Create: `apps/desktop/src/components/DependencyChecklist.vue`
+- Modify: `apps/desktop/src/App.vue`
 - Modify: `docs/reverse-engineering/demo-video-coverage.md`
 
 - [x] **Step 1: Create component**
 
-Create `desktop/src/components/DependencyChecklist.vue`:
+Create `apps/desktop/src/components/DependencyChecklist.vue`:
 
 ```vue
 <script setup lang="ts">
@@ -720,7 +720,7 @@ const results = checkSidecarDependencies({
 
 - [x] **Step 2: Add component styles**
 
-Add to `desktop/src/styles.css`:
+Add to `apps/desktop/src/styles.css`:
 
 ```css
 .dependency-list {
@@ -747,7 +747,7 @@ Add to `desktop/src/styles.css`:
 
 - [x] **Step 3: Add to settings card**
 
-Modify `desktop/src/App.vue` settings card:
+Modify `apps/desktop/src/App.vue` settings card:
 
 ```vue
 <DependencyChecklist />
@@ -767,7 +767,7 @@ Expected: PASS, settings card displays dependency messages.
 - [x] **Step 5: Commit**
 
 ```bash
-git add desktop/src/components/DependencyChecklist.vue desktop/src/App.vue desktop/src/styles.css docs/reverse-engineering/demo-video-coverage.md
+git add apps/desktop/src/components/DependencyChecklist.vue apps/desktop/src/App.vue apps/desktop/src/styles.css docs/reverse-engineering/demo-video-coverage.md
 git commit -m "feat: show dependency checklist"
 ```
 
@@ -776,13 +776,13 @@ git commit -m "feat: show dependency checklist"
 ### Task 7: Publish Confirmation and Task History
 
 **Files:**
-- Create: `desktop/src/features/task-center/taskHistory.ts`
-- Create: `desktop/src/features/task-center/taskHistory.test.ts`
-- Modify: `desktop/src/App.vue`
+- Create: `apps/desktop/src/features/task-center/taskHistory.ts`
+- Create: `apps/desktop/src/features/task-center/taskHistory.test.ts`
+- Modify: `apps/desktop/src/App.vue`
 
 - [x] **Step 1: Write task history tests**
 
-Create `desktop/src/features/task-center/taskHistory.test.ts`:
+Create `apps/desktop/src/features/task-center/taskHistory.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -824,7 +824,7 @@ describe("task history", () => {
 
 - [x] **Step 2: Implement task history**
 
-Create `desktop/src/features/task-center/taskHistory.ts`:
+Create `apps/desktop/src/features/task-center/taskHistory.ts`:
 
 ```ts
 import type { PublishPlatform } from "@mirax/core";
@@ -868,7 +868,7 @@ export function listLatestHistoryItems(items: PublishHistoryItem[]): PublishHist
 
 - [x] **Step 3: Add publish confirmation**
 
-Modify `desktop/src/App.vue` publish branch:
+Modify `apps/desktop/src/App.vue` publish branch:
 
 ```ts
 const confirmed = window.confirm(`确认创建 ${project.targetPlatforms.length} 个草稿发布任务？`);
@@ -881,14 +881,14 @@ When publish succeeds, push `createPublishHistoryItem(...)` into `taskHistory`.
 
 - [x] **Step 4: Show task history card**
 
-Modify `desktop/src/App.vue` log card to include latest 5 publish history items under execution logs.
+Modify `apps/desktop/src/App.vue` log card to include latest 5 publish history items under execution logs.
 
 - [x] **Step 5: Verify**
 
 Run:
 
 ```bash
-pnpm test -- desktop/src/features/task-center/taskHistory.test.ts
+pnpm test -- apps/desktop/src/features/task-center/taskHistory.test.ts
 pnpm typecheck
 ```
 
@@ -897,7 +897,7 @@ Browser expected: clicking publish asks for confirmation; confirming creates a t
 - [x] **Step 6: Commit**
 
 ```bash
-git add desktop/src/features/task-center/taskHistory.ts desktop/src/features/task-center/taskHistory.test.ts desktop/src/App.vue
+git add apps/desktop/src/features/task-center/taskHistory.ts apps/desktop/src/features/task-center/taskHistory.test.ts apps/desktop/src/App.vue
 git commit -m "feat: add publish confirmation and task history"
 ```
 
@@ -948,7 +948,7 @@ In browser:
 Run:
 
 ```bash
-"desktop/src-tauri/target/release/mirax-ai-desktop"
+"apps/desktop/src-tauri/target/release/mirax-ai-desktop"
 ```
 
 Expected: process remains alive for at least 3 seconds and does not print a panic.

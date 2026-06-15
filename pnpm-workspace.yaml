@@ -1,5 +1,3 @@
 packages:
-  - "desktop"
+  - "apps/*"
   - "packages/*"
-allowBuilds:
-  esbuild: false

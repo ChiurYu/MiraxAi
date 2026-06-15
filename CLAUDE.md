@@ -33,7 +33,7 @@ pnpm test
 
 ```bash
 pnpm test packages/core/tests/workflow.test.ts
-pnpm test desktop/src/runtime/desktopDraft.test.ts
+pnpm test apps/desktop/src/runtime/desktopDraft.test.ts
 ```
 
 全仓类型检查：
@@ -82,7 +82,7 @@ pnpm --filter @mirax/desktop preview
 
 仓库使用 pnpm workspace：
 
-- `desktop/`：桌面应用。
+- `apps/*`：应用。
 - `packages/*`：桌面端复用的共享包。
 
 ## 包说明
@@ -143,7 +143,7 @@ AI 服务抽象层。定义 `AiProvider` 接口，覆盖文案提取、文案改
 
 ## 桌面端说明
 
-路径：`desktop/`
+路径：`apps/desktop/`
 
 Tauri 2 桌面壳 + Vue 3 单页应用。
 
@@ -157,7 +157,7 @@ Tauri 2 桌面壳 + Vue 3 单页应用。
 - 当前桌面端使用 mock AI、mock media 和 mock publisher。真实能力后续通过 provider / sidecar 抽象替换，不要在 UI 层直接耦合模型服务、FFmpeg、Playwright 或 Python 服务细节。
 - workflow 状态转换在 `@mirax/core` 中保持不可变。桌面端用 Vue ref 持有 workflow，并通过 `updateStageStatus` 更新。
 - 八个 workflow 阶段顺序是：`transcribe -> rewrite -> voice-clone -> speech -> avatar -> compose -> review -> publish`。其中 `review` 为可选，其余为必需。
-- TypeScript path mapping 在 `tsconfig.base.json` 中配置；Vite alias 在 `desktop/vite.config.ts` 中配置。开发时 workspace import 直接指向包源码。
+- TypeScript path mapping 在 `tsconfig.base.json` 中配置；Vite alias 在 `apps/desktop/vite.config.ts` 中配置。开发时 workspace import 直接指向包源码。
 - 各 package 的 build 都是简单 `tsc` 编译，不使用包级 bundler。
 - 大型逆向输入文件不要入 Git，包括 DMG、操作视频、解包 ASAR、抽帧图片等，规则见 `.gitignore`。
 

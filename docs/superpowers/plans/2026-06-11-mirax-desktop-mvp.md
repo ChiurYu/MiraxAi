@@ -163,7 +163,7 @@ Create `pnpm-workspace.yaml`:
 
 ```yaml
 packages:
-  - "desktop"
+  - "apps/*"
   - "packages/*"
 ```
 
@@ -201,7 +201,7 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    include: ["packages/**/*.test.ts", "desktop/**/*.test.ts"],
+    include: ["packages/**/*.test.ts", "apps/**/*.test.ts"],
     environment: "node"
   }
 });
@@ -647,16 +647,16 @@ git commit -m "feat: add mock providers"
 
 **Files:**
 
-- Create: `desktop/package.json`
-- Create: `desktop/index.html`
-- Create: `desktop/src/main.ts`
-- Create: `desktop/src/App.vue`
-- Create: `desktop/src/routes.ts`
-- Create: `desktop/src/styles/tokens.css`
-- Create: `desktop/src/styles/app.css`
-- Create: `desktop/src-tauri/Cargo.toml`
-- Create: `desktop/src-tauri/tauri.conf.json`
-- Create: `desktop/src-tauri/src/main.rs`
+- Create: `apps/desktop/package.json`
+- Create: `apps/desktop/index.html`
+- Create: `apps/desktop/src/main.ts`
+- Create: `apps/desktop/src/App.vue`
+- Create: `apps/desktop/src/routes.ts`
+- Create: `apps/desktop/src/styles/tokens.css`
+- Create: `apps/desktop/src/styles/app.css`
+- Create: `apps/desktop/src-tauri/Cargo.toml`
+- Create: `apps/desktop/src-tauri/tauri.conf.json`
+- Create: `apps/desktop/src-tauri/src/main.rs`
 
 - [ ] **Step 1: Create Vue/Tauri package metadata**
 
@@ -724,7 +724,7 @@ Expected: Vue app builds.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add desktop
+git add apps/desktop
 git commit -m "feat: scaffold desktop app"
 ```
 
@@ -734,13 +734,13 @@ git commit -m "feat: scaffold desktop app"
 
 **Files:**
 
-- Create: `desktop/src/stores/workflowStore.ts`
-- Create: `desktop/src/stores/providerStore.ts`
-- Create: `desktop/src/components/AppShell.vue`
-- Create: `desktop/src/components/WorkflowStepper.vue`
-- Create: `desktop/src/components/VideoPreview.vue`
-- Create: `desktop/src/components/StatusPill.vue`
-- Create: `desktop/src/features/workspace/WorkspaceView.vue`
+- Create: `apps/desktop/src/stores/workflowStore.ts`
+- Create: `apps/desktop/src/stores/providerStore.ts`
+- Create: `apps/desktop/src/components/AppShell.vue`
+- Create: `apps/desktop/src/components/WorkflowStepper.vue`
+- Create: `apps/desktop/src/components/VideoPreview.vue`
+- Create: `apps/desktop/src/components/StatusPill.vue`
+- Create: `apps/desktop/src/features/workspace/WorkspaceView.vue`
 - Create: all workspace panel components listed in the target structure.
 
 - [ ] **Step 1: Implement workflow store**
@@ -809,7 +809,7 @@ Expected:
 - [ ] **Step 6: Commit**
 
 ```bash
-git add desktop/src
+git add apps/desktop/src
 git commit -m "feat: build desktop workflow UI"
 ```
 
@@ -819,9 +819,9 @@ git commit -m "feat: build desktop workflow UI"
 
 **Files:**
 
-- Create: `desktop/src/features/settings/ProviderSettingsView.vue`
-- Modify: `desktop/src/stores/providerStore.ts`
-- Modify: `desktop/src/routes.ts`
+- Create: `apps/desktop/src/features/settings/ProviderSettingsView.vue`
+- Modify: `apps/desktop/src/stores/providerStore.ts`
+- Modify: `apps/desktop/src/routes.ts`
 
 - [ ] **Step 1: Add provider forms**
 
@@ -854,7 +854,7 @@ Mock provider returns success. Unwired real providers show clear “未接入”
 - [ ] **Step 4: Commit**
 
 ```bash
-git add desktop/src/features/settings desktop/src/stores/providerStore.ts desktop/src/routes.ts
+git add apps/desktop/src/features/settings apps/desktop/src/stores/providerStore.ts apps/desktop/src/routes.ts
 git commit -m "feat: add provider settings UI"
 ```
 
