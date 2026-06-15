@@ -706,6 +706,25 @@ textarea {
   color: var(--mx-error);
 }
 
+.stage-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0 13px;
+  padding: 8px 10px;
+  border: 1px solid var(--mx-error);
+  border-radius: var(--mx-radius-md);
+  color: var(--mx-error);
+  background: var(--mx-error-bg);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.stage-error svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
 .two-columns {
   display: grid;
   grid-template-columns: 1fr 1fr;

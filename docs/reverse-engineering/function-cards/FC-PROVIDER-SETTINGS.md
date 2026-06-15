@@ -86,7 +86,7 @@
 
 | 字段 | 值 |
 | --- | --- |
-| 建议修改文件 | `apps/desktop/src/App.vue`、新增 `apps/desktop/src/components/SettingsPanel.vue`（或类似）、`packages/core/src/types.ts`、`packages/local-store/src/schema.ts`、`packages/provider-ai/src/openAiCompatible.ts`、`packages/sidecar-manager/src/dependencyChecks.ts` |
+| 建议修改文件 | `desktop/src/App.vue`、新增 `desktop/src/components/SettingsPanel.vue`（或类似）、`packages/core/src/types.ts`、`packages/local-store/src/schema.ts`、`packages/provider-ai/src/openAiCompatible.ts`、`packages/sidecar-manager/src/dependencyChecks.ts` |
 | 验证命令 | `pnpm typecheck`、`pnpm test`、`pnpm --filter @mirax/desktop dev:web` |
 | 验收标准 | 桌面端设置页能展示常规设置表单；用户可配置输出根目录；模型设置可新增 / 编辑 / 启用 Provider 配置；本地依赖检查能根据配置项给出状态提示 |
 | 任务边界 | 第一版先用 mock provider 跑通 workflow；真实 Provider 调用和连通测试后续再实现；不绕过旧版登录 / 激活 |

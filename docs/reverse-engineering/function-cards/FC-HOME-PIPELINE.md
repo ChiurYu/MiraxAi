@@ -70,7 +70,7 @@
 
 | 字段 | 值 |
 | --- | --- |
-| 建议修改文件 | `apps/desktop/src/App.vue`、`packages/core/`、`packages/provider-ai/`、`packages/media-pipeline/` |
+| 建议修改文件 | `desktop/src/App.vue`、`packages/core/`、`packages/provider-ai/`、`packages/media-pipeline/` |
 | 验证命令 | `pnpm typecheck`、`pnpm test`、`pnpm --filter @mirax/desktop dev:web` |
 | 验收标准 | 桌面端首页能按顺序展示 7 步生产流程，mock 跑通后能生成音频、数字人视频、成片和发布前确认 |
 | 任务边界 | 不实现真实模型调用，不绕过旧版登录/激活，只做新版界面和 mock 流程 |
