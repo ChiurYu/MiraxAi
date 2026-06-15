@@ -52,3 +52,10 @@
 | EV-RUNTIME-130 | E1 | high | 人工截图 | 旧版 App 任务中心页可见界面截图，用于补齐任务列表、状态、进度、失败原因、重试和查看结果入口。 | `docs/截图/任务中心.png` | PAGE-TASK-CENTER | FC-ASSET-MANAGEMENT | Codex | 2026-06-13 |
 | EV-RUNTIME-140 | E1 | high | 人工截图 | 旧版 App 账号管理页可见界面截图，用于补齐平台账号列表、登录状态、添加账号、删除账号、浏览器 profile 或授权提示。 | `docs/截图/账号管理.png` | PAGE-ACCOUNT-MANAGEMENT | FC-ASSET-MANAGEMENT | Codex | 2026-06-13 |
 | EV-RUNTIME-200 | E2 | low | 运行态观察 / 人工截图 | P2 辅助入口和边缘状态页面卡，基于首页和设置页截图汇总帮助、软件更新、数据设置、提示词管理、日志上传、登录/激活弹窗、空状态和依赖缺失提示。 | `docs/reverse-engineering/pages/PAGE-SECONDARY-ENTRYPOINTS.md`; `docs/截图/首页.png`; `docs/截图/设置.png` | PAGE-SECONDARY-ENTRYPOINTS | N/A | Codex | 2026-06-13 |
+| EV-STATIC-001 | E3 | medium | 旧包静态分析 | 旧版 DMG 基本属性与挂载路径确认。 | `ASSET-PKG-001` | N/A | N/A | Codex | 2026-06-15 |
+| EV-STATIC-002 | E3/E2 | medium | 旧包静态分析 | P0 发布流程静态补证：发布调用链、平台接口、账号存储。 | `docs/reverse-engineering/static-analysis/SA-PUBLISH-FLOW.md` | PAGE-PUBLISH-FLOW | FC-PUBLISH-PREP | Codex | 2026-06-15 |
+| EV-STATIC-003 | E3/E2 | medium | 旧包静态分析 | P0 设置与本地依赖静态补证：模型配置、服务配置、依赖检查、输出目录。 | `docs/reverse-engineering/static-analysis/SA-SECONDARY-ENTRYPOINTS.md` | PAGE-SETTINGS、PAGE-SECONDARY-ENTRYPOINTS | FC-PROVIDER-SETTINGS | Codex | 2026-06-15 |
+| EV-STATIC-100 | E3/E2 | medium | 旧包静态分析 | P1 声音与形象管理静态补证：CosyVoice / HeyGem 调用、训练/合成 API、表结构。 | `docs/reverse-engineering/static-analysis/SA-VOICE-AVATAR.md` | PAGE-VOICE-MANAGEMENT、PAGE-AVATAR-MANAGEMENT | FC-ASSET-MANAGEMENT | Codex | 2026-06-15 |
+| EV-STATIC-101 | E3/E2 | medium | 旧包静态分析 | P1 素材与任务中心静态补证：素材表结构、FFmpeg 抽帧、任务状态机。 | `docs/reverse-engineering/static-analysis/SA-MATERIALS-TASKS.md` | PAGE-MATERIALS、PAGE-TASK-CENTER | FC-ASSET-MANAGEMENT | Codex | 2026-06-15 |
+| EV-STATIC-102 | E3/E2 | medium | 旧包静态分析 | P1 账号管理与授权静态补证：平台账号表、浏览器 profile、Token 存储。 | `docs/reverse-engineering/static-analysis/SA-ACCOUNTS-AUTH.md` | PAGE-ACCOUNT-MANAGEMENT | FC-ASSET-MANAGEMENT、FC-PUBLISH-PREP | Codex | 2026-06-15 |
+| EV-STATIC-200 | E3/E2 | low | 旧包静态分析 | P2 辅助入口与边缘状态静态补证：帮助、更新、数据设置、日志上传、依赖检查。 | `docs/reverse-engineering/static-analysis/SA-SECONDARY-ENTRYPOINTS.md` | PAGE-SECONDARY-ENTRYPOINTS | FC-PROVIDER-SETTINGS | Codex | 2026-06-15 |
