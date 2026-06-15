@@ -16,11 +16,11 @@
 
 **当前阶段：** 阶段 2：旧包静态分析补盲区。
 
-**已完成任务：** 阶段 1 运行态全量巡检已完成；阶段 2 Task 1/2/3/4 已完成，已登记旧版 DMG 资产、阶段 2 证据范围，建立解包与搜索工作流笔记，完成 P0 发布流程静态补证和 P1 资产管理静态补证（声音/形象、素材/任务、账号/授权）。
+**已完成任务：** 阶段 1 运行态全量巡检已完成；阶段 2 Task 1/2/3/4/5 已完成，已登记旧版 DMG 资产、阶段 2 证据范围，建立解包与搜索工作流笔记，完成 P0 发布流程静态补证、P1 资产管理静态补证（声音/形象、素材/任务、账号/授权）和 P2 辅助入口与边缘状态静态补证。
 
-**当前任务：** 从 Task 5 开始：P2 辅助入口与边缘状态静态补证。
+**当前任务：** 从 Task 6 开始：阶段 2 汇总与项目状态更新。
 
-**下一步：** 按 Task 5 → Task 6 顺序执行。
+**下一步：** 执行 Task 6，完成阶段 2 汇总与项目状态更新。
 
 **验证命令：**
 
@@ -510,17 +510,18 @@ git status --short
 **文件：**
 
 - 创建：`docs/reverse-engineering/static-analysis/SA-SECONDARY-ENTRYPOINTS.md`
+- 修改：`docs/reverse-engineering/evidence-index.md`
 - 修改：`docs/reverse-engineering/pages/PAGE-SECONDARY-ENTRYPOINTS.md`
 - 修改：`docs/reverse-engineering/function-cards/FC-PROVIDER-SETTINGS.md`
 - 修改：`docs/reverse-engineering/runtime-blockers.md`
 
-- [ ] **Step 1：搜索辅助入口相关字符串**
+- [x] **Step 1：搜索辅助入口相关字符串**
 
 ```bash
 rg -i "help|帮助|about|关于|update|更新|data.*setting|数据设置|log|日志|upload|上传|dependency|依赖|ffmpeg|python|prompt|提示词" "$EXTRACT_DIR" --type-add 'js:*.{js,ts}' -t js | head -80
 ```
 
-- [ ] **Step 2：检查本地配置与 plist**
+- [x] **Step 2：检查本地配置与 plist**
 
 ```bash
 find "$MOUNT_DIR" -name "*.plist" -o -name "*.json" -o -name "*.db" -o -name "*.sqlite" | head -20
@@ -528,19 +529,19 @@ find "$MOUNT_DIR" -name "*.plist" -o -name "*.json" -o -name "*.db" -o -name "*.
 
 查看应用配置、本地数据库路径、缓存目录、更新配置等。
 
-- [ ] **Step 3：写入静态分析记录**
+- [x] **Step 3：写入静态分析记录**
 
 创建 `SA-SECONDARY-ENTRYPOINTS.md`，记录帮助、更新、数据设置、日志上传、依赖检查、提示词管理等的模块路径、配置字段和受限原因。
 
-- [ ] **Step 4：更新 P2 页面卡和 Provider 设置功能卡**
+- [x] **Step 4：更新 P2 页面卡和 Provider 设置功能卡**
 
 如发现了设置页的具体字段（模型配置、Base URL、依赖路径、输出目录等），更新 `PAGE-SECONDARY-ENTRYPOINTS.md` 和 `FC-PROVIDER-SETTINGS.md`。
 
-- [ ] **Step 5：更新运行障碍记录**
+- [x] **Step 5：更新运行障碍记录**
 
 更新 RB-SECONDARY-001 至 RB-SECONDARY-005 的静态补证方向和替代方案。
 
-- [ ] **Step 6：运行验证**
+- [x] **Step 6：运行验证**
 
 ```bash
 test -f docs/reverse-engineering/static-analysis/SA-SECONDARY-ENTRYPOINTS.md
@@ -548,7 +549,7 @@ rg -n "EV-STATIC-200" docs/reverse-engineering/evidence-index.md
 rg -n "SA-SECONDARY-ENTRYPOINTS" docs/reverse-engineering/pages/PAGE-SECONDARY-ENTRYPOINTS.md docs/reverse-engineering/function-cards/FC-PROVIDER-SETTINGS.md docs/reverse-engineering/runtime-blockers.md
 ```
 
-- [ ] **Step 7：运行验证并汇报 diff**
+- [x] **Step 7：运行验证并汇报 diff**
 
 运行本任务验证命令，确认 `SA-SECONDARY-ENTRYPOINTS.md` 和相关页面卡/功能卡/运行障碍已更新。然后汇报当前 diff 摘要，等待总控验收，不要自行 commit：
 
