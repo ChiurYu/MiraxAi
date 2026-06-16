@@ -15,10 +15,10 @@
 
 | 字段 | 值 |
 | --- | --- |
-| 证据 ID | EV-RUNTIME-010 |
-| 最高证据等级 | E1 |
-| 可信度 | high |
-| 冲突说明 | N/A |
+| 证据 ID | EV-RUNTIME-010、EV-STATIC-003、EV-STATIC-200 |
+| 最高证据等级 | E3 |
+| 可信度 | medium |
+| 静态分析记录 | `docs/reverse-engineering/static-analysis/SA-SECONDARY-ENTRYPOINTS.md` |
 
 ## 用户目标
 
@@ -28,12 +28,12 @@
 
 | 区域 | 控件或字段 | 行为 |
 | --- | --- | --- |
-| 常规设置 | 界面主题、统一输出根目录、音频 / 视频 / 封面输出路径 | 配置应用外观和文件输出位置；子目录由根目录自动派生 |
-| 模型设置（入口可见，内容待补证） | 预计包含 AI 模型、API Key、Base URL、服务状态 | 配置文案提取、改写、声音克隆、语音合成、数字人视频生成的 Provider |
-| 提示词管理（入口可见，内容待补证） | 预计包含改写提示词、角色设定、系统提示词 | 管理文案改写和生成任务使用的提示词模板 |
-| 数据设置（入口可见，内容待补证） | 预计包含本地数据目录、缓存清理、导入 / 导出 | 管理 SQLite 本地库、素材缓存和草稿数据 |
-| 软件更新（入口可见，内容待补证） | 预计包含当前版本、检查更新、自动更新开关 | 管理桌面端应用更新行为 |
-| 全局支持入口 | 「出现错误？点击此处上传日志」按钮 | 上传日志或跳转到支持反馈页面 |
+| 常规设置 | 界面主题 `themeName`、运行模式 `runMode(local/cloud)`、AI 算力来源 `ai.source(platform/custom)`、统一输出根目录 `paths.baseOutput` | 配置应用外观、本地/云端运行模式、文件输出根目录；子目录 `audios/videos/drafts/exports/thumbs` 由根目录自动派生 |
+| 模型设置 | AI 来源、Base URL、API Key、模型列表 `availableModels`、标题模型 `titleModel.model`、翻译模型 `translation.model`、数字人版本 `digitalHuman.modelVersion`、声音高性能模式 `voiceClone.highPerformance` | 配置文案提取、改写、声音克隆、语音合成、数字人视频生成的 Provider；支持平台内置或用户自有 OpenAI-compatible 服务 |
+| 提示词管理 | 标题生成提示词 `prompts.titlePrompt`、文案写作提示词、提示词名称/内容/描述 | 管理改写与标题生成任务使用的提示词模板；支持增删改与设为当前提示词 |
+| 数据设置 | 本地数据库路径 `data.databaseUrl`、数据备份/恢复、清除缓存、重置所有数据 | 管理 SQLite 本地库、素材缓存、草稿数据；通过 `db.backup/restore` 与 `file.clearCache` 实现 |
+| 软件更新 | 当前版本 `appVersion`、检查更新、下载更新、应用更新 | 通过 `cloud.checkVersion/downloadUpdate/applyUpdate` 实现；更新完成后自动重启 |
+| 全局支持入口 | 「出现错误点击此处上报日志」按钮 | 调用 `file.uploadTodayLog` 上报日志；主进程 `logger.*` 负责分级日志收集 |
 
 ## 输入与输出
 
@@ -47,24 +47,26 @@
 
 | 层级 | 证据或预期职责 |
 | --- | --- |
-| 前端 | 桌面端设置页按标签分组展示配置项；文件路径选择调用 Tauri 原生对话框；主题切换即时生效 |
-| Provider | `@mirax/provider-ai` 的 `AiProvider` 接口抽象文案提取、改写、声音克隆、语音合成、数字人视频生成；`ApiKeyProviderConfig`（`id / label / provider / apiKey / baseUrl / model / enabled`）作为配置实体 |
-| Sidecar | `@mirax/sidecar-manager` 负责 FFmpeg、Playwright 浏览器、Python 本地服务、HeyGem、CosyVoice 的健康检查和依赖校验 |
-| 本地存储 | `@mirax/local-store` 的 `provider_configs` 表持久化 Provider 配置；`content_drafts`、`video_projects`、`workflow_tasks` 表持久化草稿、项目和任务；输出目录由用户指定并存放生成的音频、视频、封面 |
-| 外部服务 | 用户自行配置的 AI 服务（OpenAI-compatible 或其他兼容接口）；旧版云端账号 / 激活校验在 Mirax AI 第一版中不强制依赖 |
+| 前端 | 桌面端设置页按 `general/model/prompts/data/update` 标签分组展示配置项；文件路径选择调用 Tauri 原生对话框；主题切换即时生效；依赖状态通过 `python.getStatus` / `checkModuleExists` 展示 |
+| Preload / IPC | `config.*` 读写配置；`file.*` 处理路径选择、缓存清理、日志上传/打开；`db.backup/restore` 备份恢复；`cloud.checkVersion/downloadUpdate/applyUpdate` 软件更新；`llm.updateConfig/testConnectionWithConfig` Provider 配置与连通测试；`python.getStatus/checkModuleExists` 依赖检查；`logger.*` 日志分级 |
+| Provider | `@mirax/provider-ai` 的 `AiProvider` 接口抽象文案提取、改写、声音克隆、语音合成、数字人视频生成；`ApiKeyProviderConfig`（`id / label / provider / apiKey / baseUrl / model / enabled`）作为配置实体；旧版 `ai.source=platform/custom` 映射到内置 mock 或用户自定义 Provider |
+| Sidecar | `@mirax/sidecar-manager` 负责 FFmpeg、Playwright 浏览器、Python 本地服务、HeyGem、CosyVoice 的健康检查和依赖校验；对应旧版模块 `asrModule`、`voiceCloneModule`、`humanModule`/`hdModule` |
+| 本地存储 | `@mirax/local-store` 的 `provider_configs` 表持久化 Provider 配置；新增 `app_settings` 表存储 `general`/`ai`/`paths`/`voiceClone`/`digitalHuman`/`prompts`/`data` 等分类配置；`content_drafts`、`video_projects`、`workflow_tasks` 表持久化草稿、项目和任务；输出目录由用户指定并存放生成的音频、视频、封面 |
+| 外部服务 | 用户自行配置的 AI 服务（OpenAI-compatible 或其他兼容接口）；旧版云端账号 / 激活校验在 Mirax AI 第一版中不强制依赖；软件更新由 Tauri 2 Updater 替代旧版 `cloud.*` 更新通道 |
 
 ## 旧版设置到 Mirax AI 的映射
 
 | 旧版设置项 | Mirax AI 对应模块 | 说明 |
 | --- | --- | --- |
-| 常规设置 → 界面主题 | 桌面端 UI 主题状态 | 由 Vue / Tauri 前端主题系统管理，不进入 Provider 配置 |
-| 常规设置 → 统一输出根目录 | `@mirax/media-pipeline` + 桌面端文件系统 | 用户选择根目录后，自动生成 `audios`、`videos`、`drafts`、`exports`、`thumbs` 子目录；与 `ProjectDraft` 和 `VideoProjectRecord` 的输出字段对齐 |
-| 模型设置 → API Key / Base URL / 模型 | `@mirax/core` 的 `ApiKeyProviderConfig` + `@mirax/local-store` 的 `provider_configs` 表 | 旧版由云端下发或内置的模型配置，Mirax AI 改为用户自行配置；支持 `openai`、`whisper`、`cosyvoice`、`heygem`、`custom` 等 Provider 类型 |
-| 模型设置 → 服务状态 / 连通测试 | `@mirax/sidecar-manager` 的 `checkSidecarDependencies` + `@mirax/provider-ai` 的 Provider 实例 | 校验本地依赖和外部服务地址格式，真实连通测试在 Provider 实现中补充 |
-| 提示词管理 → 改写提示词 / 系统提示词 | `@mirax/core` 的 workflow 配置或 `@mirax/provider-ai` 的 Provider 选项 | 当前 `RewriteScriptInput` 已包含 `productName`、`sellingPoints`，提示词模板可作为扩展字段存储在本地配置或 draft 中 |
-| 数据设置 → 本地数据 / 缓存 | `@mirax/local-store` 的 SQLite 迁移和 repositories | 管理草稿、项目、任务、账号、配置；缓存清理对应删除或重置本地数据库和输出目录 |
-| 软件更新 → 版本 / 检查更新 | Tauri 2 Updater | 桌面端应用更新由 Tauri 框架负责，不进入业务 Provider 配置 |
-| 全局 → 上传日志 | Tauri 日志 + 支持通道 | 收集前端和 Rust 侧日志，用于排错和反馈 |
+| 常规设置 → 界面主题 | 桌面端 UI 主题状态 | 由 Vue / Tauri 前端主题系统管理；对应 `general.themeName` |
+| 常规设置 → 运行模式 / AI 算力来源 | `@mirax/provider-ai` Provider 来源切换 | `runMode=local` 优先走本地 sidecar / mock；`runMode=cloud` 或 `ai.source=custom` 走用户配置的外部 API；`ai.source=platform` 在第一版映射为 mock |
+| 常规设置 → 统一输出根目录 | `@mirax/media-pipeline` + 桌面端文件系统 | 用户选择根目录后，自动生成 `audios`、`videos`、`drafts`、`exports`、`thumbs` 子目录；与 `ProjectDraft` 和 `VideoProjectRecord` 的输出字段对齐；对应 `paths.*` |
+| 模型设置 → API Key / Base URL / 模型 | `@mirax/core` 的 `ApiKeyProviderConfig` + `@mirax/local-store` 的 `provider_configs` 表 | 旧版由云端下发或内置的模型配置，Mirax AI 改为用户自行配置；支持 `openai`、`whisper`、`cosyvoice`、`heygem`、`custom` 等 Provider 类型；对应 `ai.baseURL`、`ai.apiKey`、`titleModel.model`、`translation.model` |
+| 模型设置 → 服务状态 / 连通测试 | `@mirax/sidecar-manager` 的 `checkSidecarDependencies` + `@mirax/provider-ai` 的 Provider 实例 + `llm:testConnectionWithConfig` | 校验本地依赖和外部服务地址格式，真实连通测试在 Provider 实现中补充 |
+| 提示词管理 → 标题/文案提示词 | `@mirax/core` 的 workflow 配置或 `@mirax/provider-ai` 的 Provider 选项 | 对应 `prompts.titlePrompt`；当前 `RewriteScriptInput` 已包含 `productName`、`sellingPoints`，提示词模板可作为扩展字段存储在本地配置或 draft 中 |
+| 数据设置 → 本地数据 / 缓存 / 备份 | `@mirax/local-store` 的 SQLite 迁移和 repositories | 管理草稿、项目、任务、账号、配置；`data.databaseUrl` 指定 SQLite 路径；缓存清理对应删除或重置本地数据库和输出目录；备份恢复对应 `db.backup/restore` |
+| 软件更新 → 版本 / 检查更新 | Tauri 2 Updater | 桌面端应用更新由 Tauri 框架负责，替代旧版 `cloud.checkVersion/downloadUpdate/applyUpdate` |
+| 全局 → 上传日志 | Tauri 日志 + 支持通道 | 收集前端和 Rust 侧日志，用于排错和反馈；第一版可先本地导出/复制 |
 
 ## 限制与风险
 

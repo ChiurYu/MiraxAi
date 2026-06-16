@@ -38,3 +38,4 @@
 | ASSET-RUNTIME-015 | EV-RUNTIME-130 | 人工截图 | 待跟踪 | `docs/截图/任务中心.png` | 用户手动提供的旧版任务中心页截图，用于阶段 1 Task 5 Step 4。 | `docs/reverse-engineering/pages/PAGE-TASK-CENTER.md` | 2026-06-13 |
 | ASSET-RUNTIME-016 | EV-RUNTIME-140 | 人工截图 | 待跟踪 | `docs/截图/账号管理.png` | 用户手动提供的旧版账号管理页截图，用于阶段 1 Task 5 Step 5。 | `docs/reverse-engineering/pages/PAGE-ACCOUNT-MANAGEMENT.md` | 2026-06-13 |
 | ASSET-RUNTIME-017 | EV-RUNTIME-200 | Markdown 页面卡 | 已跟踪 | `docs/reverse-engineering/pages/PAGE-SECONDARY-ENTRYPOINTS.md` | 阶段 1 P2 辅助入口与边缘状态页面卡，汇总帮助、软件更新、数据设置、提示词管理、日志上传、登录/激活弹窗和依赖缺失提示。 | `docs/reverse-engineering/pages/PAGE-SECONDARY-ENTRYPOINTS.md` | 2026-06-13 |
+| ASSET-PKG-001 | EV-STATIC-001 | DMG 安装包 | 不提交 | `/Users/yuzhenzhao/code/ai/轻语IP智能体-5.0.0-苹果芯片.dmg` | 旧版「轻语 IP 智能体」5.0.0 苹果芯片版 DMG，用于阶段 2 静态分析。 | `docs/reverse-engineering/static-analysis/SA-PUBLISH-FLOW.md` 等 | 2026-06-15 |

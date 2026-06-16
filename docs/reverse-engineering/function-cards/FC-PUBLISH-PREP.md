@@ -15,10 +15,11 @@
 
 | 字段 | 值 |
 | --- | --- |
-| 证据 ID | EV-RUNTIME-020、EV-RUNTIME-001、EV-RUNTIME-130、EV-RUNTIME-140 |
-| 最高证据等级 | E2 |
+| 证据 ID | EV-RUNTIME-020、EV-RUNTIME-001、EV-RUNTIME-130、EV-RUNTIME-140、EV-STATIC-002 |
+| 最高证据等级 | E3 |
 | 可信度 | medium |
-| 冲突说明 | N/A |
+| 冲突说明 | 静态字符串未找到 `shipinhao`/`视频号` 平台标识；旧版运行态截图是否包含视频号待确认。 |
+| 静态分析记录 | `docs/reverse-engineering/static-analysis/SA-PUBLISH-FLOW.md` |
 
 ## 用户目标
 
@@ -45,11 +46,12 @@
 
 | 层级 | 证据或预期职责 |
 | --- | --- |
-| 前端 | 首页第 6、7 步卡片收集发布元数据；账号管理页维护账号列表；任务中心展示发布任务 |
+| 前端 | 首页第 6、7 步卡片收集发布元数据；账号管理页维护账号列表；任务中心展示发布任务；renderer 中可见 `publish-video`、`publish-accounts`、`PublishRecords` 等路由 / 组件线索 |
+| Preload / IPC | `electron/main/preload.js` 暴露 `publish.publishVideo(payload)` → `publish:publish-video`；`account.*` 系列接口管理账号；`task.*` 系列接口创建与更新任务 |
 | Provider | `@mirax/provider-publish` 的 `Publisher` 接口抽象各平台发布行为；`PublishAccount` 描述平台账号与登录状态 |
 | Sidecar | Playwright 浏览器自动化负责平台登录、授权、上传视频、填写表单和发布/保存草稿 |
-| 本地存储 | `@mirax/local-store` 的 `publish_accounts` 表持久化账号；`workflow_tasks` 表记录发布任务状态与结果 |
-| 外部服务 | 抖音、小红书、快手、视频号、B 站等平台的上传与发布接口；受平台规则、风控和登录状态限制 |
+| 本地存储 | `@mirax/local-store` 的 `publish_accounts` 表持久化账号（字段参考 `account_name`、`display_name`、`platform`、`last_login_at`、`status`/`active`）；`workflow_tasks` 表记录发布任务状态与结果（状态机参考 `pending/processing/completed/failed/cancelled`） |
+| 外部服务 | 抖音、小红书、快手、B 站等平台的上传与发布接口；视频号待确认；受平台规则、风控和登录状态限制 |
 
 ## 旧版发布能力到 Mirax AI 的映射
 
@@ -57,7 +59,7 @@
 | --- | --- | --- |
 | 首页第 6 步「标题封面」 | 桌面端首页 workflow 的 `review` / `publish` 阶段输入 | 标题、描述、话题、封面作为 `ProjectDraft.publishMetadata` 或 `PublishInput` 字段 |
 | 首页第 7 步「视频发布」 | `@mirax/provider-publish` 的 `publish` 方法 | 接收视频文件、元数据、账号、发布方式，创建发布任务 |
-| 发布账号管理 | `@mirax/local-store` 的 `publish_accounts` 表 + `@mirax/provider-publish` 账号接口 | 支持 `douyin`、`xiaohongshu`、`kuaishou`、`shipinhao`、`bilibili` 等平台 |
+| 发布账号管理 | `@mirax/local-store` 的 `publish_accounts` 表 + `@mirax/provider-publish` 账号接口 | 静态分析确认 `account_name`、`display_name`、`platform`、`last_login_at`、`status`/`active` 字段；支持 `douyin`、`xiaohongshu`、`kuaishou`、`bilibili` 等平台；`shipinhao` 未在静态字符串中出现，待运行态确认 |
 | 直接发布 / 草稿 | `PublishOptions.publishMode` | `direct` 表示直接发布，`draft` 表示保存为平台草稿 |
 | 任务中心查看发布结果 | `@mirax/local-store` 的 `workflow_tasks` 表 + 前端任务列表 | 记录任务状态、进度、当前步骤、失败原因和结果入口 |
 | 平台登录 / 授权 | Playwright sidecar 的浏览器自动化 | 旧版通过浏览器完成平台授权；Mirax AI 第一版先用 mock publisher，真实授权后续通过 sidecar 实现 |
@@ -70,7 +72,7 @@
 | 平台授权流程不稳定 | 二维码过期、风控、Cookie 失效会导致授权失败 | 在任务中心记录失败原因，支持重试或重新授权 |
 | 平台规则差异 | 各平台标题长度、话题格式、封面尺寸、视频时长限制不同 | Publisher 实现中按平台规则校验输入，前端按平台给出提示 |
 | 真实发布需要浏览器自动化 | 抖音 / 小红书等平台未开放稳定发布 API | 通过 Playwright 模拟浏览器上传；无法绕过平台登录和验证码 |
-| 发布前确认页未确认 | 不确定点击「立即发布」后是否有二次确认弹窗 | 第一版先做首页内发布卡片；如后续补证存在确认页，再增加独立确认步骤 |
+| 发布前确认页未确认 | 截图未展示二次确认弹窗；静态分析未发现独立确认页路由或弹窗组件，`publish:publish-video` 为单一 IPC 入口，倾向于首页卡片内直接触发 | 第一版先做首页内发布卡片；后续如运行态发现确认弹窗，再增加确认步骤 |
 
 ## Mirax AI 实现建议
 

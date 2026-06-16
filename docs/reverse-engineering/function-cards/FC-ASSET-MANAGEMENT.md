@@ -15,10 +15,11 @@
 
 | 字段 | 值 |
 | --- | --- |
-| 证据 ID | EV-RUNTIME-100、EV-RUNTIME-110、EV-RUNTIME-120、EV-RUNTIME-130、EV-RUNTIME-140 |
-| 最高证据等级 | E1 |
-| 可信度 | high |
-| 冲突说明 | N/A |
+| 证据 ID | EV-RUNTIME-100、EV-RUNTIME-110、EV-RUNTIME-120、EV-RUNTIME-130、EV-RUNTIME-140、EV-STATIC-100、EV-STATIC-101、EV-STATIC-102 |
+| 最高证据等级 | E3 |
+| 可信度 | medium |
+| 冲突说明 | 静态字符串未找到 `shipinhao`/`视频号` 平台标识。 |
+| 静态分析记录 | `docs/reverse-engineering/static-analysis/SA-VOICE-AVATAR.md`、`SA-MATERIALS-TASKS.md`、`SA-ACCOUNTS-AUTH.md` |
 
 ## 用户目标
 
@@ -46,10 +47,11 @@
 
 | 层级 | 证据或预期职责 |
 | --- | --- |
-| 前端 | Vue 管理页面提供上传区、列表、搜索、筛选、空状态；调用 Tauri 命令或本地 API 读写资源 |
+| 前端 | Vue 管理页面提供上传区、列表、搜索、筛选、空状态；调用 preload 暴露的 IPC 接口读写资源 |
+| Preload / IPC | `voice.*` / `digitalHuman.*` 管理声音与形象；`material.*` / `category.*` / `vector.*` 管理素材与向量化；`task.*` 管理任务状态；`account.*` 管理平台账号与授权 |
 | Provider | `@mirax/provider-ai` 负责声音克隆与语音合成；`@mirax/provider-publish` 负责平台账号与发布能力 |
 | Sidecar | `@mirax/sidecar-manager` 管理 FFmpeg（音频提取/抽帧）、CosyVoice（声音训练/合成）、HeyGem（数字人训练）、Playwright（平台授权） |
-| 本地存储 | `@mirax/local-store` 持久化声音、形象、素材、任务、账号的元数据和状态；原始媒体文件按设置页输出目录存放 |
+| 本地存储 | `@mirax/local-store` 持久化声音、形象、素材、任务、账号的元数据和状态；参考字段：`voice`/`digitalHuman` 用 `db:*` 模型语义；`materials` 含 `file_path/file_name/category/description/status/error/result/created_at`；`workflow_tasks` 含 `status/progress/current_step/input/output/error/created_at/updated_at`；`publish_accounts` 含 `account_name/display_name/platform/last_login_at/status/active` |
 | 外部服务 | 云端模型或平台登录页（仅在真实能力启用时使用；第一版用 mock 替代） |
 
 ## 限制与风险
