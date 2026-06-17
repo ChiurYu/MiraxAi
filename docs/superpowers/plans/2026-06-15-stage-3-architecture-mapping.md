@@ -14,13 +14,13 @@
 
 **当前自动调度入口：** `docs/superpowers/plans/2026-06-15-stage-3-architecture-mapping.md`
 
-**当前阶段：** 阶段 3：Mirax AI 新版产品架构映射。
+**当前阶段：** 阶段 3：Mirax AI 新版产品架构映射（已完成）。
 
-**已完成任务：** 阶段 0、阶段 1、阶段 2 已完成；阶段 2 已登记 `EV-STATIC-001` 到 `EV-STATIC-200`，完成发布、设置、声音/形象、素材/任务、账号/授权、辅助入口与边缘状态静态补证。
+**已完成任务：** 阶段 0、阶段 1、阶段 2 已完成；阶段 2 已登记 `EV-STATIC-001` 到 `EV-STATIC-200`；阶段 3 Task 1 → Task 7 已全部完成，产出 `docs/product-architecture/` 下 6 份架构映射文档。
 
-**当前任务：** 从 Task 1 开始创建阶段 3 架构映射文档。
+**当前任务：** 无。阶段 3 已收尾，不要重复执行 Task 1 → Task 7。
 
-**下一步：** 完成 Task 1 到 Task 7 后，进入阶段 4：把映射结果拆成面向源码实现的 implementation plans。
+**下一步：** 进入阶段 4：按 `docs/product-architecture/ui-ux-and-phase-4-handoff.md` 的 P0 → P1 → P2 队列创建面向源码实现的 implementation plans。
 
 **验证命令：**
 
@@ -122,7 +122,7 @@ git diff -- docs/reverse-engineering/legacy-ui-gap-list.md
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 - 与阶段 3 映射无关的文档
 
-- [ ] **Step 1：创建目录和 README**
+- [x] **Step 1：创建目录和 README**
 
 创建 `docs/product-architecture/README.md`，内容必须包含以下小节：
 
@@ -150,7 +150,7 @@ git diff -- docs/reverse-engineering/legacy-ui-gap-list.md
 | `ui-ux-and-phase-4-handoff.md` | 需要 UI/UX skill 的复杂页面、设计产物落点和阶段 4 实施队列。 |
 ```
 
-- [ ] **Step 2：创建证据源清单**
+- [x] **Step 2：创建证据源清单**
 
 创建 `docs/product-architecture/stage-3-source-inventory.md`，至少包含以下表格：
 
@@ -207,7 +207,7 @@ git diff -- docs/reverse-engineering/legacy-ui-gap-list.md
 | `docs/reverse-engineering/runtime-blockers.md` | 将登录、激活、云服务、模型、本地依赖、平台规则限制映射为新版风险和替代实现。 |
 ```
 
-- [ ] **Step 3：运行验证**
+- [x] **Step 3：运行验证**
 
 ```bash
 test -f docs/product-architecture/README.md
@@ -244,7 +244,7 @@ rg -n "SA-PUBLISH-FLOW|SA-VOICE-AVATAR|SA-MATERIALS-TASKS|SA-ACCOUNTS-AUTH|SA-SE
 - `docs/reverse-engineering/function-cards/`
 - `docs/reverse-engineering/pages/`
 
-- [ ] **Step 1：创建信息架构映射文档**
+- [x] **Step 1：创建信息架构映射文档**
 
 创建 `docs/product-architecture/legacy-function-to-information-architecture.md`，必须包含以下模块地图：
 
@@ -266,7 +266,7 @@ rg -n "SA-PUBLISH-FLOW|SA-VOICE-AVATAR|SA-MATERIALS-TASKS|SA-ACCOUNTS-AUTH|SA-SE
 | 帮助与边缘状态 | `PAGE-SECONDARY-ENTRYPOINTS`、`EV-STATIC-200` | 提供引导、日志、更新、数据恢复和依赖缺失提示。 | 合并：帮助、日志、更新放入设置/支持入口；登录激活不移植为强制门槛。 |
 ```
 
-- [ ] **Step 2：补充页面到导航映射**
+- [x] **Step 2：补充页面到导航映射**
 
 在同一文件追加：
 
@@ -286,7 +286,7 @@ rg -n "SA-PUBLISH-FLOW|SA-VOICE-AVATAR|SA-MATERIALS-TASKS|SA-ACCOUNTS-AUTH|SA-SE
 | `PAGE-SECONDARY-ENTRYPOINTS` | 设置 / 支持 / 引导 | 低频入口 | 帮助、日志、软件更新、数据恢复、依赖缺失提示合并管理。 |
 ```
 
-- [ ] **Step 3：补充旧版能力决策矩阵**
+- [x] **Step 3：补充旧版能力决策矩阵**
 
 在同一文件追加：
 
@@ -309,7 +309,7 @@ rg -n "SA-PUBLISH-FLOW|SA-VOICE-AVATAR|SA-MATERIALS-TASKS|SA-ACCOUNTS-AUTH|SA-SE
 | 日志上传 | `EV-STATIC-200` | 设置 / 支持 | 替代实现 | 第一版本地导出/复制，云端上传待服务端明确。 |
 ```
 
-- [ ] **Step 4：更新 README 索引状态**
+- [x] **Step 4：更新 README 索引状态**
 
 在 `docs/product-architecture/README.md` 的文档索引后追加一句：
 
@@ -317,7 +317,7 @@ rg -n "SA-PUBLISH-FLOW|SA-VOICE-AVATAR|SA-MATERIALS-TASKS|SA-ACCOUNTS-AUTH|SA-SE
 当前已完成：旧版功能到新版信息架构映射见 `legacy-function-to-information-architecture.md`。
 ```
 
-- [ ] **Step 5：运行验证**
+- [x] **Step 5：运行验证**
 
 ```bash
 test -f docs/product-architecture/legacy-function-to-information-architecture.md
@@ -352,7 +352,7 @@ git diff -- docs/reverse-engineering/legacy-ui-gap-list.md
 - `.codex/dispatch-state.json`
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 
-- [ ] **Step 1：创建工程模块地图**
+- [x] **Step 1：创建工程模块地图**
 
 创建 `docs/product-architecture/engineering-module-map.md`，必须包含：
 
@@ -372,7 +372,7 @@ git diff -- docs/reverse-engineering/legacy-ui-gap-list.md
 | `@mirax/sidecar-manager` | 本地依赖健康检查和服务抽象：FFmpeg、Python、CosyVoice、HeyGem、Playwright。 | 设置、本地依赖、真实生成、真实平台授权。 | 不渲染 UI，不存储业务实体，不决定产品流程。 |
 ```
 
-- [ ] **Step 2：补充产品模块到工程模块映射**
+- [x] **Step 2：补充产品模块到工程模块映射**
 
 追加：
 
@@ -391,7 +391,7 @@ git diff -- docs/reverse-engineering/legacy-ui-gap-list.md
 | 发布链路 | 工作台发布步骤 + 任务中心 | publish metadata validation | 标题/描述生成可选 | 封面/视频文件校验 | publish/direct/draft | publish tasks、accounts | Playwright 上传 |
 ```
 
-- [ ] **Step 3：补充禁止耦合规则**
+- [x] **Step 3：补充禁止耦合规则**
 
 追加：
 
@@ -406,7 +406,7 @@ git diff -- docs/reverse-engineering/legacy-ui-gap-list.md
 - 旧版 `main.jsc` 只能作为接口和字段线索，不允许复用旧版生产代码。
 ```
 
-- [ ] **Step 4：运行验证**
+- [x] **Step 4：运行验证**
 
 ```bash
 test -f docs/product-architecture/engineering-module-map.md
@@ -440,7 +440,7 @@ rg -n "禁止耦合|不得直接|保持纯逻辑" docs/product-architecture/engi
 - `.codex/dispatch-state.json`
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 
-- [ ] **Step 1：创建 workflow 映射表**
+- [x] **Step 1：创建 workflow 映射表**
 
 创建 `docs/product-architecture/workflow-and-release-chain.md`，必须包含：
 
@@ -460,7 +460,7 @@ rg -n "禁止耦合|不得直接|保持纯逻辑" docs/product-architecture/engi
 | 7. 视频发布 | `publish` | 视频文件、发布元数据、发布账号、发布方式 | 发布任务、平台草稿或发布结果 | `pending` → `processing` → `completed/failed/cancelled` |
 ```
 
-- [ ] **Step 2：补充发布链路**
+- [x] **Step 2：补充发布链路**
 
 追加：
 
@@ -477,7 +477,7 @@ rg -n "禁止耦合|不得直接|保持纯逻辑" docs/product-architecture/engi
 | 上传与发布 | 后续真实发布模块 | publish task output/error | Playwright sidecar + platform adapter | 阶段 4 后拆独立实现计划。 |
 ```
 
-- [ ] **Step 3：补充任务状态统一规则**
+- [x] **Step 3：补充任务状态统一规则**
 
 追加：
 
@@ -494,7 +494,7 @@ rg -n "禁止耦合|不得直接|保持纯逻辑" docs/product-architecture/engi
 | `retry` | `EV-STATIC-101` | 动作或派生状态。 | 作为操作按钮，不作为最终状态。 |
 ```
 
-- [ ] **Step 4：运行验证**
+- [x] **Step 4：运行验证**
 
 ```bash
 test -f docs/product-architecture/workflow-and-release-chain.md
@@ -529,7 +529,7 @@ rg -n "direct|draft|publish_accounts|workflow_tasks" docs/product-architecture/w
 - `.codex/dispatch-state.json`
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 
-- [ ] **Step 1：创建本地数据契约表**
+- [x] **Step 1：创建本地数据契约表**
 
 创建 `docs/product-architecture/data-provider-sidecar-contracts.md`，必须包含：
 
@@ -552,7 +552,7 @@ rg -n "direct|draft|publish_accounts|workflow_tasks" docs/product-architecture/w
 | `publish_accounts` | `EV-STATIC-102` | `account_name`、`display_name`、`platform`、`last_login_at`、`status`、`active` | `@mirax/local-store` + `@mirax/provider-publish` | 敏感 Cookie/Token 不在阶段 3 定义明文存储。 |
 ```
 
-- [ ] **Step 2：补充 Provider 能力矩阵**
+- [x] **Step 2：补充 Provider 能力矩阵**
 
 追加：
 
@@ -570,7 +570,7 @@ rg -n "direct|draft|publish_accounts|workflow_tasks" docs/product-architecture/w
 | 平台发布 | 视频路径、标题、描述、话题、封面、账号、publishMode | 发布任务结果、平台链接或草稿状态 | `@mirax/provider-publish` | 第一版 mock，真实发布走 sidecar。 |
 ```
 
-- [ ] **Step 3：补充 sidecar 依赖矩阵**
+- [x] **Step 3：补充 sidecar 依赖矩阵**
 
 追加：
 
@@ -587,7 +587,7 @@ rg -n "direct|draft|publish_accounts|workflow_tasks" docs/product-architecture/w
 | Tauri Updater | 旧版 `cloud.checkVersion/downloadUpdate/applyUpdate` | 应用更新。 | 替代旧云端更新通道。 |
 ```
 
-- [ ] **Step 4：运行验证**
+- [x] **Step 4：运行验证**
 
 ```bash
 test -f docs/product-architecture/data-provider-sidecar-contracts.md
@@ -622,7 +622,7 @@ rg -n "FFmpeg|Python|CosyVoice|HeyGem|Playwright|Tauri Updater" docs/product-arc
 - `.codex/dispatch-state.json`
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 
-- [ ] **Step 1：创建 UI/UX 需求矩阵**
+- [x] **Step 1：创建 UI/UX 需求矩阵**
 
 创建 `docs/product-architecture/ui-ux-and-phase-4-handoff.md`，必须包含：
 
@@ -643,7 +643,7 @@ rg -n "FFmpeg|Python|CosyVoice|HeyGem|Playwright|Tauri Updater" docs/product-arc
 | 帮助 / 日志 / 软件更新 | no | 低频入口，可直接按设置子页和支持入口实现。 | N/A |
 ```
 
-- [ ] **Step 2：补充阶段 4 implementation plan 队列**
+- [x] **Step 2：补充阶段 4 implementation plan 队列**
 
 追加：
 
@@ -663,7 +663,7 @@ rg -n "FFmpeg|Python|CosyVoice|HeyGem|Playwright|Tauri Updater" docs/product-arc
 | 帮助、日志、更新、数据管理低频入口 | P2 | `legacy-function-to-information-architecture.md`、`data-provider-sidecar-contracts.md` | `apps/desktop`、`@mirax/local-store`、Tauri updater 后续 | typecheck、manual smoke |
 ```
 
-- [ ] **Step 3：补充阶段 4 禁止事项**
+- [x] **Step 3：补充阶段 4 禁止事项**
 
 追加：
 
@@ -677,7 +677,7 @@ rg -n "FFmpeg|Python|CosyVoice|HeyGem|Playwright|Tauri Updater" docs/product-arc
 - 不因源码实现通过就更新 `legacy-ui-gap-list.md` 状态列；只有计划明确要求且验收通过时才能更新。
 ```
 
-- [ ] **Step 4：运行验证**
+- [x] **Step 4：运行验证**
 
 ```bash
 test -f docs/product-architecture/ui-ux-and-phase-4-handoff.md
@@ -711,7 +711,7 @@ rg -n "工作台|设置|发布|声音|形象|素材|任务中心|账号管理" d
 - `.codex/dispatch-state.json`
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 
-- [ ] **Step 1：运行阶段 3 全局验证**
+- [x] **Step 1：运行阶段 3 全局验证**
 
 ```bash
 test -f docs/product-architecture/README.md
@@ -729,7 +729,7 @@ git diff -- docs/reverse-engineering/legacy-ui-gap-list.md
 
 预期：所有文件存在；所有旧版功能卡、页面卡和目标模块都能查到；`legacy-ui-gap-list.md` 无 diff。
 
-- [ ] **Step 2：更新 README 完成状态**
+- [x] **Step 2：更新 README 完成状态**
 
 在 `docs/product-architecture/README.md` 追加：
 
@@ -744,7 +744,7 @@ git diff -- docs/reverse-engineering/legacy-ui-gap-list.md
 下一步是阶段 4：按 `ui-ux-and-phase-4-handoff.md` 的队列创建面向源码实现的 implementation plans。
 ```
 
-- [ ] **Step 3：更新 PROJECT-STATE**
+- [x] **Step 3：更新 PROJECT-STATE**
 
 将 `docs/superpowers/PROJECT-STATE.md` 更新为：
 
@@ -754,7 +754,7 @@ git diff -- docs/reverse-engineering/legacy-ui-gap-list.md
 - 进度入口中新增 `docs/product-architecture/README.md`。
 - 下一步中说明不要重复执行阶段 2 Task 1 → Task 6，不要重复创建阶段 3 已完成文档。
 
-- [ ] **Step 4：运行最终验证**
+- [x] **Step 4：运行最终验证**
 
 ```bash
 rg -n "阶段 3|阶段 4|product-architecture|2026-06-15-stage-3-architecture-mapping" docs/superpowers/PROJECT-STATE.md

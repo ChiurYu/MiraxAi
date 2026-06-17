@@ -14,11 +14,11 @@
 
 `docs/superpowers/plans/2026-06-15-stage-3-architecture-mapping.md`
 
-该计划是当前阶段的自动调度入口。自动调度时按此计划执行 Task 1 → Task 7，完成 Mirax AI 新版产品架构映射。
+该计划是阶段 3 的完成记录，用于归档和追溯。阶段 3 Task 1 → Task 7 已全部完成，不要重复执行。
 
 ## 最新可执行任务
 
-执行 `docs/superpowers/plans/2026-06-15-stage-3-architecture-mapping.md` Task 1 → Task 7 已全部完成。下一阶段按 `docs/product-architecture/ui-ux-and-phase-4-handoff.md` 拆分 implementation plans。
+阶段 4：按 `docs/product-architecture/ui-ux-and-phase-4-handoff.md` 的 P0 → P1 → P2 队列创建源码 implementation plans。阶段 3 已完成，不要重复执行 `docs/superpowers/plans/2026-06-15-stage-3-architecture-mapping.md` 的 Task 1 → Task 7。
 
 不要修改 `docs/reverse-engineering/legacy-ui-gap-list.md` 的状态列；不要直接修改 `apps/` 或 `packages/` 代码。架构映射只输出设计文档和模块映射，待计划明确后再进入实现。
 
