@@ -486,13 +486,6 @@ function toggleTheme() {
             <input type="range" min="0" max="1" step="0.1" value="0.3" />
             <b>0.3</b>
           </div>
-          <button
-            class="primary wide-button"
-            :disabled="runtime.running.value || runtime.stageStatus.value.compose === 'completed'"
-            @click="runtime.runStage('compose')"
-          >
-            <FileVideo :size="16" /> 剪辑视频
-          </button>
         </div>
         <div class="video-preview">
           <FileVideo :size="52" />
@@ -500,6 +493,15 @@ function toggleTheme() {
           <span>{{ generatedVideoPath || "生成视频后将在此处显示预览" }}</span>
         </div>
       </div>
+      <template #actions>
+        <button
+          class="primary wide-button"
+          :disabled="runtime.running.value || runtime.stageStatus.value.compose === 'completed'"
+          @click="runtime.runStage('compose')"
+        >
+          <FileVideo :size="16" /> 剪辑视频
+        </button>
+      </template>
     </WorkflowStageCard>
 
     <WorkflowStageCard
