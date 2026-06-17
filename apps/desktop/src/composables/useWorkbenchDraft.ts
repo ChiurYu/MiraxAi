@@ -61,6 +61,8 @@ export function useWorkbenchDraft(options: UseWorkbenchDraftOptions = {}) {
     { deep: true },
   );
 
+  restore();
+
   return {
     draft,
     saveStatus,

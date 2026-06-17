@@ -32,7 +32,7 @@
 - `apps/desktop/src/features/task-center/taskHistory.ts`：最近任务历史 localStorage 读写。
 - `packages/core/src/workflow.ts` / `types.ts`：`Workflow`、`WorkflowStageId`、`updateStageStatus` 等不可变状态转换。
 
-**下一步：** Task 1/2/3 已完成；后续执行本计划时从 Task 4 开始。先完成本 P0 计划；再按 `ui-ux-and-phase-4-handoff.md` 完成 P0「设置 / Provider / sidecar 配置」和「发布准备与 mock 发布任务」两个计划。
+**下一步：** Task 1/2/3/4 已完成；后续执行本计划时从 Task 5 开始。先完成本 P0 计划；再按 `ui-ux-and-phase-4-handoff.md` 完成 P0「设置 / Provider / sidecar 配置」和「发布准备与 mock 发布任务」两个计划。
 
 ---
 
@@ -555,7 +555,7 @@ pnpm --filter @mirax/desktop typecheck
 - `apps/desktop/src/App.vue`
 - `packages/`
 
-- [ ] **Step 1：创建 fake storage helper**
+- [x] **Step 1：创建 fake storage helper**
 
 在测试文件顶部写入：
 
@@ -591,7 +591,7 @@ function createFakeStorage(): Storage {
 }
 ```
 
-- [ ] **Step 2：写入测试用例**
+- [x] **Step 2：写入测试用例**
 
 继续在同一文件追加：
 
@@ -669,7 +669,7 @@ describe("useWorkbenchDraft", () => {
 });
 ```
 
-- [ ] **Step 3：运行测试**
+- [x] **Step 3：运行测试**
 
 ```bash
 pnpm test apps/desktop/src/composables/useWorkbenchDraft.test.ts
