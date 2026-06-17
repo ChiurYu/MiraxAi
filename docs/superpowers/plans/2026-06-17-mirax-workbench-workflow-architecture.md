@@ -334,7 +334,7 @@ pnpm --filter @mirax/desktop typecheck
 - `apps/desktop/src/App.vue`
 - `packages/`
 
-- [ ] **Step 1：写入测试文件**
+- [x] **Step 1：写入测试文件**
 
 创建 `apps/desktop/src/composables/useWorkflowRuntime.test.ts`：
 
@@ -419,13 +419,13 @@ describe("useWorkflowRuntime", () => {
 });
 ```
 
-- [ ] **Step 2：运行测试**
+- [x] **Step 2：运行测试**
 
 ```bash
 pnpm test apps/desktop/src/composables/useWorkflowRuntime.test.ts
 ```
 
-预期：8 个测试全部通过。
+预期：7 个测试全部通过。
 
 **验收标准：**
 

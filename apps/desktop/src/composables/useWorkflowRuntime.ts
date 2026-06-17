@@ -81,6 +81,11 @@ export function useWorkflowRuntime(options: UseWorkflowRuntimeOptions) {
 
     try {
       await processStage(stage.id, stage.title);
+    } catch (error) {
+      if (error instanceof Error && error.message === "PUBLISH_CANCELLED") {
+        throw error;
+      }
+      // 普通失败已由 processStage 标记为 failed 并写入日志，不再向外抛。
     } finally {
       running.value = false;
       runningMode.value = null;
@@ -136,8 +141,11 @@ export function useWorkflowRuntime(options: UseWorkflowRuntimeOptions) {
 
     try {
       await processStage(stageId, stage.title);
-    } catch {
-      // processStage already updates status and logs; swallow here to keep UX on card.
+    } catch (error) {
+      if (error instanceof Error && error.message === "PUBLISH_CANCELLED") {
+        throw error;
+      }
+      // processStage 已更新状态与日志；普通错误在此处吞掉，保持卡片级 UX。
     } finally {
       running.value = false;
       runningMode.value = null;
