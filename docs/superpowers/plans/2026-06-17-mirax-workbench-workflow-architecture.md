@@ -32,7 +32,7 @@
 - `apps/desktop/src/features/task-center/taskHistory.ts`：最近任务历史 localStorage 读写。
 - `packages/core/src/workflow.ts` / `types.ts`：`Workflow`、`WorkflowStageId`、`updateStageStatus` 等不可变状态转换。
 
-**下一步：** 当前创建计划的任务已完成；后续执行本计划时从 Task 1 开始。先完成本 P0 计划；再按 `ui-ux-and-phase-4-handoff.md` 完成 P0「设置 / Provider / sidecar 配置」和「发布准备与 mock 发布任务」两个计划。
+**下一步：** Task 1 已完成；后续执行本计划时从 Task 2 开始。先完成本 P0 计划；再按 `ui-ux-and-phase-4-handoff.md` 完成 P0「设置 / Provider / sidecar 配置」和「发布准备与 mock 发布任务」两个计划。
 
 ---
 
@@ -125,7 +125,7 @@ pnpm --filter @mirax/desktop typecheck
 - `.codex/dispatch-state.json`
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 
-- [ ] **Step 1：创建 composables 目录并写入 composable**
+- [x] **Step 1：创建 composables 目录并写入 composable**
 
 ```bash
 mkdir -p apps/desktop/src/composables
@@ -305,7 +305,7 @@ export function useWorkflowRuntime(options: UseWorkflowRuntimeOptions) {
 }
 ```
 
-- [ ] **Step 2：运行类型检查**
+- [x] **Step 2：运行类型检查**
 
 ```bash
 pnpm --filter @mirax/desktop typecheck
