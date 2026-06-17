@@ -20,6 +20,7 @@
 | 工作台 workflow 信息架构和状态拆分 | P0 | `workflow-and-release-chain.md`、`engineering-module-map.md` | `apps/desktop`、`@mirax/core` | `pnpm test packages/core`、`pnpm typecheck` |
 | 设置 / Provider / sidecar 配置 | P0 | `data-provider-sidecar-contracts.md`、`engineering-module-map.md` | `apps/desktop`、`@mirax/core`、`@mirax/local-store`、`@mirax/sidecar-manager` | `pnpm test`、`pnpm typecheck` |
 | 发布准备与 mock 发布任务 | P0 | `workflow-and-release-chain.md`、`data-provider-sidecar-contracts.md` | `apps/desktop`、`@mirax/provider-publish`、`@mirax/local-store` | provider-publish tests、desktop typecheck |
+| P0 UI/UX polish | P0.5 | 三个 P0 implementation plans、`design-decisions/` | `apps/desktop`、`docs/product-architecture/design-decisions` | desktop typecheck、build:web、browser smoke |
 | 声音管理 mock 资产流 | P1 | `legacy-function-to-information-architecture.md`、`data-provider-sidecar-contracts.md` | `apps/desktop`、`@mirax/provider-ai`、`@mirax/local-store` | local-store/provider tests、typecheck |
 | 形象管理 mock 资产流 | P1 | `legacy-function-to-information-architecture.md`、`data-provider-sidecar-contracts.md` | `apps/desktop`、`@mirax/provider-ai`、`@mirax/local-store` | local-store/provider tests、typecheck |
 | 素材管理本地上传/分类/搜索 | P1 | `data-provider-sidecar-contracts.md`、`engineering-module-map.md` | `apps/desktop`、`@mirax/media-pipeline`、`@mirax/local-store` | media/local-store tests、typecheck |
