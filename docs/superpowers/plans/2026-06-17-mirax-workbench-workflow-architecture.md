@@ -32,7 +32,7 @@
 - `apps/desktop/src/features/task-center/taskHistory.ts`：最近任务历史 localStorage 读写。
 - `packages/core/src/workflow.ts` / `types.ts`：`Workflow`、`WorkflowStageId`、`updateStageStatus` 等不可变状态转换。
 
-**下一步：** Task 1/2/3/4/5/6 已完成；后续执行本计划时从 Task 7 开始。先完成本 P0 计划；再按 `ui-ux-and-phase-4-handoff.md` 完成 P0「设置 / Provider / sidecar 配置」和「发布准备与 mock 发布任务」两个计划。
+**下一步：** Task 1/2/3/4/5/6/7 已完成；后续执行本计划时从 Task 8 开始。先完成本 P0 计划；再按 `ui-ux-and-phase-4-handoff.md` 完成 P0「设置 / Provider / sidecar 配置」和「发布准备与 mock 发布任务」两个计划。
 
 ---
 
@@ -894,7 +894,7 @@ pnpm test apps/desktop/src/composables/useTaskCenterPreview.test.ts
 - `apps/desktop/src/App.vue`
 - `packages/`
 
-- [ ] **Step 1：写入组件**
+- [x] **Step 1：写入组件**
 
 创建目录和文件：
 
@@ -916,7 +916,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  run: [stageId: string];
+  run: [stageId: WorkflowStage["id"]];
 }>();
 
 const isRunDisabled = computed(() => props.status === "running" || props.status === "completed");
@@ -953,10 +953,10 @@ const isRunDisabled = computed(() => props.status === "running" || props.status 
 
 <style scoped>
 .workflow-card {
-  border: 1px solid var(--mx-border-subtle);
-  border-radius: 12px;
+  border: 1px solid var(--mx-border-default);
+  border-radius: var(--mx-radius-lg);
   padding: 16px;
-  background: var(--mx-surface-primary);
+  background: var(--mx-bg-panel);
 }
 
 .card-heading {
@@ -991,7 +991,7 @@ const isRunDisabled = computed(() => props.status === "running" || props.status 
 </style>
 ```
 
-- [ ] **Step 2：运行类型检查**
+- [x] **Step 2：运行类型检查**
 
 ```bash
 pnpm --filter @mirax/desktop typecheck
