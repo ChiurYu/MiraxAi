@@ -32,7 +32,7 @@
 - `apps/desktop/src/features/task-center/taskHistory.ts`：最近任务历史 localStorage 读写。
 - `packages/core/src/workflow.ts` / `types.ts`：`Workflow`、`WorkflowStageId`、`updateStageStatus` 等不可变状态转换。
 
-**下一步：** Task 1/2/3/4/5/6/7 已完成；后续执行本计划时从 Task 8 开始。先完成本 P0 计划；再按 `ui-ux-and-phase-4-handoff.md` 完成 P0「设置 / Provider / sidecar 配置」和「发布准备与 mock 发布任务」两个计划。
+**下一步：** Task 1/2/3/4/5/6/7/8 已完成；后续执行本计划时从 Task 9 开始。先完成本 P0 计划；再按 `ui-ux-and-phase-4-handoff.md` 完成 P0「设置 / Provider / sidecar 配置」和「发布准备与 mock 发布任务」两个计划。
 
 ---
 
@@ -1020,14 +1020,13 @@ pnpm --filter @mirax/desktop typecheck
 - `apps/desktop/src/App.vue`
 - `packages/`
 
-- [ ] **Step 1：写入组件**
+- [x] **Step 1：写入组件**
 
 创建 `apps/desktop/src/components/workbench/WorkbenchShell.vue`：
 
 ```vue
 <script setup lang="ts">
 import {
-  CheckCircle2,
   Circle,
   CloudUpload,
   ClipboardCheck,
@@ -1044,7 +1043,6 @@ import {
   Volume2,
   WandSparkles,
 } from "lucide-vue-next";
-import type { WorkflowStage } from "@mirax/core";
 
 defineProps<{
   projectName: string;
@@ -1184,7 +1182,7 @@ nav {
 }
 
 .nav-item.active {
-  background: var(--mx-surface-active);
+  background: var(--mx-bg-hover);
   color: var(--mx-text-primary);
 }
 
@@ -1232,7 +1230,7 @@ nav {
 }
 
 .mode-switch button.selected {
-  background: var(--mx-surface-active);
+  background: var(--mx-bg-hover);
   color: var(--mx-text-primary);
 }
 
@@ -1245,7 +1243,7 @@ nav {
 .progress-pill {
   padding: 4px 10px;
   border-radius: 999px;
-  background: var(--mx-surface-secondary);
+  background: var(--mx-bg-surface);
   font-size: 12px;
 }
 
@@ -1261,7 +1259,7 @@ nav {
 </style>
 ```
 
-- [ ] **Step 2：运行类型检查**
+- [x] **Step 2：运行类型检查**
 
 ```bash
 pnpm --filter @mirax/desktop typecheck
