@@ -32,7 +32,7 @@
 - `apps/desktop/src/features/task-center/taskHistory.ts`：最近任务历史 localStorage 读写。
 - `packages/core/src/workflow.ts` / `types.ts`：`Workflow`、`WorkflowStageId`、`updateStageStatus` 等不可变状态转换。
 
-**下一步：** Task 1/2/3/4/5/6/7/8/9 已完成；后续执行本计划时从 Task 10 开始。先完成本 P0 计划；再按 `ui-ux-and-phase-4-handoff.md` 完成 P0「设置 / Provider / sidecar 配置」和「发布准备与 mock 发布任务」两个计划。
+**下一步：** Task 1/2/3/4/5/6/7/8/9/10 已全部完成。本 P0 工作台 workflow 信息架构和状态拆分计划已完成。后续按 `ui-ux-and-phase-4-handoff.md` 进入 P0「设置 / Provider / sidecar 配置」或「发布准备与 mock 发布任务」计划。
 
 ---
 
@@ -1604,7 +1604,7 @@ pnpm --filter @mirax/desktop typecheck
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 - `.codex/dispatch-state.json`
 
-- [ ] **Step 1：运行核心包测试**
+- [x] **Step 1：运行核心包测试**
 
 ```bash
 pnpm test packages/core
@@ -1612,7 +1612,7 @@ pnpm test packages/core
 
 预期：通过。
 
-- [ ] **Step 2：运行桌面端新增测试**
+- [x] **Step 2：运行桌面端新增测试**
 
 ```bash
 pnpm test apps/desktop/src/composables/useWorkflowRuntime.test.ts
@@ -1622,7 +1622,7 @@ pnpm test apps/desktop/src/composables/useTaskCenterPreview.test.ts
 
 预期：全部通过。
 
-- [ ] **Step 3：运行桌面端既有测试**
+- [x] **Step 3：运行桌面端既有测试**
 
 ```bash
 pnpm test apps/desktop/src/runtime/desktopDraft.test.ts
@@ -1631,7 +1631,7 @@ pnpm test apps/desktop/src/features/task-center/taskHistory.test.ts
 
 预期：全部通过。
 
-- [ ] **Step 4：运行桌面端类型检查**
+- [x] **Step 4：运行桌面端类型检查**
 
 ```bash
 pnpm --filter @mirax/desktop typecheck
@@ -1639,7 +1639,7 @@ pnpm --filter @mirax/desktop typecheck
 
 预期：无错误。
 
-- [ ] **Step 5：运行 web 开发模式 smoke（可选）**
+- [x] **Step 5：运行 web 开发模式 smoke（可选）**
 
 ```bash
 pnpm --filter @mirax/desktop dev:web
