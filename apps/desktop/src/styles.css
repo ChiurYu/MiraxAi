@@ -112,7 +112,7 @@
 html,
 body {
   margin: 0;
-  min-width: 1180px;
+  min-width: 1000px;
   min-height: 760px;
   background: var(--mx-bg-base);
 }
@@ -139,7 +139,7 @@ button:disabled {
 
 .app-shell {
   display: grid;
-  grid-template-columns: 196px minmax(984px, 1fr);
+  grid-template-columns: 196px minmax(0, 1fr);
   min-height: 100vh;
   background: var(--mx-bg-base);
 }
@@ -217,6 +217,9 @@ button:disabled {
   background: transparent;
   font-size: 13px;
   text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   transition: color 120ms ease, background 120ms ease;
 }
 
@@ -467,7 +470,7 @@ button:active:not(:disabled) {
   border: 0;
   padding: 0 12px;
   color: var(--mx-accent-text);
-  background: #e16b6b;
+  background: var(--mx-error);
   font-weight: 600;
 }
 
@@ -476,7 +479,7 @@ button:active:not(:disabled) {
 }
 
 [data-theme="light"] .legal-button {
-  background: #dc5757;
+  background: var(--mx-error);
 }
 
 /* ───────────────────────────────────────────────
@@ -547,6 +550,7 @@ button:active:not(:disabled) {
 
 .learn-card,
 .rewrite-card,
+.voice-clone-card,
 .voice-card,
 .avatar-card,
 .settings-card,
@@ -712,10 +716,16 @@ textarea {
   gap: 0 10px;
 }
 
+.card-actions {
+  display: flex;
+  gap: 8px;
+  padding: 0 13px 13px;
+}
+
 .button-row {
   display: flex;
   gap: 8px;
-  padding: 0 13px;
+  padding: 0 13px 13px;
 }
 
 /* ───────────────────────────────────────────────
@@ -1139,6 +1149,73 @@ textarea {
 
 @media (max-width: 1180px) {
   .app-shell {
-    grid-template-columns: 180px minmax(1000px, 1fr);
+    grid-template-columns: 172px minmax(0, 1fr);
+  }
+
+  .board-shell {
+    padding: 14px 18px 22px;
+  }
+
+  .nav-rail {
+    gap: 12px;
+    padding: 14px 10px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .app-shell {
+    grid-template-columns: 148px minmax(0, 1fr);
+  }
+
+  .nav-rail {
+    gap: 10px;
+    padding: 12px 8px;
+  }
+
+  .brand {
+    gap: 8px;
+    padding: 0;
+  }
+
+  .nav-item {
+    gap: 8px;
+    padding: 0 8px;
+    font-size: 12px;
+  }
+
+  .mode-switch {
+    display: none;
+  }
+
+  .window-bar {
+    gap: 10px;
+  }
+
+  .project-overview {
+    gap: 8px;
+  }
+
+  .board-shell {
+    padding: 12px 14px 20px;
+  }
+
+  .workflow-board {
+    grid-template-columns: 1fr;
+  }
+
+  .compose-card {
+    grid-column: span 1;
+  }
+
+  .compose-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .video-preview {
+    min-height: 220px;
+  }
+
+  .cover-row {
+    grid-template-columns: 1fr;
   }
 }

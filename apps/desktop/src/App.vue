@@ -46,14 +46,21 @@ import { useTaskCenterPreview } from "./composables/useTaskCenterPreview.js";
 import { useWorkbenchDraft } from "./composables/useWorkbenchDraft.js";
 import { useWorkflowRuntime } from "./composables/useWorkflowRuntime.js";
 import SettingsView from "./views/SettingsView.vue";
+import TaskCenterPreview from "./components/task-center/TaskCenterPreview.vue";
 import { appendPublishTasks } from "./features/task-center/publishTaskStore.js";
+import {
+  appendPublishHistoryItem,
+  createPublishHistoryItem,
+} from "./features/task-center/taskHistory.js";
 
 const aiProvider = createMockAiProvider({ artifactRoot: "/Users/Shared/MiraxAI" });
 const mediaRenderer = createMockMediaRenderer({ artifactRoot: "/Users/Shared/MiraxAI" });
 const publisher = createMockPublisher();
 
 const { draft, saveStatus } = useWorkbenchDraft();
-const { latestItems: latestHistoryItems } = useTaskCenterPreview({ limit: 5 });
+const historyPreview = useTaskCenterPreview({ limit: 5 });
+const { latestItems: latestHistoryItems, refresh: refreshHistory } = historyPreview;
+const taskPreviewRef = ref<InstanceType<typeof TaskCenterPreview> | null>(null);
 
 const generatedVideoPath = ref("");
 const generatedCoverPath = ref("");
@@ -183,9 +190,20 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
       const platforms = project.value.targetPlatforms;
       const platformText = platforms.map((platform) => platformLabels.value[platform]).join("、") || "未选择";
       const modeText = prep.metadata.value.mode === "direct" ? "直接发布" : "草稿";
+      const coverText = prep.metadata.value.coverPath ? "已生成" : "未设置";
+      const accountText = "未登录（mock 账号）";
+      const titleText = prep.metadata.value.title || "未填写";
+      const descText = prep.metadata.value.description.slice(0, 80) || "未填写";
 
       const confirmed = window.confirm(
-        `确认创建 ${platforms.length} 个发布任务？\n\n平台：${platformText}\n发布模式：${modeText}\n视频路径：${videoPath}`,
+        `确认创建 ${platforms.length} 个发布任务？\n\n` +
+          `标题：${titleText}\n` +
+          `描述：${descText}${prep.metadata.value.description.length > 80 ? "…" : ""}\n` +
+          `封面：${coverText}\n` +
+          `平台：${platformText}\n` +
+          `账号：${accountText}\n` +
+          `发布模式：${modeText}\n` +
+          `视频路径：${videoPath}`,
       );
 
       if (!confirmed) {
@@ -198,6 +216,16 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
       }
 
       appendPublishTasks(tasks);
+      appendPublishHistoryItem(
+        createPublishHistoryItem({
+          projectId: runtime.workflow.value.projectId,
+          taskIds: tasks.map((task) => task.id),
+          videoPath,
+          platforms,
+        }),
+      );
+      taskPreviewRef.value?.refresh();
+      refreshHistory();
 
       return `已创建 ${tasks.length} 个发布任务`;
     }
@@ -512,6 +540,7 @@ function toggleTheme() {
           </li>
         </ul>
       </div>
+      <TaskCenterPreview ref="taskPreviewRef" />
     </section>
     </template>
     <SettingsView v-else />
@@ -519,22 +548,6 @@ function toggleTheme() {
 </template>
 
 <style scoped>
-.voice-clone-card {
-  padding-bottom: 12px;
-}
-
-.connection-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 4px;
-}
-
-.connection-message {
-  font-size: 12px;
-  color: var(--mx-text-tertiary);
-}
-
 .history-section h3 {
   margin: 12px 0 8px;
   font-size: 12px;

@@ -12,7 +12,7 @@
 
 ## Resume Here
 
-**当前计划状态：** 待执行。先完成阶段 4 三个 P0 implementation plans，再执行本 UI/UX polish 计划。
+**当前计划状态：** 已完成。阶段 4 P0.5 UI/UX polish Task 1 → Task 5 已全部完成并通过验收，不要重复执行。
 
 **执行前置条件：**
 - `docs/superpowers/plans/2026-06-17-mirax-workbench-workflow-architecture.md` 已完成。
@@ -64,7 +64,7 @@
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 - `.codex/dispatch-state.json`
 
-- [ ] **Step 1：补齐工作台 UI 决策**
+- [x] **Step 1：补齐工作台 UI 决策**
 
 在 `docs/product-architecture/design-decisions/workbench-workflow.md` 中记录：
 
@@ -100,7 +100,7 @@
 - 点击“运行下一步”后进度、日志和阶段状态同步变化。
 ```
 
-- [ ] **Step 2：补齐设置 UI 决策**
+- [x] **Step 2：补齐设置 UI 决策**
 
 在 `docs/product-architecture/design-decisions/settings-provider-sidecar.md` 中记录：
 
@@ -123,7 +123,7 @@
 - 表单标签、输入、帮助文本不互相遮挡。
 ```
 
-- [ ] **Step 3：补齐发布准备 UI 决策**
+- [x] **Step 3：补齐发布准备 UI 决策**
 
 在 `docs/product-architecture/design-decisions/account-publish-flow.md` 中记录：
 
@@ -144,7 +144,7 @@
 - 取消发布不会创建历史记录。
 ```
 
-- [ ] **Step 4：验证文档存在**
+- [x] **Step 4：验证文档存在**
 
 ```bash
 test -f docs/product-architecture/design-decisions/workbench-workflow.md
@@ -171,7 +171,7 @@ test -f docs/product-architecture/design-decisions/account-publish-flow.md
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 - `.codex/dispatch-state.json`
 
-- [ ] **Step 1：检查重复主操作**
+- [x] **Step 1：检查重复主操作**
 
 运行：
 
@@ -183,7 +183,7 @@ rg -n "执行 视频合成|剪辑视频|运行下一步|运行全部" apps/deskt
 - 每个阶段卡片只有一个主操作按钮。
 - 顶部只保留全局运行按钮。
 
-- [ ] **Step 2：统一阶段卡片 actions 区域**
+- [x] **Step 2：统一阶段卡片 actions 区域**
 
 调整 `WorkflowStageCard.vue` 和 `App.vue`，使每个阶段卡片主操作位于 actions slot；辅助操作保留在卡片内容或 heading-extra。
 
@@ -191,7 +191,7 @@ rg -n "执行 视频合成|剪辑视频|运行下一步|运行全部" apps/deskt
 - 文案提取、文案改写、声音克隆、语音合成、数字人口播、视频合成、人工复核、多平台发布都只有一个主操作。
 - 主操作禁用逻辑统一使用 `runtime.running.value || stageStatus === "completed"`。
 
-- [ ] **Step 3：优化工作台密度与响应式**
+- [x] **Step 3：优化工作台密度与响应式**
 
 在 `apps/desktop/src/styles.css` 中检查并调整：
 - `.workflow-board`
@@ -208,7 +208,7 @@ rg -n "执行 视频合成|剪辑视频|运行下一步|运行全部" apps/deskt
 - 1440x900 下首屏至少可见核心工作台、顶部控制和多个阶段卡片。
 - 长路径文本不会撑破卡片。
 
-- [ ] **Step 4：运行验证**
+- [x] **Step 4：运行验证**
 
 ```bash
 pnpm --filter @mirax/desktop typecheck
@@ -240,7 +240,7 @@ pnpm --filter @mirax/desktop dev:web
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 - `.codex/dispatch-state.json`
 
-- [ ] **Step 1：确认设置页面入口**
+- [x] **Step 1：确认设置页面入口**
 
 ```bash
 rg -n "Settings|Provider|sidecar|Sidecar|API Key|Base URL|输出目录" apps/desktop/src
@@ -248,7 +248,7 @@ rg -n "Settings|Provider|sidecar|Sidecar|API Key|Base URL|输出目录" apps/des
 
 预期：能定位设置页组件或 App.vue 中的设置区域。
 
-- [ ] **Step 2：优化配置分区**
+- [x] **Step 2：优化配置分区**
 
 把设置页分成以下区块：
 - 通用设置：输出目录、主题、数据目录。
@@ -258,7 +258,7 @@ rg -n "Settings|Provider|sidecar|Sidecar|API Key|Base URL|输出目录" apps/des
 
 每个区块必须有标题、简短说明、保存/检测状态。
 
-- [ ] **Step 3：验证密钥安全展示**
+- [x] **Step 3：验证密钥安全展示**
 
 检查：
 
@@ -270,7 +270,7 @@ rg -n "apiKey|API Key|password|localStorage" apps/desktop/src
 - API Key 输入使用 `type="password"`。
 - API Key 不出现在普通文本、日志或任务历史中。
 
-- [ ] **Step 4：运行验证**
+- [x] **Step 4：运行验证**
 
 ```bash
 pnpm --filter @mirax/desktop typecheck
@@ -301,7 +301,7 @@ pnpm --filter @mirax/desktop dev:web
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 - `.codex/dispatch-state.json`
 
-- [ ] **Step 1：确认发布 UI 入口**
+- [x] **Step 1：确认发布 UI 入口**
 
 ```bash
 rg -n "发布准备|立即发布|发布模式|mock|task|history|任务历史|publish" apps/desktop/src
@@ -309,7 +309,7 @@ rg -n "发布准备|立即发布|发布模式|mock|task|history|任务历史|pub
 
 预期：能定位发布准备页、发布卡片、任务历史或任务中心预览。
 
-- [ ] **Step 2：优化发布确认信息**
+- [x] **Step 2：优化发布确认信息**
 
 确认 UI 中明确展示：
 - 视频路径。
@@ -320,7 +320,7 @@ rg -n "发布准备|立即发布|发布模式|mock|task|history|任务历史|pub
 - 发布模式：草稿或直接发布。
 - 创建任务后的状态和任务 ID。
 
-- [ ] **Step 3：优化 mock 任务反馈**
+- [x] **Step 3：优化 mock 任务反馈**
 
 mock 发布任务必须可区分：
 - 待提交。
@@ -331,7 +331,7 @@ mock 发布任务必须可区分：
 
 失败状态必须显示原因和重试入口；取消状态不能生成历史记录。
 
-- [ ] **Step 4：运行验证**
+- [x] **Step 4：运行验证**
 
 ```bash
 pnpm --filter @mirax/desktop typecheck
@@ -362,7 +362,7 @@ pnpm --filter @mirax/desktop dev:web
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 - `.codex/dispatch-state.json`
 
-- [ ] **Step 1：检查 design token 使用**
+- [x] **Step 1：检查 design token 使用**
 
 ```bash
 rg -n "--mx-[a-z0-9-]+" apps/desktop/src
@@ -373,7 +373,7 @@ rg -n "#[0-9a-fA-F]{3,8}|rgb\\(|rgba\\(" apps/desktop/src
 - 主要颜色使用 `styles.css` 中定义的 token。
 - 组件内没有大量临时硬编码颜色。
 
-- [ ] **Step 2：检查文案和按钮层级**
+- [x] **Step 2：检查文案和按钮层级**
 
 浏览器检查：
 - 每个页面主操作清晰。
@@ -381,7 +381,7 @@ rg -n "#[0-9a-fA-F]{3,8}|rgb\\(|rgba\\(" apps/desktop/src
 - 危险操作有明确文案。
 - 空状态和错误状态有下一步行动。
 
-- [ ] **Step 3：运行全量验证**
+- [x] **Step 3：运行全量验证**
 
 ```bash
 pnpm test packages/core
@@ -400,7 +400,7 @@ pnpm --filter @mirax/desktop dev:web
 - 控制台无 error。
 - 无 Vite overlay。
 
-- [ ] **Step 4：更新计划状态**
+- [x] **Step 4：更新计划状态**
 
 本计划完成后，在 `docs/superpowers/PROJECT-STATE.md` 的「进度入口」中登记：
 

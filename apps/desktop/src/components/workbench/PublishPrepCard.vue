@@ -76,7 +76,7 @@ const tagsText = computed(() => props.metadata.tags.join(", "));
       </div>
     </div>
 
-    <div class="mode-row">
+    <div class="radio-row">
       <label>
         <input
           type="radio"
@@ -106,89 +106,6 @@ const tagsText = computed(() => props.metadata.tags.join(", "));
 </template>
 
 <style scoped>
-.workflow-card {
-  border: 1px solid var(--mx-border-subtle);
-  border-radius: 12px;
-  padding: 16px;
-  background: var(--mx-surface-primary);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.card-heading {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 4px;
-}
-
-.card-heading h2 {
-  margin: 0;
-  font-size: 16px;
-  flex: 1;
-}
-
-.card-icon {
-  display: inline-flex;
-  color: var(--mx-text-secondary);
-}
-
-label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 13px;
-}
-
-.action-input {
-  display: flex;
-  gap: 8px;
-}
-
-.action-input input {
-  flex: 1;
-}
-
-textarea {
-  min-height: 80px;
-  resize: vertical;
-}
-
-.cover-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.cover-preview {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px;
-  border-radius: 8px;
-  background: var(--mx-surface-secondary);
-  color: var(--mx-text-secondary);
-}
-
-.cover-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.mode-row {
-  display: flex;
-  gap: 16px;
-}
-
-.mode-row label {
-  flex-direction: row;
-  align-items: center;
-  gap: 6px;
-}
-
-.button-row {
-  margin-top: 4px;
-}
+/* Card chrome and form elements are styled globally.
+   This component only keeps a small local override for the cover preview ratio. */
 </style>

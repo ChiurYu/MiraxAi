@@ -110,87 +110,19 @@ function publish() {
       </label>
     </div>
 
-    <button
-      class="primary wide-button"
-      :disabled="disabled || targetPlatforms.length === 0 || !videoPath"
-      @click="publish"
-    >
-      <CloudUpload :size="16" />
-      {{ isPublishing ? '发布中...' : '立即发布' }}
-    </button>
+    <div class="button-row">
+      <button
+        class="primary wide-button"
+        :disabled="disabled || targetPlatforms.length === 0 || !videoPath"
+        @click="publish"
+      >
+        <CloudUpload :size="16" />
+        {{ isPublishing ? '发布中...' : '立即发布' }}
+      </button>
+    </div>
   </section>
 </template>
 
 <style scoped>
-.workflow-card {
-  border: 1px solid var(--mx-border-subtle);
-  border-radius: 12px;
-  padding: 16px;
-  background: var(--mx-surface-primary);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.card-heading {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 4px;
-}
-
-.card-heading h2 {
-  margin: 0;
-  font-size: 16px;
-  flex: 1;
-}
-
-.card-icon {
-  display: inline-flex;
-  color: var(--mx-text-secondary);
-}
-
-label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 13px;
-}
-
-.action-input {
-  display: flex;
-  gap: 8px;
-}
-
-.action-input input {
-  flex: 1;
-}
-
-.platforms {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.platforms label {
-  flex-direction: row;
-  align-items: center;
-  gap: 6px;
-}
-
-.radio-row {
-  display: flex;
-  gap: 16px;
-}
-
-.radio-row label {
-  flex-direction: row;
-  align-items: center;
-  gap: 6px;
-}
-
-.wide-button {
-  width: 100%;
-  justify-content: center;
-}
+/* Card chrome and form elements are styled globally. */
 </style>

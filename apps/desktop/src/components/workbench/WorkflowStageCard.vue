@@ -45,40 +45,6 @@ const isRunDisabled = computed(() => props.status === "running" || props.status 
 </template>
 
 <style scoped>
-.workflow-card {
-  border: 1px solid var(--mx-border-default);
-  border-radius: var(--mx-radius-lg);
-  padding: 16px;
-  background: var(--mx-bg-panel);
-}
-
-.card-heading {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.card-heading h2 {
-  margin: 0;
-  font-size: 16px;
-  flex: 1;
-}
-
-.card-icon {
-  display: inline-flex;
-  color: var(--mx-text-secondary);
-}
-
-.card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.card-actions {
-  margin-top: 12px;
-  display: flex;
-  gap: 8px;
-}
+/* Card chrome is styled globally so all workflow cards share the same
+   density, border, radius and heading treatment. */
 </style>

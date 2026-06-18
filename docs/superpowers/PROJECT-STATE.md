@@ -6,6 +6,8 @@
 
 ## 当前阶段
 
+阶段 4 P0.5：UI/UX polish 已完成。在阶段 4 三个 P0 源码计划完成后，对工作台、设置/Provider/sidecar、发布准备与 mock 任务做了统一的视觉层级、状态表达、响应式和页面验收优化。
+
 阶段 4 P0：发布准备与 mock 发布任务源码实现（已完成，Task 1-12 已完成）。
 
 阶段 3：Mirax AI 新版产品架构映射（已完成）。
@@ -22,7 +24,7 @@
 
 ## 最新可执行任务
 
-阶段 4：按 `docs/product-architecture/ui-ux-and-phase-4-handoff.md` 进入 P0.5 UI/UX polish 或 P1 队列。阶段 3 已完成，不要重复执行 `docs/superpowers/plans/2026-06-15-stage-3-architecture-mapping.md` 的 Task 1 → Task 7，也不要重复执行阶段 4 P0 已完成计划。
+阶段 4：按 `docs/product-architecture/ui-ux-and-phase-4-handoff.md` 进入 P0.5 UI/UX polish 或 P1 队列。P0.5 已完成，阶段 3 已完成，不要重复执行 `docs/superpowers/plans/2026-06-15-stage-3-architecture-mapping.md` 的 Task 1 → Task 7，也不要重复执行阶段 4 P0/P0.5 已完成计划。
 
 继续执行阶段 4 时，仍然不要修改 `docs/reverse-engineering/legacy-ui-gap-list.md` 的状态列；不要修改 `.codex/dispatch-state.json`；每个源码计划只允许修改该计划列明的文件。
 
@@ -30,7 +32,9 @@
 
 - 阶段 3 架构映射：`docs/product-architecture/README.md`
 - 路线图设计：`docs/superpowers/specs/2026-06-13-mirax-evidence-driven-roadmap-design.md`
-- 当前计划：`docs/superpowers/plans/2026-06-17-mirax-publish-prep-mock-tasks.md`
+- 当前计划：`docs/superpowers/plans/2026-06-17-mirax-ui-ux-polish.md`
+- 已完成阶段 4 P0 发布计划：`docs/superpowers/plans/2026-06-17-mirax-publish-prep-mock-tasks.md`
+- 已完成阶段 4 P0.5 UI/UX polish：`docs/superpowers/plans/2026-06-17-mirax-ui-ux-polish.md`
 - 已完成阶段 4 P0 设置计划：`docs/superpowers/plans/2026-06-17-mirax-settings-provider-sidecar.md`
 - 已完成阶段 4 P0 工作台计划：`docs/superpowers/plans/2026-06-17-mirax-workbench-workflow-architecture.md`
 - 已完成阶段 3 计划：`docs/superpowers/plans/2026-06-15-stage-3-architecture-mapping.md`
@@ -90,4 +94,4 @@
 
 ## 下一步
 
-阶段 3 已完成，阶段 4 三个 P0 源码计划已完成。下一步按 `docs/product-architecture/ui-ux-and-phase-4-handoff.md` 进入 P0.5 UI/UX polish 或 P1 队列。不要重复执行阶段 3 Task 1 → Task 7，也不要重复执行阶段 4 P0 已完成的任务。
+阶段 3 已完成，阶段 4 三个 P0 源码计划已完成，阶段 4 P0.5 UI/UX polish 已完成。下一步按路线图设计 `docs/superpowers/specs/2026-06-13-mirax-evidence-driven-roadmap-design.md` 进入 P1 队列或根据验收反馈继续迭代。不要重复执行阶段 3 Task 1 → Task 7，也不要重复执行阶段 4 P0/P0.5 已完成的任务。
