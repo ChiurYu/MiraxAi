@@ -69,3 +69,11 @@ export interface AppSettings {
   theme: AppTheme;
   outputPaths: AppOutputPaths;
 }
+
+export interface PublishMetadata {
+  title: string;
+  description: string;
+  tags: string[];
+  coverPath?: string;
+  mode: "direct" | "draft";
+}

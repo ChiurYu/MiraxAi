@@ -81,3 +81,20 @@ export interface SidecarConfigRecord {
 
 export type AppSettingsRepository = Repository<AppSettingsRecord>;
 export type SidecarConfigRepository = Repository<SidecarConfigRecord>;
+
+export interface PublishTaskRecord {
+  id: string;
+  projectId: string;
+  platformId: string;
+  accountId: string;
+  status: string;
+  videoPath: string;
+  title: string;
+  description: string;
+  tagsJson: string;
+  mode: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type PublishTaskRepository = Repository<PublishTaskRecord>;

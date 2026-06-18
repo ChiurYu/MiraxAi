@@ -6,23 +6,23 @@
 
 ## 当前阶段
 
-阶段 4 P0：设置 / Provider / sidecar 配置源码实现（已完成，Task 1-11 已完成）。
+阶段 4 P0：发布准备与 mock 发布任务源码实现（已完成，Task 1-12 已完成）。
 
 阶段 3：Mirax AI 新版产品架构映射（已完成）。
 
-阶段 4 P0 把 App.vue 中硬编码的 Provider 配置和静态依赖检查拆分为可持久化的「通用设置 + Provider 配置列表 + sidecar 依赖配置」，并提供独立的 SettingsView.vue 入口。本阶段不接入真实 SQLite，使用 localStorage 持久化，API Key 被过滤不进入存储。
+阶段 4 P0 已完成工作台 workflow 拆分、设置 / Provider / sidecar 配置，以及发布准备与 mock 发布任务。发布链路已把标题/描述/话题/封面/发布方式抽成 `PublishMetadata`，把 mock 发布结果抽成 `PublishTask`，并用 localStorage 持久化到 `publishTaskStore`。
 
 ## 当前自动调度入口
 
-`docs/superpowers/plans/2026-06-17-mirax-settings-provider-sidecar.md`
+`docs/superpowers/plans/2026-06-17-mirax-publish-prep-mock-tasks.md`
 
-该计划是阶段 4 P0 的源码 implementation plan。执行本计划时，工位按每个 Task 的允许修改文件修改源码；未列入允许范围的文件禁止修改。
+该计划是阶段 4 P0 的源码 implementation plan，Task 1 → Task 12 已全部完成，不要重复执行。
 
-阶段 4 P0 Task 1 → Task 11 已全部完成，不要重复执行。
+阶段 4 P0 三个源码计划已完成：工作台 workflow、设置 / Provider / sidecar、发布准备与 mock 发布任务。
 
 ## 最新可执行任务
 
-阶段 4：按 `docs/product-architecture/ui-ux-and-phase-4-handoff.md` 的 P0 → P1 → P2 队列进入下一个 implementation plan。阶段 3 已完成，不要重复执行 `docs/superpowers/plans/2026-06-15-stage-3-architecture-mapping.md` 的 Task 1 → Task 7，也不要重复执行阶段 4 P0「设置 / Provider / sidecar 配置」Task 1 → Task 11。
+阶段 4：按 `docs/product-architecture/ui-ux-and-phase-4-handoff.md` 进入 P0.5 UI/UX polish 或 P1 队列。阶段 3 已完成，不要重复执行 `docs/superpowers/plans/2026-06-15-stage-3-architecture-mapping.md` 的 Task 1 → Task 7，也不要重复执行阶段 4 P0 已完成计划。
 
 继续执行阶段 4 时，仍然不要修改 `docs/reverse-engineering/legacy-ui-gap-list.md` 的状态列；不要修改 `.codex/dispatch-state.json`；每个源码计划只允许修改该计划列明的文件。
 
@@ -30,7 +30,9 @@
 
 - 阶段 3 架构映射：`docs/product-architecture/README.md`
 - 路线图设计：`docs/superpowers/specs/2026-06-13-mirax-evidence-driven-roadmap-design.md`
-- 当前计划：`docs/superpowers/plans/2026-06-17-mirax-settings-provider-sidecar.md`
+- 当前计划：`docs/superpowers/plans/2026-06-17-mirax-publish-prep-mock-tasks.md`
+- 已完成阶段 4 P0 设置计划：`docs/superpowers/plans/2026-06-17-mirax-settings-provider-sidecar.md`
+- 已完成阶段 4 P0 工作台计划：`docs/superpowers/plans/2026-06-17-mirax-workbench-workflow-architecture.md`
 - 已完成阶段 3 计划：`docs/superpowers/plans/2026-06-15-stage-3-architecture-mapping.md`
 - 已完成阶段 0 计划：`docs/superpowers/plans/2026-06-13-stage-0-inventory-tools.md`
 - 桌面重建设计：`docs/superpowers/specs/2026-06-11-mirax-desktop-rebuild-design.md`
@@ -88,4 +90,4 @@
 
 ## 下一步
 
-阶段 3 已完成，阶段 4 P0「设置 / Provider / sidecar 配置」Task 1 → Task 11 已完成。下一步按 `docs/product-architecture/ui-ux-and-phase-4-handoff.md` 的 P0 队列进入下一个 implementation plan。不要重复执行阶段 3 Task 1 → Task 7，也不要重复执行阶段 4 P0 已完成的任务。
+阶段 3 已完成，阶段 4 三个 P0 源码计划已完成。下一步按 `docs/product-architecture/ui-ux-and-phase-4-handoff.md` 进入 P0.5 UI/UX polish 或 P1 队列。不要重复执行阶段 3 Task 1 → Task 7，也不要重复执行阶段 4 P0 已完成的任务。

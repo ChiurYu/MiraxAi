@@ -6,6 +6,7 @@ export const LOCAL_STORE_SCHEMA_TABLES = [
   "workflow_tasks",
   "app_settings",
   "sidecar_configs",
+  "publish_tasks",
 ] as const;
 
 export const LOCAL_STORE_MIGRATIONS = [
@@ -72,6 +73,20 @@ export const LOCAL_STORE_MIGRATIONS = [
     cosy_voice_service_url TEXT,
     heygem_service_url TEXT,
     has_playwright_browser INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );`,
+  `CREATE TABLE IF NOT EXISTS publish_tasks (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL,
+    platform_id TEXT NOT NULL,
+    account_id TEXT NOT NULL,
+    status TEXT NOT NULL,
+    video_path TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    tags_json TEXT NOT NULL,
+    mode TEXT NOT NULL,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
   );`,

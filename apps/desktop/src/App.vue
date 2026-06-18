@@ -17,6 +17,7 @@ import {
   PlayCircle,
   RefreshCw,
   Settings2,
+  ShieldCheck,
   Sun,
   Upload,
   UserRound,
@@ -33,49 +34,51 @@ import {
 } from "@mirax/core";
 import { createMockMediaRenderer } from "@mirax/media-pipeline";
 import { createMockAiProvider } from "@mirax/provider-ai";
-import { SUPPORTED_PLATFORM_PROFILES, createMockPublisher, type PublishAccount } from "@mirax/provider-publish";
+import { SUPPORTED_PLATFORM_PROFILES, createMockPublisher } from "@mirax/provider-publish";
 import PathPickerButton from "./components/PathPickerButton.vue";
 import StatusBadge from "./components/StatusBadge.vue";
 import WorkbenchShell from "./components/workbench/WorkbenchShell.vue";
 import WorkflowStageCard from "./components/workbench/WorkflowStageCard.vue";
+import PublishPrepCard from "./components/workbench/PublishPrepCard.vue";
+import PublishCard from "./components/workbench/PublishCard.vue";
+import { usePublishPreparation } from "./composables/usePublishPreparation.js";
 import { useTaskCenterPreview } from "./composables/useTaskCenterPreview.js";
 import { useWorkbenchDraft } from "./composables/useWorkbenchDraft.js";
 import { useWorkflowRuntime } from "./composables/useWorkflowRuntime.js";
 import SettingsView from "./views/SettingsView.vue";
-import {
-  appendPublishHistoryItem,
-  createPublishHistoryItem,
-} from "./features/task-center/taskHistory.js";
+import { appendPublishTasks } from "./features/task-center/publishTaskStore.js";
 
 const aiProvider = createMockAiProvider({ artifactRoot: "/Users/Shared/MiraxAI" });
 const mediaRenderer = createMockMediaRenderer({ artifactRoot: "/Users/Shared/MiraxAI" });
 const publisher = createMockPublisher();
 
 const { draft, saveStatus } = useWorkbenchDraft();
-const { latestItems: latestHistoryItems, refresh: refreshTaskHistory } = useTaskCenterPreview({ limit: 5 });
+const { latestItems: latestHistoryItems } = useTaskCenterPreview({ limit: 5 });
 
-const publishAccounts = ref<PublishAccount[]>([]);
 const generatedVideoPath = ref("");
 const generatedCoverPath = ref("");
 const generatedAudioPath = ref("");
 const generatedAvatarPath = ref("");
-const publishTitle = ref("");
-const publishDescription = ref("");
-const publishTags = ref("通勤包, 大容量, 质感");
-const publishMode = ref<"direct" | "draft">("draft");
 const theme = ref<"light" | "dark">("dark");
 const activeView = ref<"workbench" | "settings">("workbench");
-
-const runtime = useWorkflowRuntime({
-  projectId: "demo-project",
-  executor: executeStage,
-});
 
 const project = computed({
   get: () => draft.project,
   set: (value: ProjectDraft) => {
     Object.assign(draft.project, value);
   },
+});
+
+const prep = usePublishPreparation({
+  projectId: "demo-project",
+  projectName: project.value.name,
+  targetPlatforms: () => project.value.targetPlatforms,
+  publisher,
+});
+
+const runtime = useWorkflowRuntime({
+  projectId: "demo-project",
+  executor: executeStage,
 });
 
 const projectErrors = computed(() => validateProjectDraft(project.value));
@@ -88,16 +91,6 @@ const platformLabels = computed<Record<PublishPlatform, string>>(() =>
     string
   >,
 );
-const selectedAccountText = computed(() => {
-  if (publishAccounts.value.length === 0) {
-    return "选择账号";
-  }
-
-  return project.value.targetPlatforms
-    .map((platformId) => publishAccounts.value.find((account) => account.platformId === platformId)?.displayName)
-    .filter(Boolean)
-    .join("、");
-});
 
 function getStage(stageId: WorkflowStageId): WorkflowStage {
   return runtime.workflow.value.stages.find((stage) => stage.id === stageId)!;
@@ -109,13 +102,11 @@ function getPlatformLabel(platform: PublishPlatform): string {
 
 function resetWorkbench() {
   runtime.resetWorkflow();
-  publishAccounts.value = [];
   generatedVideoPath.value = "";
   generatedCoverPath.value = "";
   generatedAudioPath.value = "";
   generatedAvatarPath.value = "";
-  publishTitle.value = "";
-  publishDescription.value = "";
+  prep.updateMetadata({ title: "", description: "", tags: [], coverPath: undefined, mode: "draft" });
 }
 
 async function executeStage(stageId: WorkflowStageId, title: string): Promise<string> {
@@ -133,8 +124,10 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
         productName: project.value.name,
         sellingPoints: ["通勤", "大容量", "质感"],
       });
-      publishTitle.value = result.titleSuggestions[0] ?? project.value.name;
-      publishDescription.value = result.script.slice(0, 100);
+      prep.updateMetadata({
+        title: result.titleSuggestions[0] ?? project.value.name,
+        description: result.script.slice(0, 100),
+      });
       return `生成 ${result.titleSuggestions.length} 个标题方向`;
     }
     case "voice-clone": {
@@ -177,43 +170,42 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
     case "review":
       return "人工复核清单已通过";
     case "publish": {
-      publishAccounts.value = await publisher.listAccounts();
+      const videoPath = generatedVideoPath.value;
+      if (!videoPath) {
+        throw new Error("视频尚未生成，无法发布");
+      }
 
-      const platformText =
-        project.value.targetPlatforms.map((platform) => platformLabels.value[platform]).join("、") || "未选择";
-      const accountText = selectedAccountText.value || "选择账号";
-      const modeText = publishMode.value === "direct" ? "直接发布" : "草稿";
-      const videoPath = generatedVideoPath.value || "未生成";
+      if (!prep.canPublish.value) {
+        const reasons = prep.errors.value.join("、") || "发布条件不满足";
+        throw new Error(reasons);
+      }
+
+      const platforms = project.value.targetPlatforms;
+      const platformText = platforms.map((platform) => platformLabels.value[platform]).join("、") || "未选择";
+      const modeText = prep.metadata.value.mode === "direct" ? "直接发布" : "草稿";
 
       const confirmed = window.confirm(
-        `确认创建 ${project.value.targetPlatforms.length} 个发布任务？\n\n账号：${accountText}\n平台：${platformText}\n发布模式：${modeText}\n视频路径：${videoPath}`,
+        `确认创建 ${platforms.length} 个发布任务？\n\n平台：${platformText}\n发布模式：${modeText}\n视频路径：${videoPath}`,
       );
 
       if (!confirmed) {
         throw new Error("PUBLISH_CANCELLED");
       }
 
-      const result = await publisher.publish({
-        projectId: runtime.workflow.value.projectId,
-        videoPath: generatedVideoPath.value,
-        title: publishTitle.value || project.value.name,
-        description: publishDescription.value || project.value.notes || "",
-        platformIds: project.value.targetPlatforms,
-        mode: publishMode.value,
-      });
+      const tasks = await prep.publish(videoPath);
+      if (tasks.length === 0) {
+        throw new Error("发布校验失败，未创建任务");
+      }
 
-      const historyItem = createPublishHistoryItem({
-        projectId: runtime.workflow.value.projectId,
-        taskIds: result.taskIds,
-        videoPath: generatedVideoPath.value,
-        platforms: project.value.targetPlatforms,
-      });
-      appendPublishHistoryItem(historyItem);
-      refreshTaskHistory();
+      appendPublishTasks(tasks);
 
-      return `${result.message}：${result.taskIds.join("、")}`;
+      return `已创建 ${tasks.length} 个发布任务`;
     }
   }
+}
+
+async function handlePublish() {
+  await runtime.runStage("publish");
 }
 
 function toggleTheme() {
@@ -315,7 +307,7 @@ function toggleTheme() {
       </template>
       <label>
         <span>改写内容</span>
-        <textarea v-model="publishDescription" placeholder="改写的文案将显示在这里..." />
+        <textarea :value="prep.metadata.value.description" placeholder="改写的文案将显示在这里..." @input="prep.updateMetadata({ description: ($event.target as HTMLTextAreaElement).value })" />
       </label>
     </WorkflowStageCard>
 
@@ -475,90 +467,27 @@ function toggleTheme() {
       </template>
     </WorkflowStageCard>
 
-    <WorkflowStageCard
-      class="publish-meta-card"
-      :stage="getStage('review')"
+    <PublishPrepCard
+      :metadata="prep.metadata.value"
       :status="runtime.stageStatus.value.review"
-      @run="runtime.runStage('review')"
-    >
-      <template #icon><FileText :size="19" /></template>
-      <label>
-        <span>标题</span>
-        <div class="action-input">
-          <input v-model="publishTitle" placeholder="输入视频标题" />
-          <button @click="publishTitle = project.name">一键生成</button>
-        </div>
-      </label>
-      <label>
-        <span>描述</span>
-        <textarea v-model="publishDescription" placeholder="输入视频描述..." />
-      </label>
-      <label>
-        <span>话题标签</span>
-        <input v-model="publishTags" placeholder="输入标签后回车，发布时自动拼接 #tag" />
-      </label>
-      <div class="cover-row">
-        <div class="cover-preview">
-          <Image :size="26" />
-          <span>{{ generatedCoverPath ? "封面已生成" : "暂无封面" }}</span>
-        </div>
-        <div class="cover-actions">
-          <button>封面设计</button>
-          <button :disabled="!generatedCoverPath">打开封面</button>
-          <button :disabled="!generatedCoverPath">导出封面</button>
-        </div>
-      </div>
-      <template #actions>
-        <button
-          class="primary compact-button"
-          :disabled="runtime.running.value || runtime.stageStatus.value.review === 'completed'"
-          @click="runtime.runStage('review')"
-        >
-          <ClipboardCheck :size="16" /> 复核通过
-        </button>
-      </template>
-    </WorkflowStageCard>
+      :disabled="runtime.running.value || runtime.stageStatus.value.review === 'completed'"
+      @update="prep.updateMetadata"
+      @review="runtime.runStage('review')"
+    />
 
-    <WorkflowStageCard
-      class="publish-card"
-      :stage="getStage('publish')"
+    <PublishCard
+      :project-id="runtime.workflow.value.projectId"
+      :project-name="project.name"
+      :video-path="generatedVideoPath"
+      :target-platforms="project.targetPlatforms"
+      :mode="prep.metadata.value.mode"
       :status="runtime.stageStatus.value.publish"
-      @run="runtime.runStage('publish')"
-    >
-      <template #icon><CloudUpload :size="19" /></template>
-      <label>
-        <span>视频地址</span>
-        <div class="action-input">
-          <input :value="generatedVideoPath || '自动使用上一步视频，或手动选择'" readonly />
-          <button><FolderOpen :size="16" /></button>
-        </div>
-      </label>
-      <label>
-        <span>发布账号</span>
-        <select>
-          <option>{{ selectedAccountText }}</option>
-        </select>
-      </label>
-      <div class="platforms compact-platforms">
-        <label><input v-model="project.targetPlatforms" type="checkbox" value="douyin" /> 抖音</label>
-        <label><input v-model="project.targetPlatforms" type="checkbox" value="xiaohongshu" /> 小红书</label>
-        <label><input v-model="project.targetPlatforms" type="checkbox" value="kuaishou" /> 快手</label>
-        <label><input v-model="project.targetPlatforms" type="checkbox" value="shipinhao" /> 视频号</label>
-      </div>
-      <div class="radio-row">
-        <label><input v-model="publishMode" type="radio" value="direct" name="publish-mode" /> 直接发布</label>
-        <label><input v-model="publishMode" type="radio" value="draft" name="publish-mode" /> 草稿</label>
-      </div>
-      <template #actions>
-        <button
-          class="primary wide-button"
-          :disabled="runtime.running.value || runtime.stageStatus.value.publish === 'completed'"
-          @click="runtime.runStage('publish')"
-        >
-          <CloudUpload :size="16" /> 立即发布
-        </button>
-      </template>
-    </WorkflowStageCard>
+      :disabled="runtime.running.value || runtime.stageStatus.value.publish === 'completed'"
+      :is-publishing="prep.isPublishing.value"
+      @update-mode="prep.updateMetadata({ mode: $event })"
+      @update-platforms="project.targetPlatforms = $event"
+      @publish="handlePublish"
+    />
 
     <section class="workflow-card log-card">
       <div class="card-heading">

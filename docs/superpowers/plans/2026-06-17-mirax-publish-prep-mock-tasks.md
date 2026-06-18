@@ -21,21 +21,21 @@
 
 **当前自动调度入口：** `docs/superpowers/plans/2026-06-17-mirax-publish-prep-mock-tasks.md`
 
-**当前阶段：** 阶段 4 P0。本文件是阶段 4 P0 源码 implementation plan。执行本计划时，工位可以按每个 Task 的允许修改文件修改源码；未列入允许范围的文件禁止修改。
+**当前阶段：** 阶段 4 P0。本文件是阶段 4 P0 源码 implementation plan，Task 1 → Task 12 已全部完成并通过验收，不要重复执行。
 
 **依赖阶段 3 文档：**
 - `docs/product-architecture/workflow-and-release-chain.md`
 - `docs/product-architecture/data-provider-sidecar-contracts.md`
 - `docs/product-architecture/ui-ux-and-phase-4-handoff.md`
 
-**当前源码起点：**
-- `apps/desktop/src/App.vue`：当前在工作流卡片中内嵌"标题封面"和"视频发布"表单，发布时调用 `publisher.publish()` 并把结果追加到 `taskHistory`。
-- `packages/provider-publish/src/types.ts` / `mockPublisher.ts`：已有 `Publisher` 接口与 `createMockPublisher`。
-- `packages/core/src/types.ts` / `validation.ts`：已有 `PublishPlatform`、`ProjectDraft` 校验。
-- `packages/local-store/src/schema.ts` / `repositories.ts`：已有 5 张表。
-- `apps/desktop/src/features/task-center/taskHistory.ts`：记录发布历史（成功/失败）。
+**当前源码状态：**
+- `apps/desktop/src/App.vue`：已移除内嵌"标题封面"和"视频发布"表单，改用 `PublishPrepCard.vue` 与 `PublishCard.vue`。
+- `executeStage("publish")`：已统一承接发布确认、校验、`prep.publish()`、`appendPublishTasks()` 和 runtime 阶段状态更新；不再出现未创建任务却标记 completed 的空跑路径。
+- `usePublishPreparation()`：已通过 getter / `MaybeRefOrGetter` 动态读取最新 `targetPlatforms`，避免平台选择变更后使用旧数组。
+- `packages/provider-publish`、`packages/core`、`packages/local-store`：已补齐发布元数据、发布任务和 `publish_tasks` 本地数据契约。
+- `apps/desktop/src/features/task-center/publishTaskStore.ts`：P0 使用 localStorage 持久化 mock 发布任务。
 
-**下一步：** 当前创建计划的任务已完成；后续执行本计划时从 Task 1 开始。本计划是阶段 4 P0 最后一个计划；完成后进入 P1 计划（声音/形象/素材/任务中心/账号管理）。
+**下一步：** 本 P0 计划已完成。本计划是阶段 4 P0 最后一个源码计划；后续进入 P0.5 UI/UX polish 或 P1 计划（声音/形象/素材/任务中心/账号管理）。
 
 ---
 
@@ -131,7 +131,7 @@ pnpm --filter @mirax/desktop typecheck
 - `.codex/dispatch-state.json`
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 
-- [ ] **Step 1：追加类型到 `types.ts`**
+- [x] **Step 1：追加类型到 `types.ts`**
 
 在 `packages/core/src/types.ts` 的 `ProjectDraft` 接口之后追加：
 
@@ -145,7 +145,7 @@ export interface PublishMetadata {
 }
 ```
 
-- [ ] **Step 2：追加校验函数到 `validation.ts`**
+- [x] **Step 2：追加校验函数到 `validation.ts`**
 
 在 `packages/core/src/validation.ts` 中追加：
 
@@ -184,7 +184,7 @@ export function validatePublishMetadata(metadata: PublishMetadata, platforms: Pu
 }
 ```
 
-- [ ] **Step 3：运行 core 测试**
+- [x] **Step 3：运行 core 测试**
 
 ```bash
 pnpm test packages/core
@@ -213,7 +213,7 @@ pnpm test packages/core
 - `apps/`
 - `packages/core/src/` 以外的 `packages/`
 
-- [ ] **Step 1：写入测试文件**
+- [x] **Step 1：写入测试文件**
 
 创建 `packages/core/tests/publishMetadata.test.ts`：
 
@@ -272,7 +272,7 @@ describe("PublishMetadata", () => {
 });
 ```
 
-- [ ] **Step 2：运行测试**
+- [x] **Step 2：运行测试**
 
 ```bash
 pnpm test packages/core/tests/publishMetadata.test.ts
@@ -301,7 +301,7 @@ pnpm test packages/core/tests/publishMetadata.test.ts
 - `.codex/dispatch-state.json`
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 
-- [ ] **Step 1：追加类型到 `types.ts`**
+- [x] **Step 1：追加类型到 `types.ts`**
 
 在 `packages/provider-publish/src/types.ts` 的 `Publisher` 接口之后追加：
 
@@ -324,7 +324,7 @@ export interface PublishTask {
 }
 ```
 
-- [ ] **Step 2：追加工厂函数到 `mockPublisher.ts`**
+- [x] **Step 2：追加工厂函数到 `mockPublisher.ts`**
 
 在 `packages/provider-publish/src/mockPublisher.ts` 的 `createMockPublisher` 之后追加：
 
@@ -361,7 +361,7 @@ export function createPublishTask(input: {
 }
 ```
 
-- [ ] **Step 3：运行 provider-publish 类型检查**
+- [x] **Step 3：运行 provider-publish 类型检查**
 
 ```bash
 pnpm --filter @mirax/provider-publish typecheck
@@ -389,7 +389,7 @@ pnpm --filter @mirax/provider-publish typecheck
 - `apps/`
 - `packages/provider-publish/src/` 以外的 `packages/`
 
-- [ ] **Step 1：写入测试文件**
+- [x] **Step 1：写入测试文件**
 
 创建 `packages/provider-publish/tests/publishTask.test.ts`：
 
@@ -437,7 +437,7 @@ describe("createPublishTask", () => {
 });
 ```
 
-- [ ] **Step 2：运行测试**
+- [x] **Step 2：运行测试**
 
 ```bash
 pnpm test packages/provider-publish/tests/publishTask.test.ts
@@ -467,7 +467,7 @@ pnpm test packages/provider-publish/tests/publishTask.test.ts
 - `.codex/dispatch-state.json`
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 
-- [ ] **Step 1：扩展 `schema.ts`**
+- [x] **Step 1：扩展 `schema.ts`**
 
 在 `packages/local-store/src/schema.ts` 的 `LOCAL_STORE_MIGRATIONS` 数组中，在 `workflow_tasks` 之后追加：
 
@@ -488,7 +488,7 @@ pnpm test packages/provider-publish/tests/publishTask.test.ts
   );`,
 ```
 
-- [ ] **Step 2：扩展 `repositories.ts`**
+- [x] **Step 2：扩展 `repositories.ts`**
 
 在 `packages/local-store/src/repositories.ts` 中追加记录类型和 repository 类型：
 
@@ -511,7 +511,7 @@ export interface PublishTaskRecord {
 export type PublishTaskRepository = Repository<PublishTaskRecord>;
 ```
 
-- [ ] **Step 3：更新 `LOCAL_STORE_SCHEMA_TABLES`**
+- [x] **Step 3：更新 `LOCAL_STORE_SCHEMA_TABLES`**
 
 在 `packages/local-store/src/schema.ts` 中把 `publish_tasks` 加入 `LOCAL_STORE_SCHEMA_TABLES`：
 
@@ -528,7 +528,7 @@ export const LOCAL_STORE_SCHEMA_TABLES = [
 ] as const;
 ```
 
-- [ ] **Step 4：运行 local-store 类型检查**
+- [x] **Step 4：运行 local-store 类型检查**
 
 ```bash
 pnpm --filter @mirax/local-store typecheck
@@ -559,7 +559,7 @@ pnpm --filter @mirax/local-store typecheck
 - `.codex/dispatch-state.json`
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 
-- [ ] **Step 1：写入 store**
+- [x] **Step 1：写入 store**
 
 创建 `apps/desktop/src/features/task-center/publishTaskStore.ts`：
 
@@ -624,7 +624,7 @@ export function appendPublishTasks(tasks: PublishTask[]): void {
 }
 ```
 
-- [ ] **Step 2：写入测试**
+- [x] **Step 2：写入测试**
 
 创建 `apps/desktop/src/features/task-center/publishTaskStore.test.ts`：
 
@@ -729,7 +729,7 @@ describe("publishTaskStore", () => {
 });
 ```
 
-- [ ] **Step 3：运行测试**
+- [x] **Step 3：运行测试**
 
 ```bash
 pnpm test apps/desktop/src/features/task-center/publishTaskStore.test.ts
@@ -758,7 +758,7 @@ pnpm test apps/desktop/src/features/task-center/publishTaskStore.test.ts
 - `.codex/dispatch-state.json`
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 
-- [ ] **Step 1：写入 composable**
+- [x] **Step 1：写入 composable**
 
 创建 `apps/desktop/src/composables/usePublishPreparation.ts`：
 
@@ -854,7 +854,7 @@ export function usePublishPreparation(options: UsePublishPreparationOptions) {
 }
 ```
 
-- [ ] **Step 2：运行类型检查**
+- [x] **Step 2：运行类型检查**
 
 ```bash
 pnpm --filter @mirax/desktop typecheck
@@ -882,7 +882,7 @@ pnpm --filter @mirax/desktop typecheck
 - `apps/desktop/src/App.vue`
 - `packages/`
 
-- [ ] **Step 1：写入测试文件**
+- [x] **Step 1：写入测试文件**
 
 创建 `apps/desktop/src/composables/usePublishPreparation.test.ts`：
 
@@ -954,7 +954,7 @@ describe("usePublishPreparation", () => {
 });
 ```
 
-- [ ] **Step 2：运行测试**
+- [x] **Step 2：运行测试**
 
 ```bash
 pnpm test apps/desktop/src/composables/usePublishPreparation.test.ts
@@ -981,7 +981,7 @@ pnpm test apps/desktop/src/composables/usePublishPreparation.test.ts
 - `apps/desktop/src/App.vue`
 - `packages/`
 
-- [ ] **Step 1：写入组件**
+- [x] **Step 1：写入组件**
 
 创建 `apps/desktop/src/components/workbench/PublishPrepCard.vue`：
 
@@ -1181,7 +1181,7 @@ textarea {
 </style>
 ```
 
-- [ ] **Step 2：运行类型检查**
+- [x] **Step 2：运行类型检查**
 
 ```bash
 pnpm --filter @mirax/desktop typecheck
@@ -1210,7 +1210,7 @@ pnpm --filter @mirax/desktop typecheck
 - `apps/desktop/src/App.vue`
 - `packages/`
 
-- [ ] **Step 1：写入组件**
+- [x] **Step 1：写入组件**
 
 创建 `apps/desktop/src/components/workbench/PublishCard.vue`：
 
@@ -1421,7 +1421,7 @@ label {
 </style>
 ```
 
-- [ ] **Step 2：运行类型检查**
+- [x] **Step 2：运行类型检查**
 
 ```bash
 pnpm --filter @mirax/desktop typecheck
@@ -1450,7 +1450,7 @@ pnpm --filter @mirax/desktop typecheck
 - `.codex/dispatch-state.json`
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 
-- [ ] **Step 1：导入组件与 store**
+- [x] **Step 1：导入组件与 store**
 
 在 `App.vue` 的 `<script setup>` 中新增：
 
@@ -1461,7 +1461,7 @@ import { usePublishPreparation } from "./composables/usePublishPreparation.js";
 import { appendPublishTasks } from "./features/task-center/publishTaskStore.js";
 ```
 
-- [ ] **Step 2：替换发布相关 refs**
+- [x] **Step 2：替换发布相关 refs**
 
 移除：
 - `publishTitle`
@@ -1476,28 +1476,16 @@ import { appendPublishTasks } from "./features/task-center/publishTaskStore.js";
 const prep = usePublishPreparation({
   projectId: runtime.workflow.value.projectId,
   projectName: project.value.name,
-  targetPlatforms: project.value.targetPlatforms,
+  targetPlatforms: () => project.value.targetPlatforms,
   publisher,
 });
 ```
 
 > 注：如果已执行 P0「工作台 workflow 信息架构和状态拆分」计划，`runtime` 来自 `useWorkflowRuntime`。若单独执行本计划，则直接在 `App.vue` 中保留原有 workflow 状态并传入 `projectId`。
 
-把 `project.targetPlatforms` 的变更同步到 `prep`：
+`usePublishPreparation` 通过 getter 动态读取 `targetPlatforms`，因此发布前在工作台修改平台选择时，`prep.publish()` 会使用最新平台列表。
 
-```typescript
-watch(
-  () => project.value.targetPlatforms,
-  (platforms) => {
-    // usePublishPreparation 的 options.targetPlatforms 是初始化时传入的数组引用，
-    // 需要让 PublishCard 直接绑定 project.value.targetPlatforms，而非 prep.options。
-  },
-);
-```
-
-更简单的方式：在模板中直接把 `project.value.targetPlatforms` 和 `prep.metadata.value.mode` 绑定到组件，不通过 `prep.options` 同步。
-
-- [ ] **Step 3：替换模板中的发布卡片**
+- [x] **Step 3：替换模板中的发布卡片**
 
 把原有 `publish-meta-card` 替换为：
 
@@ -1529,39 +1517,57 @@ watch(
 />
 ```
 
-- [ ] **Step 4：实现 `handlePublish`**
+- [x] **Step 4：实现发布动作收口**
 
-在 `App.vue` 的 `<script setup>` 中新增：
+在 `App.vue` 的 `executeStage("publish")` 中承接发布动作：
 
 ```typescript
-async function handlePublish() {
-  try {
-    const tasks = await prep.publish(generatedVideoPath.value);
-    if (tasks.length > 0) {
-      appendPublishTasks(tasks);
-      refreshTaskHistory();
-      runtime.addLog("视频发布", `已创建 ${tasks.length} 个发布任务`);
-      runtime.workflow.value = updateStageStatus(runtime.workflow.value, "publish", "completed");
-    }
-  } catch (error) {
-    if (error instanceof Error && error.message === "PUBLISH_CANCELLED") {
-      runtime.workflow.value = updateStageStatus(runtime.workflow.value, "publish", "pending");
-      runtime.addLog("视频发布", "已取消发布");
-      return;
-    }
-    runtime.workflow.value = updateStageStatus(runtime.workflow.value, "publish", "failed");
-    runtime.addLog("视频发布", error instanceof Error ? error.message : "发布失败");
+case "publish": {
+  const videoPath = generatedVideoPath.value;
+  if (!videoPath) {
+    throw new Error("视频尚未生成，无法发布");
   }
+
+  if (!prep.canPublish.value) {
+    const reasons = prep.errors.value.join("、") || "发布条件不满足";
+    throw new Error(reasons);
+  }
+
+  const platforms = project.value.targetPlatforms;
+  const platformText = platforms.map((platform) => platformLabels.value[platform]).join("、") || "未选择";
+  const modeText = prep.metadata.value.mode === "direct" ? "直接发布" : "草稿";
+
+  const confirmed = window.confirm(
+    `确认创建 ${platforms.length} 个发布任务？\n\n平台：${platformText}\n发布模式：${modeText}\n视频路径：${videoPath}`,
+  );
+
+  if (!confirmed) {
+    throw new Error("PUBLISH_CANCELLED");
+  }
+
+  const tasks = await prep.publish(videoPath);
+  if (tasks.length === 0) {
+    throw new Error("发布校验失败，未创建任务");
+  }
+
+  appendPublishTasks(tasks);
+  return `已创建 ${tasks.length} 个发布任务`;
 }
 ```
 
-> 注：`PublishCard.vue` 内部已经做了 `window.confirm`，因此 `prep.publish()` 不会被取消；但如果后续把确认逻辑移到 `handlePublish`，需要重新处理 `PUBLISH_CANCELLED`。
+`handlePublish()` 只负责通过 runtime 触发发布阶段：
 
-- [ ] **Step 5：清理不再使用的变量和函数**
+```typescript
+async function handlePublish() {
+  await runtime.runStage("publish");
+}
+```
+
+- [x] **Step 5：清理不再使用的变量和函数**
 
 删除 `App.vue` 中已移除的 `publishTitle`、`publishDescription`、`publishTags`、`publishMode`、`publishAccounts`、`selectedAccountText`（如已移除）、发布卡片相关内联函数。
 
-- [ ] **Step 6：运行类型检查与测试**
+- [x] **Step 6：运行类型检查与测试**
 
 ```bash
 pnpm --filter @mirax/desktop typecheck
@@ -1590,7 +1596,7 @@ pnpm --filter @mirax/desktop typecheck
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 - `.codex/dispatch-state.json`
 
-- [ ] **Step 1：运行 core 测试**
+- [x] **Step 1：运行 core 测试**
 
 ```bash
 pnpm test packages/core
@@ -1598,7 +1604,7 @@ pnpm test packages/core
 
 预期：通过。
 
-- [ ] **Step 2：运行 provider-publish 测试**
+- [x] **Step 2：运行 provider-publish 测试**
 
 ```bash
 pnpm test packages/provider-publish
@@ -1606,7 +1612,7 @@ pnpm test packages/provider-publish
 
 预期：通过。
 
-- [ ] **Step 3：运行 local-store 测试**
+- [x] **Step 3：运行 local-store 测试**
 
 ```bash
 pnpm test packages/local-store
@@ -1614,7 +1620,7 @@ pnpm test packages/local-store
 
 预期：通过。
 
-- [ ] **Step 4：运行桌面端新增测试**
+- [x] **Step 4：运行桌面端新增测试**
 
 ```bash
 pnpm test apps/desktop/src/composables/usePublishPreparation.test.ts
@@ -1623,7 +1629,7 @@ pnpm test apps/desktop/src/features/task-center/publishTaskStore.test.ts
 
 预期：通过。
 
-- [ ] **Step 5：运行桌面端既有测试**
+- [x] **Step 5：运行桌面端既有测试**
 
 ```bash
 pnpm test apps/desktop/src/runtime/desktopDraft.test.ts
@@ -1632,7 +1638,7 @@ pnpm test apps/desktop/src/features/task-center/taskHistory.test.ts
 
 预期：通过。
 
-- [ ] **Step 6：运行全仓类型检查**
+- [x] **Step 6：运行全仓类型检查**
 
 ```bash
 pnpm typecheck
@@ -1640,7 +1646,7 @@ pnpm typecheck
 
 预期：无错误。
 
-- [ ] **Step 7：运行 web 开发模式 smoke（可选）**
+- [x] **Step 7：运行 web 开发模式 smoke（可选）**
 
 ```bash
 pnpm --filter @mirax/desktop dev:web
@@ -1648,9 +1654,10 @@ pnpm --filter @mirax/desktop dev:web
 
 验证：
 1. 工作台页面正常加载。
-2. "标题封面"卡片可编辑标题、描述、标签、发布方式。
-3. "视频发布"卡片可选择平台、触发发布。
-4. 发布后 localStorage 的 `mirax-ai.publish-tasks.v1` 出现新增任务记录。
+2. 视频合成后修改发布平台选择，点击“立即发布”确认对话框中平台与当前选择一致。
+3. 通过“运行全部”或“运行下一步”进入发布阶段时，实际创建 PublishTask 后才标记 completed。
+4. 控制台无 error，无 Vite overlay。
+5. 发布后 localStorage 的 `mirax-ai.publish-tasks.v1` 出现新增任务记录。
 
 停止 dev server：`Control+C`。
 
@@ -1695,8 +1702,8 @@ pnpm --filter @mirax/desktop dev:web
 
 ## 风险与待确认问题
 
-1. **`PublishCard.vue` 内的确认对话框**：当前把 `window.confirm` 放在 `PublishCard.vue` 内部，如果后续需要更复杂的发布确认页，需把确认逻辑上提到 `App.vue` 或路由层。
-2. **目标平台同步**：`usePublishPreparation` 初始化时传入 `targetPlatforms` 数组引用，但 `ProjectDraft.targetPlatforms` 可能在工作台被修改。模板中直接把 `project.value.targetPlatforms` 传给 `PublishCard`，不依赖 `prep.options`，可规避引用过期问题。
+1. **发布确认形态**：当前仍使用 `window.confirm`；如果后续需要更复杂的发布确认页，需替换为独立确认组件或路由层页面。
+2. **目标平台同步**：`usePublishPreparation` 通过 getter / `MaybeRefOrGetter` 动态读取最新 `targetPlatforms`，避免工作台替换数组后发布任务仍使用旧平台。
 3. **发布任务与发布历史双轨**：`publishTaskStore` 保存详细任务记录，`taskHistory` 保存发布 handoff 摘要。P1 任务中心设计时需要决定如何合并展示。
 4. **mock publisher 返回的 taskIds 顺序**：`createPublishTask` 按 `targetPlatforms` 顺序取 `result.taskIds[index]`，需保证 mock publisher 的 taskIds 顺序与输入 platformIds 一致（当前实现已满足）。
 5. **待确认：P0 是否需要把发布任务展示在任务历史预览中？** 当前计划只把任务持久化到 `publishTaskStore`，工作台仍通过 `taskHistory` 展示发布 handoff 摘要。P1 任务中心再统一展示所有任务。

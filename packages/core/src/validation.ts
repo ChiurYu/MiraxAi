@@ -1,4 +1,4 @@
-import type { ApiKeyProviderConfig, AppSettings, AppTheme, ProjectDraft } from "./types.js";
+import type { ApiKeyProviderConfig, AppSettings, AppTheme, ProjectDraft, PublishMetadata, PublishPlatform } from "./types.js";
 
 export function createApiKeyProviderConfig(config: Omit<ApiKeyProviderConfig, "enabled"> & { enabled?: boolean }): ApiKeyProviderConfig {
   return {
@@ -86,6 +86,37 @@ export function validateAppSettings(settings: AppSettings): string[] {
   const paths = settings.outputPaths;
   if (!paths.baseOutput.trim()) {
     errors.push("基础输出目录不能为空");
+  }
+
+  return errors;
+}
+
+export function createDefaultPublishMetadata(): PublishMetadata {
+  return {
+    title: "",
+    description: "",
+    tags: [],
+    mode: "draft",
+  };
+}
+
+export function validatePublishMetadata(metadata: PublishMetadata, platforms: PublishPlatform[]): string[] {
+  const errors: string[] = [];
+
+  if (!metadata.title.trim()) {
+    errors.push("请填写标题");
+  }
+
+  if (!metadata.description.trim()) {
+    errors.push("请填写描述");
+  }
+
+  if (platforms.length === 0) {
+    errors.push("至少选择一个发布平台");
+  }
+
+  if (metadata.mode !== "direct" && metadata.mode !== "draft") {
+    errors.push("发布方式无效");
   }
 
   return errors;
