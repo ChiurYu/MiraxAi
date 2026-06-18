@@ -52,3 +52,20 @@ export interface ProjectDraft {
   voiceSamplePath?: string;
   notes?: string;
 }
+
+export type AppTheme = "light" | "dark" | "system";
+
+export interface AppOutputPaths {
+  baseOutput: string;
+  audioOutput: string;
+  videoOutput: string;
+  draftOutput: string;
+  exportOutput: string;
+  thumbsOutput: string;
+}
+
+export interface AppSettings {
+  id: string;
+  theme: AppTheme;
+  outputPaths: AppOutputPaths;
+}

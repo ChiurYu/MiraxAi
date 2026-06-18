@@ -4,6 +4,8 @@ export const LOCAL_STORE_SCHEMA_TABLES = [
   "video_projects",
   "publish_accounts",
   "workflow_tasks",
+  "app_settings",
+  "sidecar_configs",
 ] as const;
 
 export const LOCAL_STORE_MIGRATIONS = [
@@ -53,6 +55,23 @@ export const LOCAL_STORE_MIGRATIONS = [
     stage_id TEXT NOT NULL,
     status TEXT NOT NULL,
     payload_json TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );`,
+  `CREATE TABLE IF NOT EXISTS app_settings (
+    id TEXT PRIMARY KEY,
+    theme TEXT NOT NULL,
+    output_paths_json TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );`,
+  `CREATE TABLE IF NOT EXISTS sidecar_configs (
+    id TEXT PRIMARY KEY,
+    ffmpeg_path TEXT,
+    python_service_url TEXT,
+    cosy_voice_service_url TEXT,
+    heygem_service_url TEXT,
+    has_playwright_browser INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
   );`,

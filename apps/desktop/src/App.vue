@@ -8,7 +8,6 @@ import {
   FileText,
   FolderOpen,
   Image,
-  KeyRound,
   Link2,
   Loader2,
   Mic,
@@ -18,7 +17,6 @@ import {
   PlayCircle,
   RefreshCw,
   Settings2,
-  ShieldCheck,
   Sun,
   Upload,
   UserRound,
@@ -28,16 +26,14 @@ import {
 import { computed, ref } from "vue";
 import {
   validateProjectDraft,
-  validateProviderConfig,
   type ProjectDraft,
   type PublishPlatform,
   type WorkflowStage,
   type WorkflowStageId,
 } from "@mirax/core";
 import { createMockMediaRenderer } from "@mirax/media-pipeline";
-import { createMockAiProvider, testAiProviderConnection } from "@mirax/provider-ai";
+import { createMockAiProvider } from "@mirax/provider-ai";
 import { SUPPORTED_PLATFORM_PROFILES, createMockPublisher, type PublishAccount } from "@mirax/provider-publish";
-import DependencyChecklist from "./components/DependencyChecklist.vue";
 import PathPickerButton from "./components/PathPickerButton.vue";
 import StatusBadge from "./components/StatusBadge.vue";
 import WorkbenchShell from "./components/workbench/WorkbenchShell.vue";
@@ -45,6 +41,7 @@ import WorkflowStageCard from "./components/workbench/WorkflowStageCard.vue";
 import { useTaskCenterPreview } from "./composables/useTaskCenterPreview.js";
 import { useWorkbenchDraft } from "./composables/useWorkbenchDraft.js";
 import { useWorkflowRuntime } from "./composables/useWorkflowRuntime.js";
+import SettingsView from "./views/SettingsView.vue";
 import {
   appendPublishHistoryItem,
   createPublishHistoryItem,
@@ -66,8 +63,8 @@ const publishTitle = ref("");
 const publishDescription = ref("");
 const publishTags = ref("通勤包, 大容量, 质感");
 const publishMode = ref<"direct" | "draft">("draft");
-const connectionMessage = ref("未测试");
 const theme = ref<"light" | "dark">("dark");
+const activeView = ref<"workbench" | "settings">("workbench");
 
 const runtime = useWorkflowRuntime({
   projectId: "demo-project",
@@ -81,15 +78,7 @@ const project = computed({
   },
 });
 
-const providerConfig = computed({
-  get: () => draft.providerConfig,
-  set: (value) => {
-    Object.assign(draft.providerConfig, value);
-  },
-});
-
 const projectErrors = computed(() => validateProjectDraft(project.value));
-const providerErrors = computed(() => validateProviderConfig(providerConfig.value));
 const canRun = computed(
   () => !runtime.running.value && projectErrors.value.length === 0 && Boolean(runtime.nextStage.value),
 );
@@ -227,27 +216,6 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
   }
 }
 
-async function testConnection() {
-  connectionMessage.value = "检测中…";
-
-  try {
-    const input =
-      providerConfig.value.provider === "openai"
-        ? ({
-            mode: "openai-compatible",
-            baseUrl: providerConfig.value.baseUrl ?? "",
-            apiKey: providerConfig.value.apiKey,
-            model: providerConfig.value.model ?? "",
-          } as const)
-        : ({ mode: "mock" } as const);
-
-    const result = await testAiProviderConnection(input);
-    connectionMessage.value = result.message;
-  } catch (error) {
-    connectionMessage.value = error instanceof Error ? error.message : "连接测试失败";
-  }
-}
-
 function toggleTheme() {
   theme.value = theme.value === "dark" ? "light" : "dark";
 }
@@ -264,11 +232,14 @@ function toggleTheme() {
     :running-mode="runtime.runningMode.value"
     :can-run="canRun"
     :theme="theme"
+    :active-view="activeView"
     @run-next="runtime.runNextStage"
     @run-all="runtime.runAllStages"
     @reset="resetWorkbench"
     @toggle-theme="toggleTheme"
+    @switch-view="activeView = $event"
   >
+    <template v-if="activeView === 'workbench'">
     <WorkflowStageCard
       class="learn-card"
       :stage="getStage('transcribe')"
@@ -589,28 +560,6 @@ function toggleTheme() {
       </template>
     </WorkflowStageCard>
 
-    <section class="workflow-card settings-card">
-      <div class="card-heading">
-        <span class="card-icon"><KeyRound :size="19" /></span>
-        <h2>密钥配置</h2>
-      </div>
-      <div class="two-columns">
-        <label><span>配置名称</span><input v-model="providerConfig.label" /></label>
-        <label><span>模型</span><input v-model="providerConfig.model" /></label>
-      </div>
-      <label><span>Base URL</span><input v-model="providerConfig.baseUrl" /></label>
-      <label><span>API Key</span><input v-model="providerConfig.apiKey" type="password" placeholder="用户本地填写" autocomplete="off" /></label>
-      <div class="connection-row">
-        <button class="secondary" @click="testConnection">测试连接</button>
-        <span class="connection-message">{{ connectionMessage }}</span>
-      </div>
-      <DependencyChecklist />
-      <div class="warning-list">
-        <p v-for="error in providerErrors" :key="error">{{ error }}</p>
-        <p v-for="error in projectErrors" :key="error">{{ error }}</p>
-      </div>
-    </section>
-
     <section class="workflow-card log-card">
       <div class="card-heading">
         <span class="card-icon"><ClipboardCheck :size="19" /></span>
@@ -635,6 +584,8 @@ function toggleTheme() {
         </ul>
       </div>
     </section>
+    </template>
+    <SettingsView v-else />
   </WorkbenchShell>
 </template>
 

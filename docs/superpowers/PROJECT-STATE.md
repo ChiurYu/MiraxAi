@@ -6,28 +6,32 @@
 
 ## 当前阶段
 
+阶段 4 P0：设置 / Provider / sidecar 配置源码实现（已完成，Task 1-11 已完成）。
+
 阶段 3：Mirax AI 新版产品架构映射（已完成）。
 
-阶段 3 把阶段 1 运行态巡检和阶段 2 静态分析确认的旧版功能卡，映射到 Mirax AI 新版信息架构和工程模块，明确桌面工作台、素材管理、声音管理、形象管理、任务中心、账号管理、设置、Provider、sidecar、本地数据和发布链路的实现边界。本阶段不直接修改应用代码。
+阶段 4 P0 把 App.vue 中硬编码的 Provider 配置和静态依赖检查拆分为可持久化的「通用设置 + Provider 配置列表 + sidecar 依赖配置」，并提供独立的 SettingsView.vue 入口。本阶段不接入真实 SQLite，使用 localStorage 持久化，API Key 被过滤不进入存储。
 
 ## 当前自动调度入口
 
-`docs/superpowers/plans/2026-06-15-stage-3-architecture-mapping.md`
+`docs/superpowers/plans/2026-06-17-mirax-settings-provider-sidecar.md`
 
-该计划是阶段 3 的完成记录，用于归档和追溯。阶段 3 Task 1 → Task 7 已全部完成，不要重复执行。
+该计划是阶段 4 P0 的源码 implementation plan。执行本计划时，工位按每个 Task 的允许修改文件修改源码；未列入允许范围的文件禁止修改。
+
+阶段 4 P0 Task 1 → Task 11 已全部完成，不要重复执行。
 
 ## 最新可执行任务
 
-阶段 4：按 `docs/product-architecture/ui-ux-and-phase-4-handoff.md` 的 P0 → P1 → P2 队列创建源码 implementation plans。阶段 3 已完成，不要重复执行 `docs/superpowers/plans/2026-06-15-stage-3-architecture-mapping.md` 的 Task 1 → Task 7。
+阶段 4：按 `docs/product-architecture/ui-ux-and-phase-4-handoff.md` 的 P0 → P1 → P2 队列进入下一个 implementation plan。阶段 3 已完成，不要重复执行 `docs/superpowers/plans/2026-06-15-stage-3-architecture-mapping.md` 的 Task 1 → Task 7，也不要重复执行阶段 4 P0「设置 / Provider / sidecar 配置」Task 1 → Task 11。
 
-不要修改 `docs/reverse-engineering/legacy-ui-gap-list.md` 的状态列；不要直接修改 `apps/` 或 `packages/` 代码。架构映射只输出设计文档和模块映射，待计划明确后再进入实现。
+继续执行阶段 4 时，仍然不要修改 `docs/reverse-engineering/legacy-ui-gap-list.md` 的状态列；不要修改 `.codex/dispatch-state.json`；每个源码计划只允许修改该计划列明的文件。
 
 ## 进度入口
 
 - 阶段 3 架构映射：`docs/product-architecture/README.md`
 - 路线图设计：`docs/superpowers/specs/2026-06-13-mirax-evidence-driven-roadmap-design.md`
-- 当前计划：`docs/superpowers/plans/2026-06-15-stage-3-architecture-mapping.md`
-- 已完成阶段 1 计划：`docs/superpowers/plans/2026-06-13-stage-1-runtime-inspection.md`
+- 当前计划：`docs/superpowers/plans/2026-06-17-mirax-settings-provider-sidecar.md`
+- 已完成阶段 3 计划：`docs/superpowers/plans/2026-06-15-stage-3-architecture-mapping.md`
 - 已完成阶段 0 计划：`docs/superpowers/plans/2026-06-13-stage-0-inventory-tools.md`
 - 桌面重建设计：`docs/superpowers/specs/2026-06-11-mirax-desktop-rebuild-design.md`
 - 第一版可用计划：`docs/superpowers/plans/2026-06-12-mirax-first-usable-release.md`
@@ -84,4 +88,4 @@
 
 ## 下一步
 
-阶段 3 已完成，下一步进入阶段 4：按 `docs/product-architecture/ui-ux-and-phase-4-handoff.md` 的 P0 → P1 → P2 队列创建源码 implementation plans。不要重复执行阶段 2 Task 1 → Task 6，不要重复创建阶段 3 已完成文档。
+阶段 3 已完成，阶段 4 P0「设置 / Provider / sidecar 配置」Task 1 → Task 11 已完成。下一步按 `docs/product-architecture/ui-ux-and-phase-4-handoff.md` 的 P0 队列进入下一个 implementation plan。不要重复执行阶段 3 Task 1 → Task 7，也不要重复执行阶段 4 P0 已完成的任务。

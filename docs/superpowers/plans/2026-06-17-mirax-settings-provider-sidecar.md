@@ -21,21 +21,20 @@
 
 **当前自动调度入口：** `docs/superpowers/plans/2026-06-17-mirax-settings-provider-sidecar.md`
 
-**当前阶段：** 阶段 4 P0。本文件是阶段 4 P0 源码 implementation plan。执行本计划时，工位可以按每个 Task 的允许修改文件修改源码；未列入允许范围的文件禁止修改。
+**当前阶段：** 阶段 4 P0。本文件是阶段 4 P0 源码 implementation plan，Task 1 → Task 11 已全部完成并通过验收，不要重复执行。
 
 **依赖阶段 3 文档：**
 - `docs/product-architecture/data-provider-sidecar-contracts.md`
 - `docs/product-architecture/engineering-module-map.md`
 - `docs/product-architecture/ui-ux-and-phase-4-handoff.md`
 
-**当前源码起点：**
-- `apps/desktop/src/App.vue`：当前把 Provider 配置表单和静态依赖检查内嵌在工作流卡片中。
-- `apps/desktop/src/components/DependencyChecklist.vue`：静态渲染 5 项依赖检查，全部按未配置显示。
-- `packages/core/src/types.ts` / `validation.ts`：已有 `ApiKeyProviderConfig` 和 `validateProviderConfig`。
-- `packages/sidecar-manager/src/dependencyChecks.ts`：已有 `checkSidecarDependencies`。
-- `packages/local-store/src/schema.ts` / `repositories.ts`：已有 5 张表和对应 repository 接口。
+**当前源码状态：**
+- `apps/desktop/src/App.vue`：已移除内嵌「密钥配置」卡片，并通过左侧「设置」导航切换到 `SettingsView.vue`。
+- `apps/desktop/src/components/DependencyChecklist.vue`：已改为接收 `SidecarConfig` prop，并根据配置实时显示依赖检查状态。
+- `apps/desktop/src/views/SettingsView.vue`：已承载通用设置、Provider 配置列表和 sidecar 配置。
+- `packages/core`、`packages/sidecar-manager`、`packages/local-store`：已补齐本计划需要的类型、校验、schema 和 repository 预留接口。
 
-**下一步：** 当前创建计划的任务已完成；后续执行本计划时从 Task 1 开始。先完成本 P0 计划；再按 `ui-ux-and-phase-4-handoff.md` 完成 P0「发布准备与 mock 发布任务」计划。
+**下一步：** 本 P0 计划已完成；后续按 `ui-ux-and-phase-4-handoff.md` 进入下一个 P0 implementation plan「发布准备与 mock 发布任务」。
 
 ---
 
@@ -128,7 +127,7 @@ pnpm --filter @mirax/desktop typecheck
 - `.codex/dispatch-state.json`
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 
-- [ ] **Step 1：追加类型到 `types.ts`**
+- [x] **Step 1：追加类型到 `types.ts`**
 
 在 `packages/core/src/types.ts` 的 `ProjectDraft` 接口之后追加：
 
@@ -151,7 +150,7 @@ export interface AppSettings {
 }
 ```
 
-- [ ] **Step 2：追加校验函数到 `validation.ts`**
+- [x] **Step 2：追加校验函数到 `validation.ts`**
 
 在 `packages/core/src/validation.ts` 的 `validateProjectDraft` 之后追加：
 
@@ -195,7 +194,7 @@ export function validateAppSettings(settings: AppSettings): string[] {
 }
 ```
 
-- [ ] **Step 3：运行 core 类型检查与测试**
+- [x] **Step 3：运行 core 类型检查与测试**
 
 ```bash
 pnpm test packages/core
@@ -224,7 +223,7 @@ pnpm test packages/core
 - `apps/`
 - `packages/core/src/` 以外的 `packages/`
 
-- [ ] **Step 1：写入测试文件**
+- [x] **Step 1：写入测试文件**
 
 创建 `packages/core/tests/appSettings.test.ts`：
 
@@ -264,7 +263,7 @@ describe("AppSettings", () => {
 });
 ```
 
-- [ ] **Step 2：运行测试**
+- [x] **Step 2：运行测试**
 
 ```bash
 pnpm test packages/core/tests/appSettings.test.ts
@@ -294,7 +293,7 @@ pnpm test packages/core/tests/appSettings.test.ts
 - `.codex/dispatch-state.json`
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 
-- [ ] **Step 1：创建 `config.ts`**
+- [x] **Step 1：创建 `config.ts`**
 
 创建 `packages/sidecar-manager/src/config.ts`：
 
@@ -330,7 +329,7 @@ export function validateSidecarConfig(config: SidecarConfig): string[] {
 }
 ```
 
-- [ ] **Step 2：导出新增类型**
+- [x] **Step 2：导出新增类型**
 
 在 `packages/sidecar-manager/src/index.ts` 追加：
 
@@ -346,7 +345,7 @@ export * from "./dependencyChecks.js";
 export * from "./serviceStatus.js";
 ```
 
-- [ ] **Step 3：运行 sidecar-manager 类型检查**
+- [x] **Step 3：运行 sidecar-manager 类型检查**
 
 ```bash
 pnpm --filter @mirax/sidecar-manager typecheck
@@ -374,7 +373,7 @@ pnpm --filter @mirax/sidecar-manager typecheck
 - `apps/`
 - `packages/sidecar-manager/src/` 以外的 `packages/`
 
-- [ ] **Step 1：写入测试文件**
+- [x] **Step 1：写入测试文件**
 
 创建 `packages/sidecar-manager/tests/config.test.ts`：
 
@@ -411,7 +410,7 @@ describe("SidecarConfig", () => {
 });
 ```
 
-- [ ] **Step 2：运行测试**
+- [x] **Step 2：运行测试**
 
 ```bash
 pnpm test packages/sidecar-manager/tests/config.test.ts
@@ -441,7 +440,7 @@ pnpm test packages/sidecar-manager/tests/config.test.ts
 - `.codex/dispatch-state.json`
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 
-- [ ] **Step 1：扩展 `schema.ts`**
+- [x] **Step 1：扩展 `schema.ts`**
 
 在 `packages/local-store/src/schema.ts` 的 `LOCAL_STORE_MIGRATIONS` 数组中，在 `workflow_tasks` 之后追加两条 SQL：
 
@@ -465,7 +464,7 @@ pnpm test packages/sidecar-manager/tests/config.test.ts
   );`,
 ```
 
-- [ ] **Step 2：扩展 `repositories.ts`**
+- [x] **Step 2：扩展 `repositories.ts`**
 
 在 `packages/local-store/src/repositories.ts` 中追加记录类型和 repository 类型：
 
@@ -480,10 +479,10 @@ export interface AppSettingsRecord {
 
 export interface SidecarConfigRecord {
   id: string;
-  ffmpegPath: string;
-  pythonServiceUrl: string;
-  cosyVoiceServiceUrl: string;
-  heygemServiceUrl: string;
+  ffmpegPath?: string;
+  pythonServiceUrl?: string;
+  cosyVoiceServiceUrl?: string;
+  heygemServiceUrl?: string;
   hasPlaywrightBrowser: boolean;
   createdAt: string;
   updatedAt: string;
@@ -493,7 +492,7 @@ export type AppSettingsRepository = Repository<AppSettingsRecord>;
 export type SidecarConfigRepository = Repository<SidecarConfigRecord>;
 ```
 
-- [ ] **Step 3：更新 `LOCAL_STORE_SCHEMA_TABLES`**
+- [x] **Step 3：更新 `LOCAL_STORE_SCHEMA_TABLES`**
 
 在 `packages/local-store/src/schema.ts` 中把 `app_settings` 和 `sidecar_configs` 加入 `LOCAL_STORE_SCHEMA_TABLES`：
 
@@ -509,7 +508,7 @@ export const LOCAL_STORE_SCHEMA_TABLES = [
 ] as const;
 ```
 
-- [ ] **Step 4：运行 local-store 类型检查**
+- [x] **Step 4：运行 local-store 类型检查**
 
 ```bash
 pnpm --filter @mirax/local-store typecheck
@@ -539,7 +538,7 @@ pnpm --filter @mirax/local-store typecheck
 - `.codex/dispatch-state.json`
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 
-- [ ] **Step 1：写入 composable**
+- [x] **Step 1：写入 composable**
 
 创建 `apps/desktop/src/composables/useAppSettings.ts`：
 
@@ -685,7 +684,7 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
 }
 ```
 
-- [ ] **Step 2：运行类型检查**
+- [x] **Step 2：运行类型检查**
 
 ```bash
 pnpm --filter @mirax/desktop typecheck
@@ -714,7 +713,7 @@ pnpm --filter @mirax/desktop typecheck
 - `apps/desktop/src/App.vue`
 - `packages/`
 
-- [ ] **Step 1：创建 fake storage helper 与测试**
+- [x] **Step 1：创建 fake storage helper 与测试**
 
 创建 `apps/desktop/src/composables/useAppSettings.test.ts`：
 
@@ -825,7 +824,7 @@ describe("useAppSettings", () => {
 });
 ```
 
-- [ ] **Step 2：运行测试**
+- [x] **Step 2：运行测试**
 
 ```bash
 pnpm test apps/desktop/src/composables/useAppSettings.test.ts
@@ -852,7 +851,7 @@ pnpm test apps/desktop/src/composables/useAppSettings.test.ts
 - `apps/desktop/src/App.vue`
 - `packages/`
 
-- [ ] **Step 1：重写组件**
+- [x] **Step 1：重写组件**
 
 把 `DependencyChecklist.vue` 替换为：
 
@@ -927,7 +926,7 @@ const labelMap: Record<string, string> = {
 </style>
 ```
 
-- [ ] **Step 2：运行类型检查**
+- [x] **Step 2：运行类型检查**
 
 ```bash
 pnpm --filter @mirax/desktop typecheck
@@ -955,7 +954,7 @@ pnpm --filter @mirax/desktop typecheck
 - `apps/desktop/src/App.vue`
 - `packages/`
 
-- [ ] **Step 1：写入组件**
+- [x] **Step 1：写入组件**
 
 创建目录和文件：
 
@@ -1273,7 +1272,7 @@ select {
 </style>
 ```
 
-- [ ] **Step 2：运行类型检查**
+- [x] **Step 2：运行类型检查**
 
 ```bash
 pnpm --filter @mirax/desktop typecheck
@@ -1303,7 +1302,7 @@ pnpm --filter @mirax/desktop typecheck
 - `.codex/dispatch-state.json`
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 
-- [ ] **Step 1：新增视图切换状态**
+- [x] **Step 1：新增视图切换状态**
 
 在 `App.vue` 的 `<script setup>` 中新增：
 
@@ -1314,12 +1313,12 @@ import SettingsView from "./views/SettingsView.vue";
 const activeView = ref<"workbench" | "settings">("workbench");
 ```
 
-- [ ] **Step 2：修改导航按钮**
+- [x] **Step 2：修改导航按钮**
 
-把 `WorkbenchShell.vue`（或当前 App.vue 内嵌导航）中的"设置"按钮改为切换视图：
+把 `WorkbenchShell.vue` 中的"设置"按钮改为切换视图：
 
 ```vue
-<button class="nav-item" :class="{ active: activeView === 'settings' }" @click="activeView = 'settings'">
+<button class="nav-item" :class="{ active: activeView === 'settings' }" @click="emit('switchView', 'settings')">
   <Settings2 :size="18" /> 设置
 </button>
 ```
@@ -1327,29 +1326,29 @@ const activeView = ref<"workbench" | "settings">("workbench");
 把"首页"按钮改为：
 
 ```vue
-<button class="nav-item" :class="{ active: activeView === 'workbench' }" @click="activeView = 'workbench'">
+<button class="nav-item" :class="{ active: activeView === 'workbench' }" @click="emit('switchView', 'workbench')">
   <WandSparkles :size="18" /> 首页
 </button>
 ```
 
-- [ ] **Step 3：根据视图渲染内容**
+- [x] **Step 3：根据视图渲染内容**
 
 在工作区内容区使用条件渲染：
 
 ```vue
-<div class="workflow-board" v-if="activeView === 'workbench'">
+<template v-if="activeView === 'workbench'">
   <!-- 原有 workflow 卡片 -->
-</div>
+</template>
 <SettingsView v-else />
 ```
 
-- [ ] **Step 4：移除内嵌密钥配置卡片**
+- [x] **Step 4：移除内嵌密钥配置卡片**
 
 删除 `App.vue` 模板中原有的 `settings-card`（标题为"密钥配置"的 workflow-card）。
 
-同时删除 `App.vue` script 中不再使用的 `providerConfig`、`providerErrors`、`connectionMessage`、`testConnection` 等定义（如已在前序 P0 计划中被移除，则跳过）。
+同时删除 `App.vue` script 中不再使用的 `providerConfig`、`providerErrors`、`connectionMessage`、`testConnection` 等定义。
 
-- [ ] **Step 5：运行类型检查与测试**
+- [x] **Step 5：运行类型检查与测试**
 
 ```bash
 pnpm --filter @mirax/desktop typecheck
@@ -1378,7 +1377,7 @@ pnpm --filter @mirax/desktop typecheck
 - `docs/reverse-engineering/legacy-ui-gap-list.md`
 - `.codex/dispatch-state.json`
 
-- [ ] **Step 1：运行新增 core 测试**
+- [x] **Step 1：运行新增 core 测试**
 
 ```bash
 pnpm test packages/core/tests/appSettings.test.ts
@@ -1386,7 +1385,7 @@ pnpm test packages/core/tests/appSettings.test.ts
 
 预期：通过。
 
-- [ ] **Step 2：运行新增 sidecar-manager 测试**
+- [x] **Step 2：运行新增 sidecar-manager 测试**
 
 ```bash
 pnpm test packages/sidecar-manager/tests/config.test.ts
@@ -1394,7 +1393,7 @@ pnpm test packages/sidecar-manager/tests/config.test.ts
 
 预期：通过。
 
-- [ ] **Step 3：运行 local-store 测试**
+- [x] **Step 3：运行 local-store 测试**
 
 ```bash
 pnpm test packages/local-store
@@ -1402,7 +1401,7 @@ pnpm test packages/local-store
 
 预期：通过。
 
-- [ ] **Step 4：运行新增 desktop composable 测试**
+- [x] **Step 4：运行新增 desktop composable 测试**
 
 ```bash
 pnpm test apps/desktop/src/composables/useAppSettings.test.ts
@@ -1410,7 +1409,7 @@ pnpm test apps/desktop/src/composables/useAppSettings.test.ts
 
 预期：通过。
 
-- [ ] **Step 5：运行桌面端既有测试**
+- [x] **Step 5：运行桌面端既有测试**
 
 ```bash
 pnpm test apps/desktop/src/runtime/desktopDraft.test.ts
@@ -1419,7 +1418,7 @@ pnpm test apps/desktop/src/features/task-center/taskHistory.test.ts
 
 预期：通过。
 
-- [ ] **Step 6：运行全仓类型检查**
+- [x] **Step 6：运行全仓类型检查**
 
 ```bash
 pnpm typecheck
@@ -1427,7 +1426,7 @@ pnpm typecheck
 
 预期：无错误。
 
-- [ ] **Step 7：运行 web 开发模式 smoke（可选）**
+- [x] **Step 7：运行 web 开发模式 smoke（可选）**
 
 ```bash
 pnpm --filter @mirax/desktop dev:web

@@ -17,23 +17,30 @@ import {
   WandSparkles,
 } from "lucide-vue-next";
 
-defineProps<{
-  projectName: string;
-  activeStageTitle: string;
-  progressPercent: number;
-  progressCompleted: number;
-  progressTotal: number;
-  running: boolean;
-  runningMode: "single" | "all" | null;
-  canRun: boolean;
-  theme: "light" | "dark";
-}>();
+withDefaults(
+  defineProps<{
+    projectName: string;
+    activeStageTitle: string;
+    progressPercent: number;
+    progressCompleted: number;
+    progressTotal: number;
+    running: boolean;
+    runningMode: "single" | "all" | null;
+    canRun: boolean;
+    theme: "light" | "dark";
+    activeView?: "workbench" | "settings";
+  }>(),
+  {
+    activeView: "workbench",
+  },
+);
 
 const emit = defineEmits<{
   runNext: [];
   runAll: [];
   reset: [];
   toggleTheme: [];
+  switchView: [view: "workbench" | "settings"];
 }>();
 </script>
 
@@ -50,13 +57,25 @@ const emit = defineEmits<{
         </div>
       </div>
       <nav>
-        <button class="nav-item active"><WandSparkles :size="18" /> 首页</button>
+        <button
+          class="nav-item"
+          :class="{ active: activeView === 'workbench' }"
+          @click="emit('switchView', 'workbench')"
+        >
+          <WandSparkles :size="18" /> 首页
+        </button>
         <button class="nav-item"><Volume2 :size="18" /> 声音管理</button>
         <button class="nav-item"><UserRound :size="18" /> 形象管理</button>
         <button class="nav-item"><FolderOpen :size="18" /> 素材管理</button>
         <button class="nav-item"><ClipboardCheck :size="18" /> 任务中心</button>
         <button class="nav-item"><KeyRound :size="18" /> 账号管理</button>
-        <button class="nav-item"><Settings2 :size="18" /> 设置</button>
+        <button
+          class="nav-item"
+          :class="{ active: activeView === 'settings' }"
+          @click="emit('switchView', 'settings')"
+        >
+          <Settings2 :size="18" /> 设置
+        </button>
       </nav>
     </aside>
 
