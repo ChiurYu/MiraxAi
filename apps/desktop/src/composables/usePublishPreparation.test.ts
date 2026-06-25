@@ -65,20 +65,48 @@ describe("usePublishPreparation", () => {
     expect(publishSpy).not.toHaveBeenCalled();
   });
 
-  it("uses latest target platforms when publish is called", async () => {
-    const targetPlatforms = ref<PublishPlatform[]>(["douyin"]);
+  it("includes tags in created publish tasks", async () => {
     const prep = usePublishPreparation({
       projectId: "p1",
       projectName: "项目",
-      targetPlatforms,
+      targetPlatforms: ["douyin"],
+      publisher: createMockPublisher(),
+    });
+
+    prep.updateMetadata({ title: "T", description: "D", tags: ["通勤", "测评"], mode: "draft" });
+    const tasks = await prep.publish("/tmp/final.mp4");
+
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0].tags).toEqual(["通勤", "测评"]);
+  });
+
+  it("creates direct mode tasks when mode is direct", async () => {
+    const prep = usePublishPreparation({
+      projectId: "p1",
+      projectName: "项目",
+      targetPlatforms: ["douyin"],
+      publisher: createMockPublisher(),
+    });
+
+    prep.updateMetadata({ title: "T", description: "D", mode: "direct" });
+    const tasks = await prep.publish("/tmp/final.mp4");
+
+    expect(tasks[0].mode).toBe("direct");
+  });
+
+  it("does not include account credentials in tasks", async () => {
+    const prep = usePublishPreparation({
+      projectId: "p1",
+      projectName: "项目",
+      targetPlatforms: ["douyin"],
       publisher: createMockPublisher(),
     });
 
     prep.updateMetadata({ title: "T", description: "D", mode: "draft" });
-    targetPlatforms.value = ["xiaohongshu"];
     const tasks = await prep.publish("/tmp/final.mp4");
 
-    expect(tasks).toHaveLength(1);
-    expect(tasks[0].platformId).toBe("xiaohongshu");
+    expect(tasks[0]).not.toHaveProperty("apiKey");
+    expect(tasks[0]).not.toHaveProperty("token");
+    expect(tasks[0]).not.toHaveProperty("credential");
   });
 });

@@ -68,11 +68,73 @@ describe("useWorkflowRuntime", () => {
     expect(runtime.activeStageId.value).toBe("transcribe");
   });
 
-  it("propagates PUBLISH_CANCELLED by resetting stage to pending", async () => {
-    const executor = vi.fn().mockRejectedValue(new Error("PUBLISH_CANCELLED"));
+  it("allows reviewing completed stages", async () => {
+    const executor = vi.fn().mockResolvedValue("ok");
     const runtime = useWorkflowRuntime({ projectId: "demo", executor });
 
-    await expect(runtime.runStage("publish")).rejects.toThrow("PUBLISH_CANCELLED");
-    expect(runtime.workflow.value.stages.find((s) => s.id === "publish")?.status).toBe("pending");
+    await runtime.runStage("transcribe");
+    runtime.goToStage("rewrite");
+    await runtime.runStage("rewrite");
+
+    runtime.goToStage("transcribe");
+    expect(runtime.activeStageId.value).toBe("transcribe");
+  });
+
+  it("prevents skipping dependencies when navigating to pending stages", () => {
+    const runtime = useWorkflowRuntime({ projectId: "demo", executor: vi.fn() });
+
+    expect(runtime.canGoToStage("rewrite")).toBe(false);
+    runtime.goToStage("rewrite");
+    expect(runtime.activeStageId.value).toBe("transcribe");
+  });
+
+  it("supports previous/next navigation", async () => {
+    const executor = vi.fn().mockResolvedValue("ok");
+    const runtime = useWorkflowRuntime({ projectId: "demo", executor });
+
+    await runtime.runStage("transcribe");
+    runtime.goToNextStage();
+    expect(runtime.activeStageId.value).toBe("rewrite");
+
+    await runtime.runStage("rewrite");
+    runtime.goToNextStage();
+    expect(runtime.activeStageId.value).toBe("voice-clone");
+
+    runtime.goToPreviousStage();
+    expect(runtime.activeStageId.value).toBe("rewrite");
+  });
+
+  it("disables stage switching while running", async () => {
+    let resolveExecutor: (value: string) => void;
+    const executor = vi.fn().mockImplementation(() => new Promise<string>((resolve) => { resolveExecutor = resolve; }));
+    const runtime = useWorkflowRuntime({ projectId: "demo", executor });
+
+    const runPromise = runtime.runStage("transcribe");
+    expect(runtime.running.value).toBe(true);
+
+    runtime.goToStage("rewrite");
+    expect(runtime.activeStageId.value).toBe("transcribe");
+
+    resolveExecutor!("ok");
+    await runPromise;
+  });
+
+  it("warns that downstream outputs need regeneration when an earlier stage changes", async () => {
+    const executor = vi.fn().mockResolvedValue("ok");
+    const runtime = useWorkflowRuntime({ projectId: "demo", executor });
+
+    await runtime.runStage("transcribe");
+    runtime.goToNextStage();
+    await runtime.runStage("rewrite");
+    runtime.goToNextStage();
+    await runtime.runStage("voice-clone");
+
+    runtime.markStageDirty("transcribe");
+
+    expect(runtime.workflow.value.stages.find((s) => s.id === "transcribe")?.status).toBe("pending");
+    expect(runtime.workflow.value.stages.find((s) => s.id === "rewrite")?.status).toBe("pending");
+    expect(runtime.workflow.value.stages.find((s) => s.id === "voice-clone")?.status).toBe("pending");
+    expect(runtime.workflow.value.stages.find((s) => s.id === "speech")?.status).toBe("pending");
+    expect(runtime.workflow.value.stages.find((s) => s.id === "avatar")?.status).toBe("pending");
   });
 });

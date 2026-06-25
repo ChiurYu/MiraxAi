@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>更新与支持 - Mirax AI 设置</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#060e20",
+                        "on-error": "#690005",
+                        "error": "#ffb4ab",
+                        "surface-container": "#171f33",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "surface-dim": "#0b1326",
+                        "surface": "#0b1326",
+                        "on-primary-fixed-variant": "#2b4963",
+                        "on-error-container": "#ffdad6",
+                        "on-background": "#dae2fd",
+                        "primary-fixed-dim": "#abcae8",
+                        "inverse-on-surface": "#283044",
+                        "tertiary-container": "#735328",
+                        "outline-variant": "#42474d",
+                        "surface-container-highest": "#2d3449",
+                        "primary-fixed": "#cce5ff",
+                        "primary": "#abcae8",
+                        "on-tertiary": "#452b03",
+                        "secondary-container": "#3e495d",
+                        "on-primary": "#12334b",
+                        "secondary": "#bcc7de",
+                        "inverse-primary": "#43617c",
+                        "surface-bright": "#31394d",
+                        "surface-container-low": "#131b2e",
+                        "secondary-fixed": "#d8e3fb",
+                        "on-secondary-container": "#aeb9d0",
+                        "on-tertiary-fixed-variant": "#5e4118",
+                        "surface-container-high": "#222a3d",
+                        "on-secondary-fixed": "#111c2d",
+                        "error-container": "#93000a",
+                        "on-primary-container": "#b5d4f2",
+                        "inverse-surface": "#dae2fd",
+                        "primary-container": "#3e5c76",
+                        "background": "#0b1326",
+                        "tertiary-fixed": "#ffddb6",
+                        "outline": "#8d9197",
+                        "on-surface-variant": "#c3c7cd",
+                        "on-primary-fixed": "#001d31",
+                        "tertiary-fixed-dim": "#eabf8a",
+                        "tertiary": "#eabf8a",
+                        "surface-variant": "#2d3449",
+                        "surface-tint": "#abcae8",
+                        "on-tertiary-container": "#f5c993",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "on-tertiary-fixed": "#2a1800",
+                        "on-surface": "#dae2fd",
+                        "on-secondary": "#263143"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "xl": "32px",
+                        "sm": "8px",
+                        "lg": "24px",
+                        "control-panel-width": "320px",
+                        "sidebar-width": "64px",
+                        "base": "8px",
+                        "xs": "4px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "mono-label": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "mono-label": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .filled-icon {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Minimal scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #2d3449; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #42474d; }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #2d3449; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface h-screen w-screen overflow-hidden flex selection:bg-primary-container selection:text-on-primary-container">
+<!-- App Shell: Fixed 72px Left Rail -->
+<nav class="w-[72px] h-full fixed left-0 top-0 bg-surface-container border-r border-outline-variant flex flex-col items-center py-base space-y-md z-20 transition-colors duration-200">
+<div class="mb-lg mt-sm flex flex-col items-center justify-center">
+<div class="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center mb-1">
+<span class="font-headline-md text-headline-md font-bold text-primary">M</span>
+</div>
+</div>
+<button class="flex flex-col items-center justify-center w-14 h-14 rounded-xl text-on-surface-variant hover:bg-surface-variant group transition-all duration-150">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-on-surface mb-1">dashboard</span>
+<span class="font-mono-label text-mono-label">工作台</span>
+</button>
+<button class="flex flex-col items-center justify-center w-14 h-14 rounded-xl text-on-surface-variant hover:bg-surface-variant group transition-all duration-150">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-on-surface mb-1">mic</span>
+<span class="font-mono-label text-mono-label">声音</span>
+</button>
+<button class="flex flex-col items-center justify-center w-14 h-14 rounded-xl text-on-surface-variant hover:bg-surface-variant group transition-all duration-150">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-on-surface mb-1">face</span>
+<span class="font-mono-label text-mono-label">形象</span>
+</button>
+<button class="flex flex-col items-center justify-center w-14 h-14 rounded-xl text-on-surface-variant hover:bg-surface-variant group transition-all duration-150">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-on-surface mb-1">folder_open</span>
+<span class="font-mono-label text-mono-label">素材</span>
+</button>
+<button class="flex flex-col items-center justify-center w-14 h-14 rounded-xl text-on-surface-variant hover:bg-surface-variant group transition-all duration-150">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-on-surface mb-1">task_alt</span>
+<span class="font-mono-label text-mono-label">任务</span>
+</button>
+<button class="flex flex-col items-center justify-center w-14 h-14 rounded-xl text-on-surface-variant hover:bg-surface-variant group transition-all duration-150">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-on-surface mb-1">person</span>
+<span class="font-mono-label text-mono-label">账号</span>
+</button>
+<div class="mt-auto pt-4 pb-2 w-full flex justify-center border-t border-outline-variant/30">
+<button class="flex flex-col items-center justify-center w-14 h-14 rounded-xl text-primary bg-primary-container/20 group transition-all duration-150 relative">
+<div class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full"></div>
+<span class="material-symbols-outlined filled-icon mb-1">settings</span>
+<span class="font-mono-label text-mono-label">设置</span>
+</button>
+</div>
+</nav>
+<!-- App Shell: Top Bar -->
+<header class="h-12 w-full fixed top-0 z-10 bg-surface border-b border-outline-variant flex items-center justify-between px-lg ml-[72px]">
+<div class="flex items-center space-x-2 text-on-surface-variant font-body-md text-body-md">
+<span class="font-medium text-on-surface hover:text-primary cursor-pointer transition-colors">Mirax AI</span>
+<span class="material-symbols-outlined text-sm opacity-50">chevron_right</span>
+<span class="text-primary font-medium">设置</span>
+</div>
+<div class="flex items-center space-x-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center w-8 h-8 rounded-full hover:bg-surface-variant">
+<span class="material-symbols-outlined text-xl">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center w-8 h-8 rounded-full hover:bg-surface-variant">
+<span class="material-symbols-outlined text-xl">help_outline</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest border border-outline-variant overflow-hidden cursor-pointer hover:border-primary transition-colors">
+<img class="w-full h-full object-cover" data-alt="A minimalist, monochromatic geometric pattern serving as a generic user profile avatar. The design features a subtle interplay of dark navy and slate gray tones, creating a highly professional, understated aesthetic fitting for a technical AI software interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTej0g9LPQvTVzywhLR2MIhwxBVMoG82frH_C2untna3RmZEZ5a8iazjcqSySXSW55uu0PP_R_gHTK6nsujAlnjH43DK6SIzrwa2MWMS5BR7OSRyHHvNfLE_CsZOtVGl-TW4gCnvZp3bZEJTh7YoUiCmZUYcnSI86xVasZ2PCNaKApVIZHkS4n_qMp3QOZwlSUNWnFVnxcMG7FBTtos9MWeuAgx_X2qtWoUxbOGA0oBc6lks0mVRVhNchUY7lCxXDqp7N30c2I0Jg"/>
+</div>
+</div>
+</header>
+<!-- Main Workspace Container -->
+<div class="flex h-full w-full pl-[72px] pt-12">
+<!-- Settings Sidebar -->
+<aside class="w-[200px] h-full flex-shrink-0 bg-surface-container-low border-r border-outline-variant flex flex-col py-md px-sm z-0 relative">
+<div class="px-3 pb-4 mb-2 border-b border-outline-variant/50">
+<h2 class="font-headline-md text-headline-md text-on-surface">设置</h2>
+</div>
+<nav class="flex-1 overflow-y-auto space-y-1">
+<button class="w-full flex items-center px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-all duration-150 font-body-md text-body-md text-left group">
+<span class="material-symbols-outlined mr-3 text-[20px] group-hover:text-on-surface">settings</span>
+                    通用
+                </button>
+<button class="w-full flex items-center px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-all duration-150 font-body-md text-body-md text-left group">
+<span class="material-symbols-outlined mr-3 text-[20px] group-hover:text-on-surface">auto_awesome</span>
+                    AI 服务
+                </button>
+<button class="w-full flex items-center px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-all duration-150 font-body-md text-body-md text-left group">
+<span class="material-symbols-outlined mr-3 text-[20px] group-hover:text-on-surface">memory</span>
+                    本地依赖
+                </button>
+<button class="w-full flex items-center px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-all duration-150 font-body-md text-body-md text-left group">
+<span class="material-symbols-outlined mr-3 text-[20px] group-hover:text-on-surface">save</span>
+                    输出与存储
+                </button>
+<button class="w-full flex items-center px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-all duration-150 font-body-md text-body-md text-left group">
+<span class="material-symbols-outlined mr-3 text-[20px] group-hover:text-on-surface">terminal</span>
+                    提示词
+                </button>
+<button class="w-full flex items-center px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-all duration-150 font-body-md text-body-md text-left group">
+<span class="material-symbols-outlined mr-3 text-[20px] group-hover:text-on-surface">database</span>
+                    数据
+                </button>
+<button class="w-full flex items-center px-3 py-2 rounded-lg text-primary bg-secondary-container/30 font-medium transition-all duration-150 font-body-md text-body-md text-left">
+<span class="material-symbols-outlined filled-icon mr-3 text-[20px]">system_update</span>
+                    更新与支持
+                </button>
+</nav>
+<div class="mt-auto pt-4 px-3">
+<div class="flex items-start space-x-2 text-on-surface-variant opacity-70">
+<span class="material-symbols-outlined text-[14px] mt-0.5">lock</span>
+<p class="font-body-sm text-body-sm text-xs leading-relaxed">您的数据默认保存在本地，未授权不会上传云端。</p>
+</div>
+</div>
+</aside>
+<!-- Settings Content Area -->
+<main class="flex-1 h-full overflow-y-auto bg-surface-dim relative">
+<div class="max-w-4xl mx-auto px-8 py-8 md:py-12">
+<!-- Page Header -->
+<div class="flex items-start justify-between mb-10 pb-6 border-b border-outline-variant/40">
+<div class="max-w-xl">
+<div class="flex items-center space-x-3 mb-2">
+<h1 class="font-display-lg text-display-lg text-on-surface">更新与支持</h1>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#1a382e] text-[#6ee7b7] border border-[#2b5e4d]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#6ee7b7] mr-1.5"></span>
+                                系统正常
+                            </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">检查 Mirax AI 更新，查看使用帮助，并收集安全的本地诊断信息。</p>
+</div>
+<div class="flex items-center space-x-3">
+<button class="px-4 py-2 bg-transparent border border-outline-variant hover:border-outline text-on-surface rounded-lg font-body-md text-body-md font-medium transition-colors flex items-center">
+<span class="material-symbols-outlined mr-2 text-[18px]">open_in_new</span>
+                            打开帮助中心
+                        </button>
+<button class="px-4 py-2 bg-primary text-on-primary hover:bg-primary-fixed rounded-lg font-body-md text-body-md font-medium transition-colors flex items-center shadow-[0_0_15px_rgba(171,202,232,0.15)]">
+<span class="material-symbols-outlined mr-2 text-[18px]">sync</span>
+                            检查更新
+                        </button>
+</div>
+</div>
+<!-- Bento Grid Layout for Settings -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Left Column: Updates & Preferences (8 cols) -->
+<div class="lg:col-span-7 space-y-6">
+<!-- Section 1: Software Update -->
+<section class="bg-surface-container rounded-xl border border-outline-variant overflow-hidden">
+<div class="px-5 py-4 border-b border-outline-variant/50 bg-surface-container-highest/30 flex justify-between items-center">
+<h3 class="font-headline-md text-headline-md text-[16px] text-on-surface flex items-center">
+<span class="material-symbols-outlined mr-2 text-[20px] text-primary">info</span>
+                                    软件更新
+                                </h3>
+<span class="text-on-surface-variant font-mono-label text-mono-label">上次检查: 今天 09:41</span>
+</div>
+<div class="p-5">
+<div class="flex items-start justify-between">
+<div class="flex items-start space-x-4">
+<div class="w-12 h-12 bg-surface rounded-lg border border-outline-variant flex items-center justify-center shrink-0 shadow-inner">
+<span class="font-headline-md text-headline-md font-bold text-primary">M</span>
+</div>
+<div>
+<h4 class="font-body-md text-body-md font-medium text-on-surface text-lg mb-1">Mirax AI <span class="text-primary ml-1">v1.2.0</span></h4>
+<div class="space-y-1">
+<p class="font-mono-label text-mono-label text-on-surface-variant flex items-center">
+<span class="w-20 inline-block opacity-70">构建版本</span>
+<span class="text-on-surface">2026.06.23</span>
+</p>
+<p class="font-mono-label text-mono-label text-on-surface-variant flex items-center">
+<span class="w-20 inline-block opacity-70">系统架构</span>
+<span class="text-on-surface">Apple Silicon</span>
+</p>
+<p class="font-mono-label text-mono-label text-on-surface-variant flex items-center">
+<span class="w-20 inline-block opacity-70">更新通道</span>
+<span class="text-on-surface">稳定版</span>
+</p>
+</div>
+</div>
+</div>
+<div class="text-right">
+<div class="inline-flex items-center px-3 py-1 rounded-full bg-surface-container-high border border-outline-variant/50 mb-3">
+<span class="material-symbols-outlined text-[16px] text-primary mr-1.5">check_circle</span>
+<span class="font-body-sm text-body-sm text-on-surface">已是最新版本</span>
+</div>
+<div>
+<a class="font-body-sm text-body-sm text-primary hover:text-primary-fixed underline-offset-4 hover:underline transition-all" href="#">查看更新日志</a>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 2: Update Preferences -->
+<section class="bg-surface-container rounded-xl border border-outline-variant overflow-hidden">
+<div class="px-5 py-4 border-b border-outline-variant/50 bg-surface-container-highest/30">
+<h3 class="font-headline-md text-headline-md text-[16px] text-on-surface flex items-center">
+<span class="material-symbols-outlined mr-2 text-[20px] text-on-surface-variant">tune</span>
+                                    更新偏好
+                                </h3>
+</div>
+<div class="p-0">
+<div class="flex items-center justify-between px-5 py-4 border-b border-outline-variant/30 hover:bg-surface-container-high/50 transition-colors">
+<div>
+<h4 class="font-body-md text-body-md text-on-surface">更新通道</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">选择接收更新的版本类型</p>
+</div>
+<div class="relative">
+<select class="appearance-none bg-surface border border-outline-variant text-on-surface font-body-sm text-body-sm rounded-lg pl-3 pr-8 py-1.5 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary w-32 cursor-pointer">
+<option selected="" value="stable">Stable (稳定版)</option>
+<option value="preview">Preview (预览版)</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant pointer-events-none">expand_more</span>
+</div>
+</div>
+<div class="flex items-center justify-between px-5 py-4 border-b border-outline-variant/30 hover:bg-surface-container-high/50 transition-colors">
+<div>
+<h4 class="font-body-md text-body-md text-on-surface">启动时自动检查更新</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">每次启动应用时检查是否有新版本</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-9 h-5 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex items-center justify-between px-5 py-4 hover:bg-surface-container-high/50 transition-colors">
+<div>
+<h4 class="font-body-md text-body-md text-on-surface">后台自动下载更新</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">在后台静默下载可用更新，下次启动时安装</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox" value=""/>
+<div class="w-9 h-5 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface-variant after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary peer-checked:after:bg-on-surface"></div>
+</label>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Diagnostics & Help (4 cols) -->
+<div class="lg:col-span-5 space-y-6">
+<!-- Section 4: Diagnostics & Feedback -->
+<section class="bg-surface-container rounded-xl border border-outline-variant overflow-hidden relative">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full blur-2xl pointer-events-none"></div>
+<div class="px-5 py-4 border-b border-outline-variant/50">
+<h3 class="font-headline-md text-headline-md text-[16px] text-on-surface flex items-center">
+<span class="material-symbols-outlined mr-2 text-[20px] text-secondary">medical_services</span>
+                                    诊断与反馈
+                                </h3>
+</div>
+<div class="p-5 space-y-4">
+<div class="bg-surface border border-outline-variant/50 rounded-lg p-3">
+<h4 class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-2">系统摘要</h4>
+<div class="space-y-1.5 font-mono-label text-mono-label">
+<div class="flex justify-between">
+<span class="text-on-surface-variant">OS</span>
+<span class="text-on-surface">macOS 15.5</span>
+</div>
+<div class="flex justify-between">
+<span class="text-on-surface-variant">Chip</span>
+<span class="text-on-surface">Apple M3 Max</span>
+</div>
+<div class="flex justify-between">
+<span class="text-on-surface-variant">App</span>
+<span class="text-on-surface">v1.2.0 (20260623)</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<button class="col-span-2 py-2 px-3 bg-surface-container-high hover:bg-surface-bright border border-outline-variant rounded-lg text-on-surface font-body-sm text-body-sm transition-colors flex items-center justify-center group">
+<span class="material-symbols-outlined mr-2 text-[18px] text-on-surface-variant group-hover:text-primary transition-colors">content_copy</span>
+                                        复制诊断摘要
+                                    </button>
+<button class="py-2 px-3 bg-surface-container-high hover:bg-surface-bright border border-outline-variant rounded-lg text-on-surface font-body-sm text-body-sm transition-colors flex items-center justify-center group">
+<span class="material-symbols-outlined mr-1.5 text-[18px] text-on-surface-variant group-hover:text-primary transition-colors">archive</span>
+                                        导出诊断包
+                                    </button>
+<button class="py-2 px-3 bg-surface-container-high hover:bg-surface-bright border border-outline-variant rounded-lg text-on-surface font-body-sm text-body-sm transition-colors flex items-center justify-center group">
+<span class="material-symbols-outlined mr-1.5 text-[18px] text-on-surface-variant group-hover:text-primary transition-colors">folder_open</span>
+                                        打开日志目录
+                                    </button>
+</div>
+<button class="w-full mt-3 py-2 px-3 bg-surface-container-high hover:bg-surface-bright border border-outline-variant rounded-lg text-on-surface font-body-sm text-body-sm transition-colors flex items-center justify-center group" onclick="document.getElementById('feedback-modal').classList.remove('hidden')">
+<span class="material-symbols-outlined mr-2 text-[18px] text-on-surface-variant group-hover:text-primary transition-colors">bug_report</span>
+                                    提交问题反馈
+                                </button>
+<div class="bg-[#121a2f] border border-[#233559] rounded p-3 flex items-start mt-2">
+<span class="material-symbols-outlined text-[16px] text-[#8baae8] mr-2 mt-0.5">shield_locked</span>
+<p class="font-body-sm text-body-sm text-xs text-[#a3bded] leading-relaxed">
+                                        诊断信息仅包含应用运行状态、系统环境和错误摘要，不包含 API Key、Token、Cookie、平台登录凭据、项目素材或生成内容。
+                                    </p>
+</div>
+</div>
+</section>
+<!-- Section 3: Help Items -->
+<section class="bg-surface-container rounded-xl border border-outline-variant overflow-hidden">
+<div class="px-5 py-4 border-b border-outline-variant/50">
+<h3 class="font-headline-md text-headline-md text-[16px] text-on-surface flex items-center">
+<span class="material-symbols-outlined mr-2 text-[20px] text-on-surface-variant">menu_book</span>
+                                    使用帮助
+                                </h3>
+</div>
+<div class="p-2">
+<a class="flex items-center justify-between px-3 py-2.5 rounded-md hover:bg-surface-container-high text-on-surface transition-colors group" href="#">
+<div class="flex items-center font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant mr-3 group-hover:text-primary transition-colors">rocket_launch</span>
+                                        快速入门
+                                    </div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2.5 rounded-md hover:bg-surface-container-high text-on-surface transition-colors group" href="#">
+<div class="flex items-center font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant mr-3 group-hover:text-primary transition-colors">account_tree</span>
+                                        工作台流程说明
+                                    </div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2.5 rounded-md hover:bg-surface-container-high text-on-surface transition-colors group" href="#">
+<div class="flex items-center font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant mr-3 group-hover:text-primary transition-colors">dns</span>
+                                        本地服务配置
+                                    </div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2.5 rounded-md hover:bg-surface-container-high text-on-surface transition-colors group" href="#">
+<div class="flex items-center font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant mr-3 group-hover:text-primary transition-colors">quiz</span>
+                                        常见问题
+                                    </div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2.5 rounded-md hover:bg-surface-container-high text-on-surface transition-colors group" href="#">
+<div class="flex items-center font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant mr-3 group-hover:text-primary transition-colors">keyboard</span>
+                                        键盘快捷键
+                                    </div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+</a>
+</div>
+</section>
+<!-- Section 5: About -->
+<div class="px-2 pt-4 flex flex-col items-center sm:items-start text-center sm:text-left">
+<p class="font-body-sm text-body-sm text-on-surface-variant/60 mb-2">Copyright © 2026 Mirax AI. All rights reserved.</p>
+<div class="flex items-center space-x-3 font-body-sm text-body-sm text-on-surface-variant">
+<a class="hover:text-primary transition-colors" href="#">隐私说明</a>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<a class="hover:text-primary transition-colors" href="#">用户协议</a>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<a class="hover:text-primary transition-colors" href="#">开源软件许可</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Feedback Modal -->
+<div class="hidden fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm" id="feedback-modal">
+<div class="bg-surface-container rounded-xl border border-outline-variant w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl relative">
+<div class="px-6 py-4 border-b border-outline-variant/50 flex justify-between items-center bg-surface-container-highest/30">
+<h3 class="font-headline-md text-headline-md text-on-surface flex items-center">
+<span class="material-symbols-outlined mr-2 text-[22px] text-primary">bug_report</span>
+                    提交问题反馈
+                </h3>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors" onclick="document.getElementById('feedback-modal').classList.add('hidden')">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Offline Fallback Notice -->
+<div class="bg-error-container/20 border-b border-error/20 px-6 py-3 flex items-start space-x-3">
+<span class="material-symbols-outlined text-error text-[18px] mt-0.5">cloud_off</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+<span class="text-error font-medium">在线反馈通道暂不可用，可以先导出反馈包。</span>
+</p>
+</div>
+<div class="p-6 overflow-y-auto space-y-5 flex-1 custom-scrollbar">
+<div>
+<label class="block font-body-sm text-body-sm text-on-surface-variant mb-1.5">问题类型</label>
+<select class="w-full bg-surface border border-outline-variant text-on-surface rounded-lg px-3 py-2 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-body-md text-body-md appearance-none cursor-pointer">
+<option>工作台流程</option>
+<option>AI 服务</option>
+<option>本地依赖</option>
+<option>声音或形象</option>
+<option>视频生成</option>
+<option>平台发布</option>
+<option>数据与设置</option>
+<option>其他</option>
+</select>
+</div>
+<div>
+<label class="block font-body-sm text-body-sm text-on-surface-variant mb-1.5">问题标题</label>
+<input class="w-full bg-surface border border-outline-variant text-on-surface rounded-lg px-3 py-2 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-body-md text-body-md" placeholder="简短描述问题" type="text"/>
+</div>
+<div>
+<label class="block font-body-sm text-body-sm text-on-surface-variant mb-1.5">问题描述</label>
+<textarea class="w-full h-24 bg-surface border border-outline-variant text-on-surface rounded-lg px-3 py-2 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-body-md text-body-md resize-none" placeholder="详细描述您遇到的问题..."></textarea>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block font-body-sm text-body-sm text-on-surface-variant mb-1.5">重现步骤</label>
+<textarea class="w-full h-20 bg-surface border border-outline-variant text-on-surface rounded-lg px-3 py-2 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-body-md text-body-md resize-none" placeholder="1. ...
+2. ..."></textarea>
+</div>
+<div class="space-y-4">
+<div>
+<label class="block font-body-sm text-body-sm text-on-surface-variant mb-1.5">预期结果</label>
+<input class="w-full bg-surface border border-outline-variant text-on-surface rounded-lg px-3 py-2 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-body-md text-body-md" placeholder="" type="text"/>
+</div>
+<div>
+<label class="block font-body-sm text-body-sm text-on-surface-variant mb-1.5">实际结果</label>
+<input class="w-full bg-surface border border-outline-variant text-on-surface rounded-lg px-3 py-2 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-body-md text-body-md" placeholder="" type="text"/>
+</div>
+</div>
+</div>
+<div>
+<label class="block font-body-sm text-body-sm text-on-surface-variant mb-1.5">联系方式 (选填)</label>
+<input class="w-full bg-surface border border-outline-variant text-on-surface rounded-lg px-3 py-2 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-body-md text-body-md" placeholder="邮箱或手机号，方便我们与您联系" type="text"/>
+</div>
+<div class="border-t border-outline-variant/50 pt-4 space-y-3">
+<label class="flex items-center cursor-pointer">
+<div class="relative flex items-center">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-9 h-5 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+</div>
+<span class="ml-3 font-body-md text-body-md text-on-surface">包含诊断摘要</span>
+</label>
+<label class="flex items-center cursor-pointer">
+<div class="relative flex items-center">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-9 h-5 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-on-surface after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+</div>
+<span class="ml-3 font-body-md text-body-md text-on-surface">包含今日日志</span>
+</label>
+</div>
+</div>
+<div class="px-6 py-4 border-t border-outline-variant/50 bg-surface-container-highest/30 flex justify-end space-x-3">
+<button class="px-4 py-2 border border-outline-variant text-on-surface hover:bg-surface-bright rounded-lg font-body-md text-body-md font-medium transition-colors">
+                    导出反馈包
+                </button>
+<button class="px-4 py-2 bg-primary/50 text-on-primary/50 rounded-lg font-body-md text-body-md font-medium cursor-not-allowed" disabled="">
+                    提交反馈
+                </button>
+</div>
+</div>
+</div>
+</body></html>

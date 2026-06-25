@@ -1,4 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { createPublishTask } from "@mirax/provider-publish";
+import {
+  appendPublishTask,
+  savePublishTasks,
+} from "../features/task-center/publishTaskStore.js";
 import {
   appendPublishHistoryItem,
   createPublishHistoryItem,
@@ -36,6 +41,7 @@ describe("useTaskCenterPreview", () => {
   beforeEach(() => {
     (globalThis as unknown as { localStorage?: Storage }).localStorage = createFakeStorage();
     saveTaskHistory([]);
+    savePublishTasks([]);
   });
 
   it("loads latest items sorted by createdAt descending", () => {
@@ -96,5 +102,48 @@ describe("useTaskCenterPreview", () => {
     refresh();
 
     expect(latestItems.value).toHaveLength(1);
+  });
+
+  it("loads publish tasks from store", () => {
+    const task = createPublishTask({
+      id: "pt-1",
+      projectId: "p1",
+      platformId: "douyin",
+      accountId: "a1",
+      videoPath: "/tmp/final.mp4",
+      title: "T",
+      description: "D",
+      tags: [],
+      mode: "direct",
+    });
+    appendPublishTask(task);
+
+    const { tasks } = useTaskCenterPreview();
+
+    expect(tasks.value).toHaveLength(1);
+    expect(tasks.value[0].id).toBe("pt-1");
+  });
+
+  it("refresh reloads publish tasks", () => {
+    const { tasks, refresh } = useTaskCenterPreview();
+    expect(tasks.value).toHaveLength(0);
+
+    appendPublishTask(
+      createPublishTask({
+        id: "pt-2",
+        projectId: "p2",
+        platformId: "xiaohongshu",
+        accountId: "a2",
+        videoPath: "/tmp/b.mp4",
+        title: "B",
+        description: "B",
+        tags: [],
+        mode: "draft",
+      }),
+    );
+    refresh();
+
+    expect(tasks.value).toHaveLength(1);
+    expect(tasks.value[0].id).toBe("pt-2");
   });
 });

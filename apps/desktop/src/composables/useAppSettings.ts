@@ -6,28 +6,68 @@ import {
   type AppSettings,
 } from "@mirax/core";
 import { createDefaultSidecarConfig, type SidecarConfig } from "@mirax/sidecar-manager";
+import type { SettingsSection } from "../app/navigation.js";
 
 export const APP_SETTINGS_STORAGE_KEY = "mirax-ai.app-settings.v1";
+
+export const SETTINGS_SECTIONS: SettingsSection[] = [
+  "general",
+  "ai-services",
+  "local-dependencies",
+  "output-storage",
+  "prompt-templates",
+  "data",
+  "updates-support",
+];
 
 export interface AppSettingsSnapshot {
   appSettings?: Partial<AppSettings>;
   sidecarConfig?: Partial<SidecarConfig>;
   providerConfigs?: Array<Omit<ApiKeyProviderConfig, "apiKey"> & { apiKey?: string }>;
+  section?: SettingsSection;
 }
 
 export interface UseAppSettingsOptions {
   storage?: Storage;
+  persistSection?: boolean;
 }
 
 export function useAppSettings(options: UseAppSettingsOptions = {}) {
   const storage = options.storage ?? (typeof window !== "undefined" ? window.localStorage : undefined);
+  const persistSection = options.persistSection ?? false;
 
   const appSettings = reactive<AppSettings>(createDefaultAppSettings());
   const sidecarConfig = reactive<SidecarConfig>(createDefaultSidecarConfig());
   const providerConfigs = ref<ApiKeyProviderConfig[]>([]);
+  const settingsSection = ref<SettingsSection>("general");
   const saveStatus = ref("未保存");
 
   load();
+
+  function resolveSectionForSnapshot(): SettingsSection {
+    if (persistSection) {
+      return settingsSection.value;
+    }
+
+    // Non-owner instances should not overwrite the active section stored by the owner.
+    if (!storage) {
+      return settingsSection.value;
+    }
+
+    try {
+      const raw = storage.getItem(APP_SETTINGS_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<AppSettingsSnapshot>;
+        if (parsed.section && SETTINGS_SECTIONS.includes(parsed.section)) {
+          return parsed.section;
+        }
+      }
+    } catch {
+      // fall through to current value
+    }
+
+    return settingsSection.value;
+  }
 
   function createSnapshot(): AppSettingsSnapshot {
     return {
@@ -41,6 +81,7 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
         model: config.model,
         enabled: config.enabled,
       })),
+      section: resolveSectionForSnapshot(),
     };
   }
 
@@ -75,6 +116,10 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
           enabled: config.enabled ?? true,
         }),
       );
+    }
+
+    if (snapshot.section && SETTINGS_SECTIONS.includes(snapshot.section)) {
+      settingsSection.value = snapshot.section;
     }
   }
 
@@ -124,12 +169,21 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
     providerConfigs.value = providerConfigs.value.filter((config) => config.id !== id);
   }
 
-  watch([() => ({ ...appSettings }), () => ({ ...sidecarConfig }), providerConfigs], persist, { deep: true });
+  function setSettingsSection(section: SettingsSection) {
+    settingsSection.value = section;
+  }
+
+  watch(
+    [() => ({ ...appSettings }), () => ({ ...sidecarConfig }), providerConfigs, settingsSection],
+    persist,
+    { deep: true },
+  );
 
   return {
     appSettings,
     sidecarConfig,
     providerConfigs,
+    settingsSection,
     saveStatus,
     load,
     persist,
@@ -137,5 +191,6 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
     addProviderConfig,
     updateProviderConfig,
     removeProviderConfig,
+    setSettingsSection,
   };
 }

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { WorkflowStage, WorkflowStageStatus } from "@mirax/core";
-import StatusBadge from "../StatusBadge.vue";
+import StatusBadge from "../ui/StatusBadge.vue";
 
 const props = defineProps<{
   stage: WorkflowStage;
@@ -16,7 +16,7 @@ const isRunDisabled = computed(() => props.status === "running" || props.status 
 </script>
 
 <template>
-  <section class="workflow-card" :data-stage="stage.id">
+  <section class="workflow-card" :data-stage="stage.id" :data-status="status">
     <div class="card-heading">
       <span class="card-icon">
         <slot name="icon" />
@@ -30,7 +30,7 @@ const isRunDisabled = computed(() => props.status === "running" || props.status 
       <slot />
     </div>
 
-    <div class="card-actions">
+    <div class="stage-actions">
       <slot name="actions">
         <button
           class="primary compact-button"
@@ -45,6 +45,6 @@ const isRunDisabled = computed(() => props.status === "running" || props.status 
 </template>
 
 <style scoped>
-/* Card chrome is styled globally so all workflow cards share the same
-   density, border, radius and heading treatment. */
+/* Card chrome and status surfaces are styled globally in styles.css.
+   This component only wires the data-status attribute and slot layout. */
 </style>

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Settings: Output &amp; Storage v3 - Mirax AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-background": "#dae2fd",
+                        "primary-fixed": "#cce5ff",
+                        "error-container": "#93000a",
+                        "error": "#ffb4ab",
+                        "surface-container-low": "#131b2e",
+                        "on-surface-variant": "#c3c7cd",
+                        "on-tertiary-fixed": "#2a1800",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "on-tertiary": "#452b03",
+                        "on-secondary-fixed": "#111c2d",
+                        "on-primary-fixed-variant": "#2b4963",
+                        "primary": "#abcae8",
+                        "inverse-surface": "#dae2fd",
+                        "inverse-primary": "#43617c",
+                        "surface-variant": "#2d3449",
+                        "surface-container-lowest": "#060e20",
+                        "on-primary-fixed": "#001d31",
+                        "tertiary": "#eabf8a",
+                        "primary-fixed-dim": "#abcae8",
+                        "primary-container": "#3e5c76",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "surface-container": "#171f33",
+                        "on-surface": "#dae2fd",
+                        "surface-container-highest": "#2d3449",
+                        "surface": "#0b1326",
+                        "on-primary-container": "#b5d4f2",
+                        "on-error-container": "#ffdad6",
+                        "inverse-on-surface": "#283044",
+                        "on-primary": "#12334b",
+                        "surface-tint": "#abcae8",
+                        "secondary-fixed": "#d8e3fb",
+                        "tertiary-fixed": "#ffddb6",
+                        "surface-container-high": "#222a3d",
+                        "outline": "#8d9197",
+                        "on-secondary-container": "#aeb9d0",
+                        "tertiary-fixed-dim": "#eabf8a",
+                        "secondary": "#bcc7de",
+                        "on-tertiary-fixed-variant": "#5e4118",
+                        "tertiary-container": "#735328",
+                        "on-error": "#690005",
+                        "surface-dim": "#0b1326",
+                        "outline-variant": "#42474d",
+                        "surface-bright": "#31394d",
+                        "secondary-container": "#3e495d",
+                        "on-tertiary-container": "#f5c993",
+                        "on-secondary": "#263143",
+                        "background": "#0b1326"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "control-panel-width": "320px",
+                        "base": "8px",
+                        "sidebar-width": "64px",
+                        "xl": "32px",
+                        "md": "16px",
+                        "sm": "8px",
+                        "lg": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "mono-label": ["Inter"],
+                        "label-caps": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+                        "mono-label": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface h-screen flex overflow-hidden">
+<!-- Primary Sidebar (Rail) -->
+<nav class="fixed left-0 top-0 h-full w-[72px] bg-surface-container flex flex-col items-center py-md space-y-base border-r border-outline-variant z-20">
+<!-- Logo -->
+<div class="w-10 h-10 rounded-full border border-outline-variant flex items-center justify-center mb-6">
+<span class="block w-4 h-4 rounded-full border-2 border-primary"></span>
+</div>
+<!-- Nav Items -->
+<div class="flex-1 flex flex-col items-center space-y-4 w-full">
+<a class="group flex flex-col items-center justify-center w-full px-2 py-2 text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined mb-1 group-hover:scale-110 transition-transform duration-150 text-[20px]">dashboard</span>
+<span class="font-label-caps text-[10px]">工作台</span>
+</a>
+<a class="group flex flex-col items-center justify-center w-full px-2 py-2 text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined mb-1 group-hover:scale-110 transition-transform duration-150 text-[20px]">mic</span>
+<span class="font-label-caps text-[10px]">声音</span>
+</a>
+<a class="group flex flex-col items-center justify-center w-full px-2 py-2 text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined mb-1 group-hover:scale-110 transition-transform duration-150 text-[20px]">face</span>
+<span class="font-label-caps text-[10px]">形象</span>
+</a>
+<a class="group flex flex-col items-center justify-center w-full px-2 py-2 text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined mb-1 group-hover:scale-110 transition-transform duration-150 text-[20px]">folder_open</span>
+<span class="font-label-caps text-[10px]">素材</span>
+</a>
+<a class="group flex flex-col items-center justify-center w-full px-2 py-2 text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined mb-1 group-hover:scale-110 transition-transform duration-150 text-[20px]">task</span>
+<span class="font-label-caps text-[10px]">任务</span>
+</a>
+<a class="group flex flex-col items-center justify-center w-full px-2 py-2 text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined mb-1 group-hover:scale-110 transition-transform duration-150 text-[20px]">person</span>
+<span class="font-label-caps text-[10px]">账号</span>
+</a>
+<a class="group flex flex-col items-center justify-center w-12 h-12 rounded-lg bg-secondary-container text-primary transition-all scale-95 duration-150 mt-auto" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">settings</span>
+<span class="font-label-caps text-[10px] mt-1">设置</span>
+</a>
+</div>
+</nav>
+<!-- Secondary Sidebar (Settings Categories) -->
+<div class="fixed left-[72px] top-0 h-full w-[200px] bg-surface-container-low border-r border-outline-variant flex flex-col z-10">
+<div class="h-12 border-b border-outline-variant flex items-center px-4 shrink-0">
+<h2 class="font-body-md text-on-surface font-semibold">设置</h2>
+</div>
+<div class="flex-1 overflow-y-auto py-2">
+<nav class="space-y-1 px-2">
+<a class="flex items-center px-3 py-2 text-body-sm text-on-surface-variant hover:bg-surface-container-highest rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined mr-3 text-[18px]">tune</span>
+                    通用
+                </a>
+<a class="flex items-center px-3 py-2 text-body-sm text-on-surface-variant hover:bg-surface-container-highest rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined mr-3 text-[18px]">cloud</span>
+                    AI 服务
+                </a>
+<a class="flex items-center px-3 py-2 text-body-sm text-on-surface-variant hover:bg-surface-container-highest rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined mr-3 text-[18px]">dns</span>
+                    本地依赖
+                </a>
+<a class="flex items-center px-3 py-2 text-body-sm bg-secondary-container text-primary rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined mr-3 text-[18px]" style="font-variation-settings: 'FILL' 1;">save</span>
+                    输出与存储
+                </a>
+<a class="flex items-center px-3 py-2 text-body-sm text-on-surface-variant hover:bg-surface-container-highest rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined mr-3 text-[18px]">edit_note</span>
+                    提示词
+                </a>
+<a class="flex items-center px-3 py-2 text-body-sm text-on-surface-variant hover:bg-surface-container-highest rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined mr-3 text-[18px]">data_usage</span>
+                    数据
+                </a>
+<a class="flex items-center px-3 py-2 text-body-sm text-on-surface-variant hover:bg-surface-container-highest rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined mr-3 text-[18px]">support_agent</span>
+                    更新与支持
+                </a>
+</nav>
+</div>
+<div class="p-4 border-t border-outline-variant shrink-0 bg-surface-container-lowest flex items-start">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant mr-2 mt-0.5">shield</span>
+<p class="text-[11px] leading-relaxed text-on-surface-variant">设置保存在本机。<br/>敏感信息不会显示在页面中。</p>
+</div>
+</div>
+<!-- Main Content Area -->
+<main class="ml-[272px] flex-1 flex flex-col h-full bg-surface overflow-hidden relative">
+<!-- Top App Bar -->
+<header class="h-12 bg-surface-container-high border-b border-outline-variant flex items-center justify-between px-6 shrink-0 absolute top-0 left-0 right-0 z-10">
+<div class="flex items-center text-body-sm text-on-surface-variant">
+<span>Mirax AI</span>
+<span class="material-symbols-outlined text-[16px] mx-2">chevron_right</span>
+<span class="text-on-surface font-medium">设置</span>
+</div>
+<div class="flex items-center space-x-4">
+<button class="text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[20px]">help</span>
+</button>
+</div>
+</header>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto mt-12 px-10 py-8">
+<div class="max-w-4xl mx-auto pb-20">
+<!-- Page Header -->
+<div class="flex items-start justify-between mb-8">
+<div>
+<h1 class="font-display-lg text-on-surface mb-2">输出与存储</h1>
+<p class="font-body-md text-on-surface-variant">设置生成文件的保存位置、目录结构、命名规则和默认输出格式。</p>
+</div>
+<div class="flex items-center space-x-3 mt-2">
+<span class="font-body-sm text-on-surface-variant flex items-center mr-2">
+<span class="material-symbols-outlined text-[16px] mr-1">check_circle</span>
+                            已保存
+                        </span>
+<button class="px-4 py-1.5 rounded bg-surface-variant border border-outline-variant text-body-sm text-on-surface hover:bg-surface-container-highest transition-colors flex items-center">
+                            重置为默认设置
+                        </button>
+<button class="px-4 py-1.5 rounded bg-primary text-on-primary font-medium text-body-sm hover:brightness-110 transition-colors flex items-center shadow-sm">
+<span class="material-symbols-outlined text-[18px] mr-1">folder_open</span>
+                            打开输出目录
+                        </button>
+</div>
+</div>
+<!-- Section 1: Base Output Directory -->
+<section class="mb-8">
+<h3 class="font-headline-md text-on-surface mb-4">基础输出目录</h3>
+<div class="bg-surface-container rounded-xl border border-outline-variant p-5">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center w-full max-w-2xl bg-surface-container-highest rounded border border-outline-variant px-3 py-2">
+<span class="material-symbols-outlined text-on-surface-variant mr-2">folder</span>
+<input class="bg-transparent border-none w-full text-body-md text-on-surface focus:ring-0 p-0 font-mono-label" readonly="" type="text" value="/Users/yuzhenzhao/Movies/Mirax AI"/>
+</div>
+<div class="flex space-x-2 ml-4 shrink-0">
+<button class="px-3 py-1.5 rounded bg-surface-variant border border-outline-variant text-body-sm text-on-surface hover:bg-surface-container-highest transition-colors">更改目录</button>
+<button class="px-3 py-1.5 rounded bg-surface-variant border border-outline-variant text-body-sm text-on-surface hover:bg-surface-container-highest transition-colors">打开目录</button>
+</div>
+</div>
+<div class="flex items-center text-body-sm text-on-surface-variant mb-4 space-x-6">
+<span class="flex items-center text-primary"><span class="material-symbols-outlined text-[16px] mr-1" style="font-variation-settings: 'FILL' 1;">check_circle</span>可写</span>
+<span class="flex items-center"><span class="material-symbols-outlined text-[16px] mr-1">storage</span>可用空间 428 GB</span>
+<span class="flex items-center"><span class="material-symbols-outlined text-[16px] mr-1">update</span>最近检查：刚刚</span>
+<button class="text-primary hover:underline ml-auto flex items-center"><span class="material-symbols-outlined text-[16px] mr-1">refresh</span>重新检查</button>
+</div>
+<div class="flex items-start bg-surface-container-lowest p-3 rounded border border-outline-variant">
+<span class="material-symbols-outlined text-tertiary text-[18px] mr-2 mt-0.5">info</span>
+<p class="font-body-sm text-on-surface-variant">更改输出目录不会自动移动已有文件。修改后创建的新任务将使用新目录。</p>
+</div>
+</div>
+</section>
+<!-- Section 2: Directory Organization -->
+<section class="mb-8">
+<h3 class="font-headline-md text-on-surface mb-4">目录组织方式</h3>
+<div class="bg-surface-container rounded-xl border border-outline-variant p-5">
+<div class="flex items-start mb-6">
+<div class="flex items-center h-5">
+<input checked="" class="w-4 h-4 text-primary bg-surface-container-highest border-outline-variant focus:ring-primary focus:ring-offset-surface-container" id="org-project" name="org_method" type="radio"/>
+</div>
+<div class="ml-3">
+<label class="font-body-md text-on-surface font-medium block" for="org-project">按项目归档</label>
+<p class="font-body-sm text-on-surface-variant mt-1">为每个项目创建独立文件夹，并按照文件类型整理输出文件。</p>
+<div class="mt-4 space-y-3 bg-surface-container-lowest p-4 rounded border border-outline-variant">
+<label class="flex items-center">
+<input checked="" class="w-4 h-4 rounded text-primary bg-surface-container-highest border-outline-variant focus:ring-primary focus:ring-offset-surface-container-lowest" type="checkbox"/>
+<span class="ml-2 font-body-sm text-on-surface">自动创建项目文件夹</span>
+</label>
+<div class="flex items-center mt-2">
+<span class="font-body-sm text-on-surface-variant w-24">文件夹命名:</span>
+<div class="flex items-center bg-surface-container border border-outline-variant rounded px-2 py-1 ml-2 flex-1">
+<span class="font-mono-label text-primary bg-secondary-container px-1 rounded mr-1">{项目名称}</span>
+<input class="bg-transparent border-none text-body-sm text-on-surface focus:ring-0 p-0 flex-1" placeholder="附加文本..." type="text"/>
+<button class="text-primary font-body-sm hover:underline ml-2">插入变量</button>
+</div>
+</div>
+<label class="flex items-center mt-3">
+<input checked="" class="w-4 h-4 rounded text-primary bg-surface-container-highest border-outline-variant focus:ring-primary focus:ring-offset-surface-container-lowest" type="checkbox"/>
+<span class="ml-2 font-body-sm text-on-surface">按文件类型创建子目录</span>
+</label>
+<!-- Visual Preview -->
+<div class="mt-3 pl-6 border-l border-outline-variant ml-2 space-y-1 font-mono-label text-on-surface-variant"><div class="flex items-center"><span class="material-symbols-outlined text-[14px] mr-2">folder</span>Mirax AI/</div><div class="flex items-center pl-4"><span class="material-symbols-outlined text-[14px] mr-2">folder</span>夏季通勤穿搭/</div><div class="flex items-center pl-8"><span class="material-symbols-outlined text-[14px] mr-2">folder</span>素材/</div><div class="flex items-center pl-8"><span class="material-symbols-outlined text-[14px] mr-2">folder</span>音频/</div><div class="flex items-center pl-8"><span class="material-symbols-outlined text-[14px] mr-2">folder</span>形象/</div><div class="flex items-center pl-8"><span class="material-symbols-outlined text-[14px] mr-2">folder</span>成片/</div><div class="flex items-center pl-12"><span class="material-symbols-outlined text-[14px] mr-2">insert_drive_file</span>夏季通勤穿搭_成片_v1.mp4</div><div class="flex items-center pl-8"><span class="material-symbols-outlined text-[14px] mr-2">folder</span>封面/</div><div class="flex items-center pl-8"><span class="material-symbols-outlined text-[14px] mr-2">folder</span>字幕/</div></div>
+</div>
+</div>
+</div>
+<div class="flex items-start">
+<div class="flex items-center h-5">
+<input class="w-4 h-4 text-primary bg-surface-container-highest border-outline-variant focus:ring-primary focus:ring-offset-surface-container" id="org-flat" name="org_method" type="radio"/>
+</div>
+<div class="ml-3">
+<label class="font-body-md text-on-surface font-medium block" for="org-flat">全部保存到基础目录</label>
+<p class="font-body-sm text-on-surface-variant mt-1">所有生成的文件直接平铺保存在基础输出目录中。</p>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+</body></html>

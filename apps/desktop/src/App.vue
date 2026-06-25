@@ -1,52 +1,42 @@
 <script setup lang="ts">
-import {
-  CheckCircle2,
-  Circle,
-  CloudUpload,
-  ClipboardCheck,
-  FileVideo,
-  FileText,
-  FolderOpen,
-  Image,
-  Link2,
-  Loader2,
-  Mic,
-  Moon,
-  Music2,
-  Play,
-  PlayCircle,
-  RefreshCw,
-  Settings2,
-  ShieldCheck,
-  Sun,
-  Upload,
-  UserRound,
-  Volume2,
-  WandSparkles,
-} from "lucide-vue-next";
-import { computed, ref } from "vue";
-import {
-  validateProjectDraft,
-  type ProjectDraft,
-  type PublishPlatform,
-  type WorkflowStage,
-  type WorkflowStageId,
-} from "@mirax/core";
+import { computed, onMounted, reactive, ref } from "vue";
+import { type ProjectDraft, type PublishPlatform, type WorkflowStageId } from "@mirax/core";
 import { createMockMediaRenderer } from "@mirax/media-pipeline";
 import { createMockAiProvider } from "@mirax/provider-ai";
-import { SUPPORTED_PLATFORM_PROFILES, createMockPublisher } from "@mirax/provider-publish";
-import PathPickerButton from "./components/PathPickerButton.vue";
-import StatusBadge from "./components/StatusBadge.vue";
-import WorkbenchShell from "./components/workbench/WorkbenchShell.vue";
-import WorkflowStageCard from "./components/workbench/WorkflowStageCard.vue";
-import PublishPrepCard from "./components/workbench/PublishPrepCard.vue";
-import PublishCard from "./components/workbench/PublishCard.vue";
+import { SUPPORTED_PLATFORM_PROFILES, createMockPublisher, type PublishAccount } from "@mirax/provider-publish";
+import {
+  createNavigationState,
+  navigateTo,
+  openSettingsSection,
+  returnToWorkbench,
+  type AppView,
+  type SettingsSection,
+} from "./app/navigation.js";
+import AppShell from "./components/app/AppShell.vue";
+import AppDialog from "./components/ui/AppDialog.vue";
+import WorkbenchView from "./components/workbench/WorkbenchView.vue";
+import WorkbenchPreviewPlaceholder from "./components/workbench/WorkbenchPreviewPlaceholder.vue";
+import AvatarGenerationStage from "./components/workbench/stages/AvatarGenerationStage.vue";
+import ContentReviewStage from "./components/workbench/stages/ContentReviewStage.vue";
+import MaterialParsingPreview from "./components/workbench/stages/MaterialParsingPreview.vue";
+import MaterialParsingStage from "./components/workbench/stages/MaterialParsingStage.vue";
+import PublishStage from "./components/workbench/stages/PublishStage.vue";
+import ScriptRewritingStage from "./components/workbench/stages/ScriptRewritingStage.vue";
+import SpeechSynthesisStage from "./components/workbench/stages/SpeechSynthesisStage.vue";
+import VideoCompositionStage from "./components/workbench/stages/VideoCompositionStage.vue";
+import VoiceCloningStage from "./components/workbench/stages/VoiceCloningStage.vue";
+import WorkbenchStagePlaceholder from "./components/workbench/stages/WorkbenchStagePlaceholder.vue";
 import { usePublishPreparation } from "./composables/usePublishPreparation.js";
-import { useTaskCenterPreview } from "./composables/useTaskCenterPreview.js";
 import { useWorkbenchDraft } from "./composables/useWorkbenchDraft.js";
 import { useWorkflowRuntime } from "./composables/useWorkflowRuntime.js";
+import type { AssetListItem } from "./features/assets/assetModels.js";
+import { mockAccounts } from "./features/accounts/mockAccounts.js";
+import AccountManagementView from "./views/AccountManagementView.vue";
 import SettingsView from "./views/SettingsView.vue";
-import TaskCenterPreview from "./components/task-center/TaskCenterPreview.vue";
+import TaskCenterView from "./views/TaskCenterView.vue";
+import VoiceLibraryView from "./views/VoiceLibraryView.vue";
+import AvatarLibraryView from "./views/AvatarLibraryView.vue";
+import MaterialLibraryView from "./views/MaterialLibraryView.vue";
 import { appendPublishTasks } from "./features/task-center/publishTaskStore.js";
 import {
   appendPublishHistoryItem,
@@ -57,20 +47,81 @@ const aiProvider = createMockAiProvider({ artifactRoot: "/Users/Shared/MiraxAI" 
 const mediaRenderer = createMockMediaRenderer({ artifactRoot: "/Users/Shared/MiraxAI" });
 const publisher = createMockPublisher();
 
-const { draft, saveStatus } = useWorkbenchDraft();
-const historyPreview = useTaskCenterPreview({ limit: 5 });
-const { latestItems: latestHistoryItems, refresh: refreshHistory } = historyPreview;
-const taskPreviewRef = ref<InstanceType<typeof TaskCenterPreview> | null>(null);
+const { draft, persist } = useWorkbenchDraft();
 
 const generatedVideoPath = ref("");
 const generatedCoverPath = ref("");
 const generatedAudioPath = ref("");
+const generatedAudioDuration = ref(0);
 const generatedAvatarPath = ref("");
+const generatedAvatarDuration = ref(0);
+
+// WB-08 内容复核的封面候选使用本地 Stitch 示例媒体，避免依赖外部热链。
+const stitchCoverCandidates = [
+  new URL("./assets/stitch/avatars/qinghe-studio-v2.jpg", import.meta.url).href,
+  new URL("./assets/stitch/avatars/xialan-greenscreen.jpg", import.meta.url).href,
+  new URL("./assets/stitch/avatars/chenyu-office.jpg", import.meta.url).href,
+];
+
+// 形象选择为 session-only 状态，不进入持久化 draft。
+const selectedAvatarId = ref("presenter-a");
+// 转写文案为 session-only 真实数据：transcribe 成功时写入，rewrite 以它为输入。
+const transcriptText = ref("");
+// 声音选择：voiceId 与 voiceName 必须来自真实的 voice-clone executor 结果或样本文件名。
+const selectedVoiceId = ref("");
+const selectedVoiceName = ref("");
 const theme = ref<"light" | "dark">("dark");
-const activeView = ref<"workbench" | "settings">("workbench");
+const navigation = reactive(createNavigationState());
+const publishAccounts = ref<PublishAccount[]>([]);
+const selectedPublishAccountId = ref("");
+const showPublishDialog = ref(false);
+
+const platformLabels = computed<Record<PublishPlatform, string>>(() =>
+  Object.fromEntries(SUPPORTED_PLATFORM_PROFILES.map((profile) => [profile.id, profile.label])) as Record<
+    PublishPlatform,
+    string
+  >,
+);
+
+const selectedPublishAccount = computed(() =>
+  publishAccounts.value.find((a) => a.id === selectedPublishAccountId.value),
+);
+
+const allAccounts = computed(() => mockAccounts);
+
+const publishModeText = computed(() => (prep.metadata.value.mode === "direct" ? "直接发布" : "存为草稿"));
+
+const publishSummary = computed(() => {
+  const metadata = prep.metadata.value;
+  const platforms = project.value.targetPlatforms;
+  return {
+    title: metadata.title || "未填写",
+    description: metadata.description.slice(0, 80) || "未填写",
+    descriptionLong: metadata.description.length > 80,
+    coverText: metadata.coverPath ? "已生成" : "未设置",
+    platformText: platforms.map((platform) => platformLabels.value[platform]).join("、") || "未选择",
+    accountText: selectedPublishAccount.value?.displayName || "未选择账号",
+    modeText: publishModeText.value,
+    videoFile: generatedVideoPath.value ? fileName(generatedVideoPath.value) : "视频尚未生成",
+  };
+});
+
+// 这些阶段在 preview 全宽栏内自带左右分栏，frame 的窄 controls 栏由 styles.css 隐藏。
+const fullWidthStages: WorkflowStageId[] = ["rewrite", "voice-clone", "speech", "avatar", "compose", "review", "publish"];
+
+function handleNavigate(view: AppView) {
+  const assetViews: AppView[] = ["voices", "avatars", "materials"];
+  if (assetViews.includes(view) && navigation.view === "workbench") {
+    navigateTo(navigation, view, runtime.activeStage.value?.id);
+  } else if (view === "workbench") {
+    returnToWorkbench(navigation);
+  } else {
+    navigateTo(navigation, view);
+  }
+}
 
 const project = computed({
-  get: () => draft.project,
+  get: (): ProjectDraft => draft.project,
   set: (value: ProjectDraft) => {
     Object.assign(draft.project, value);
   },
@@ -88,49 +139,79 @@ const runtime = useWorkflowRuntime({
   executor: executeStage,
 });
 
-const projectErrors = computed(() => validateProjectDraft(project.value));
-const canRun = computed(
-  () => !runtime.running.value && projectErrors.value.length === 0 && Boolean(runtime.nextStage.value),
-);
-const platformLabels = computed<Record<PublishPlatform, string>>(() =>
-  Object.fromEntries(SUPPORTED_PLATFORM_PROFILES.map((profile) => [profile.id, profile.label])) as Record<
-    PublishPlatform,
-    string
-  >,
-);
+onMounted(async () => {
+  publishAccounts.value = await publisher.listAccounts();
+  if (!selectedPublishAccountId.value && publishAccounts.value.length > 0) {
+    selectedPublishAccountId.value = publishAccounts.value[0].id;
+  }
 
-function getStage(stageId: WorkflowStageId): WorkflowStage {
-  return runtime.workflow.value.stages.find((stage) => stage.id === stageId)!;
-}
+  if (import.meta.env.DEV) {
+    (window as unknown as Record<string, unknown>).__miraxQA = {
+      runtime,
+      navigation,
+      theme,
+      draft,
+      prep,
+      generatedVideoPath,
+      generatedCoverPath,
+      generatedAudioPath,
+      generatedAvatarPath,
+      transcriptText,
+      selectedVoiceId,
+      selectedVoiceName,
+      selectedAvatarId,
+      selectedPublishAccountId,
+      setStage: (stageId: WorkflowStageId) => runtime.goToStage(stageId),
+      setTheme: (value: "light" | "dark") => {
+        theme.value = value;
+      },
+      setView: (view: AppView) => {
+        navigateTo(navigation, view);
+      },
+      setSettingsSection: (section: SettingsSection) => {
+        openSettingsSection(navigation, section);
+      },
+      setDraftProject: (patch: Partial<ProjectDraft>) => {
+        Object.assign(draft.project, patch);
+      },
+      setGeneratedPaths: (paths: {
+        video?: string;
+        cover?: string;
+        audio?: string;
+        avatar?: string;
+      }) => {
+        if (paths.video !== undefined) generatedVideoPath.value = paths.video;
+        if (paths.cover !== undefined) generatedCoverPath.value = paths.cover;
+        if (paths.audio !== undefined) generatedAudioPath.value = paths.audio;
+        if (paths.avatar !== undefined) generatedAvatarPath.value = paths.avatar;
+      },
+    };
+  }
+});
 
-function getPlatformLabel(platform: PublishPlatform): string {
-  return platformLabels.value[platform];
-}
-
-function resetWorkbench() {
-  runtime.resetWorkflow();
-  generatedVideoPath.value = "";
-  generatedCoverPath.value = "";
-  generatedAudioPath.value = "";
-  generatedAvatarPath.value = "";
-  prep.updateMetadata({ title: "", description: "", tags: [], coverPath: undefined, mode: "draft" });
-}
+const platformProfiles = computed(() => SUPPORTED_PLATFORM_PROFILES);
 
 async function executeStage(stageId: WorkflowStageId, title: string): Promise<string> {
   switch (stageId) {
     case "transcribe": {
+      await new Promise((resolve) => setTimeout(resolve, 1200));
       const result = await aiProvider.transcribe({
         sourceVideoPath: project.value.sourceVideoPath ?? "",
         language: "zh-CN",
       });
+      transcriptText.value = result.text;
       return `已提取 ${result.segments.length} 段文案`;
     }
     case "rewrite": {
+      if (!transcriptText.value.trim()) {
+        throw new Error("请先完成素材解析，获取原始文案");
+      }
       const result = await aiProvider.rewriteScript({
-        transcript: "模拟对标视频文案",
+        transcript: transcriptText.value,
         productName: project.value.name,
         sellingPoints: ["通勤", "大容量", "质感"],
       });
+      project.value = { ...project.value, notes: result.script };
       prep.updateMetadata({
         title: result.titleSuggestions[0] ?? project.value.name,
         description: result.script.slice(0, 100),
@@ -138,35 +219,52 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
       return `生成 ${result.titleSuggestions.length} 个标题方向`;
     }
     case "voice-clone": {
+      const samplePath = project.value.voiceSamplePath ?? "";
+      if (!samplePath.trim()) {
+        throw new Error("请先选择声音样本文件");
+      }
       const result = await aiProvider.cloneVoice({
-        voiceSamplePath: project.value.voiceSamplePath ?? "",
+        voiceSamplePath: samplePath,
         projectId: runtime.workflow.value.projectId,
       });
+      selectedVoiceId.value = result.voiceId;
+      selectedVoiceName.value = fileName(result.samplePath || samplePath);
       return `声音配置 ${result.voiceId} 已就绪`;
     }
     case "speech": {
       const result = await aiProvider.synthesizeSpeech({
-        voiceId: "mock-voice-demo-project",
+        voiceId: selectedVoiceId.value || `mock-voice-${runtime.workflow.value.projectId}`,
         script: project.value.notes ?? project.value.name,
         projectId: runtime.workflow.value.projectId,
       });
       generatedAudioPath.value = result.audioPath;
+      generatedAudioDuration.value = result.durationSeconds;
       return `音频已生成：${result.audioPath}`;
     }
     case "avatar": {
+      if (!generatedAudioPath.value.trim()) {
+        throw new Error("请先完成语音合成，获取驱动音频");
+      }
       const result = await aiProvider.generateAvatarVideo({
-        audioPath: generatedAudioPath.value || "/Users/Shared/MiraxAI/demo-project/speech.wav",
-        avatarId: "presenter-a",
+        audioPath: generatedAudioPath.value,
+        avatarId: selectedAvatarId.value || "presenter-a",
         projectId: runtime.workflow.value.projectId,
       });
       generatedAvatarPath.value = result.videoPath;
+      generatedAvatarDuration.value = result.durationSeconds;
       return `数字人片段已生成：${result.videoPath}`;
     }
     case "compose": {
+      if (!generatedAvatarPath.value.trim()) {
+        throw new Error("请先完成形象生成，获取数字人视频");
+      }
+      if (!generatedAudioPath.value.trim()) {
+        throw new Error("请先完成语音合成，获取音频");
+      }
       const result = await mediaRenderer.render({
         projectId: runtime.workflow.value.projectId,
-        avatarVideoPath: generatedAvatarPath.value || "/Users/Shared/MiraxAI/demo-project/avatar.mp4",
-        audioPath: generatedAudioPath.value || "/Users/Shared/MiraxAI/demo-project/speech.wav",
+        avatarVideoPath: generatedAvatarPath.value,
+        audioPath: generatedAudioPath.value,
         subtitleText: project.value.notes ?? project.value.name,
         coverText: project.value.name,
       });
@@ -174,8 +272,17 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
       generatedCoverPath.value = result.coverPath;
       return `成片已生成：${result.videoPath}`;
     }
-    case "review":
-      return "人工复核清单已通过";
+    case "review": {
+      const videoPath = generatedVideoPath.value;
+      if (!videoPath) {
+        throw new Error("视频尚未生成，无法复核");
+      }
+      if (!prep.canPublish.value) {
+        const reasons = prep.errors.value.join("、") || "发布条件不满足";
+        throw new Error(reasons);
+      }
+      return "内容复核完成";
+    }
     case "publish": {
       const videoPath = generatedVideoPath.value;
       if (!videoPath) {
@@ -185,29 +292,6 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
       if (!prep.canPublish.value) {
         const reasons = prep.errors.value.join("、") || "发布条件不满足";
         throw new Error(reasons);
-      }
-
-      const platforms = project.value.targetPlatforms;
-      const platformText = platforms.map((platform) => platformLabels.value[platform]).join("、") || "未选择";
-      const modeText = prep.metadata.value.mode === "direct" ? "直接发布" : "草稿";
-      const coverText = prep.metadata.value.coverPath ? "已生成" : "未设置";
-      const accountText = "未登录（mock 账号）";
-      const titleText = prep.metadata.value.title || "未填写";
-      const descText = prep.metadata.value.description.slice(0, 80) || "未填写";
-
-      const confirmed = window.confirm(
-        `确认创建 ${platforms.length} 个发布任务？\n\n` +
-          `标题：${titleText}\n` +
-          `描述：${descText}${prep.metadata.value.description.length > 80 ? "…" : ""}\n` +
-          `封面：${coverText}\n` +
-          `平台：${platformText}\n` +
-          `账号：${accountText}\n` +
-          `发布模式：${modeText}\n` +
-          `视频路径：${videoPath}`,
-      );
-
-      if (!confirmed) {
-        throw new Error("PUBLISH_CANCELLED");
       }
 
       const tasks = await prep.publish(videoPath);
@@ -221,11 +305,9 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
           projectId: runtime.workflow.value.projectId,
           taskIds: tasks.map((task) => task.id),
           videoPath,
-          platforms,
+          platforms: project.value.targetPlatforms,
         }),
       );
-      taskPreviewRef.value?.refresh();
-      refreshHistory();
 
       return `已创建 ${tasks.length} 个发布任务`;
     }
@@ -233,350 +315,362 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
 }
 
 async function handlePublish() {
+  openPublishDialog();
+}
+
+function openPublishDialog() {
+  if (runtime.running.value || !prep.canPublish.value || !generatedVideoPath.value) return;
+  showPublishDialog.value = true;
+}
+
+function closePublishDialog() {
+  showPublishDialog.value = false;
+}
+
+function cancelPublish() {
+  closePublishDialog();
+}
+
+async function confirmPublish() {
+  closePublishDialog();
   await runtime.runStage("publish");
+}
+
+function handleOpenVideo() {
+  const path = generatedVideoPath.value;
+  if (path) {
+    console.log("Open video:", path);
+  }
+}
+
+function handleVoiceSelect(item: AssetListItem) {
+  selectedVoiceId.value = item.id;
+  selectedVoiceName.value = item.name;
+  if (navigation.returnToStage) {
+    returnToWorkbench(navigation);
+  }
+}
+
+function handleAvatarSelect(item: AssetListItem) {
+  selectedAvatarId.value = item.id;
+  if (navigation.returnToStage) {
+    returnToWorkbench(navigation);
+  }
+}
+
+function handleMaterialSelect(item: AssetListItem) {
+  // 素材选择当前不直接写入 draft，仅在工作台跳转来源存在时返回。
+  void item;
+  if (navigation.returnToStage) {
+    returnToWorkbench(navigation);
+  }
+}
+
+function handleReturnToStage(stageId: WorkflowStageId) {
+  navigateTo(navigation, "workbench");
+  runtime.goToStage(stageId);
+}
+
+function fileName(filePath: string): string {
+  const trimmed = filePath.trim();
+  if (!trimmed) return "";
+  const index = Math.max(trimmed.lastIndexOf("/"), trimmed.lastIndexOf("\\"));
+  return index >= 0 ? trimmed.slice(index + 1) : trimmed;
+}
+
+function handleSaveDraft() {
+  persist();
+}
+
+function handleViewTasks() {
+  navigateTo(navigation, "tasks");
 }
 
 function toggleTheme() {
   theme.value = theme.value === "dark" ? "light" : "dark";
 }
+
+function stagePreviewLabel(stageId: WorkflowStageId): string {
+  const labels: Record<WorkflowStageId, string> = {
+    transcribe: "素材解析预览",
+    rewrite: "改写结果预览",
+    "voice-clone": "声音样本预览",
+    speech: "音频预览",
+    avatar: "数字人预览",
+    compose: "成片预览",
+    review: "内容复核预览",
+    publish: "发布预览",
+  };
+  return labels[stageId];
+}
 </script>
 
 <template>
-  <WorkbenchShell
+  <AppShell
     :project-name="project.name"
-    :active-stage-title="runtime.activeStage.value?.title || '准备开始'"
-    :progress-percent="runtime.progress.value.percent"
-    :progress-completed="runtime.progress.value.completed"
-    :progress-total="runtime.progress.value.total"
-    :running="runtime.running.value"
-    :running-mode="runtime.runningMode.value"
-    :can-run="canRun"
     :theme="theme"
-    :active-view="activeView"
-    @run-next="runtime.runNextStage"
-    @run-all="runtime.runAllStages"
-    @reset="resetWorkbench"
+    :active-view="navigation.view"
     @toggle-theme="toggleTheme"
-    @switch-view="activeView = $event"
+    @navigate="handleNavigate"
   >
-    <template v-if="activeView === 'workbench'">
-    <WorkflowStageCard
-      class="learn-card"
-      :stage="getStage('transcribe')"
-      :status="runtime.stageStatus.value.transcribe"
-      @run="runtime.runStage('transcribe')"
+    <WorkbenchView
+      v-if="navigation.view === 'workbench'"
+      :stages="runtime.workflow.value.stages"
+      :active-stage-id="runtime.activeStageId.value"
+      :running="runtime.running.value"
+      @select-stage="runtime.goToStage"
+      @previous="runtime.goToPreviousStage"
+      @next="runtime.goToNextStage"
+      @save="handleSaveDraft"
     >
-      <template #icon><Link2 :size="19" /></template>
-      <template #heading-extra><small>{{ saveStatus }}</small></template>
-      <div class="tabs">
-        <span class="active">提取文案</span>
-        <span>IP大脑</span>
-        <span>爆款选题</span>
-        <span>营销文案</span>
-      </div>
-      <label>
-        <span>项目名称</span>
-        <input v-model="project.name" />
-      </label>
-      <label>
-        <span>视频链接</span>
-        <PathPickerButton
-          v-model="project.sourceVideoPath"
-          label="选择对标视频"
-          placeholder="请输入视频链接或本地路径"
-          :filters="[{ name: 'Video', extensions: ['mp4', 'mov', 'm4v'] }]"
+      <template #stage-controls="{ stage }">
+        <MaterialParsingStage
+          v-if="stage.id === 'transcribe'"
+          v-model="project"
+          :running="runtime.running.value"
+          @run="runtime.runStage('transcribe')"
+          @view-tasks="handleViewTasks"
         />
-      </label>
-      <label>
-        <span>原文案 / 卖点备注</span>
-        <textarea v-model="project.notes" placeholder="提取的文案将显示在这里..." />
-      </label>
-      <template #actions>
-        <button
-          class="primary compact-button"
-          :disabled="runtime.running.value || runtime.stageStatus.value.transcribe === 'completed'"
-          @click="runtime.runStage('transcribe')"
-        >
-          <Link2 :size="16" /> 提取文案
-        </button>
-      </template>
-    </WorkflowStageCard>
-
-    <WorkflowStageCard
-      class="rewrite-card"
-      :stage="getStage('rewrite')"
-      :status="runtime.stageStatus.value.rewrite"
-      @run="runtime.runStage('rewrite')"
-    >
-      <template #icon><WandSparkles :size="19" /></template>
-      <div class="two-columns">
-        <label>
-          <span>写作提示词</span>
-          <select>
-            <option>默认文案写作提示词</option>
-          </select>
-        </label>
-        <label>
-          <span>字数</span>
-          <select>
-            <option>300字</option>
-          </select>
-        </label>
-      </div>
-      <template #actions>
-        <button
-          class="primary compact-button"
-          :disabled="runtime.running.value || runtime.stageStatus.value.rewrite === 'completed'"
-          @click="runtime.runStage('rewrite')"
-        >
-          <WandSparkles :size="16" /> 改写文案
-        </button>
-        <button class="legal-button"><ShieldCheck :size="16" /> AI法务</button>
-      </template>
-      <label>
-        <span>改写内容</span>
-        <textarea :value="prep.metadata.value.description" placeholder="改写的文案将显示在这里..." @input="prep.updateMetadata({ description: ($event.target as HTMLTextAreaElement).value })" />
-      </label>
-    </WorkflowStageCard>
-
-    <WorkflowStageCard
-      class="voice-clone-card"
-      :stage="getStage('voice-clone')"
-      :status="runtime.stageStatus.value['voice-clone']"
-      @run="runtime.runStage('voice-clone')"
-    >
-      <template #icon><Mic :size="19" /></template>
-      <label>
-        <span>声音样本</span>
-        <PathPickerButton
-          v-model="project.voiceSamplePath"
-          label="选择声音样本"
-          placeholder="请选择或输入声音样本路径"
-          :filters="[{ name: 'Audio', extensions: ['wav', 'mp3', 'm4a'] }]"
+        <WorkbenchStagePlaceholder
+          v-else-if="!fullWidthStages.includes(stage.id)"
+          :stage="stage"
         />
-      </label>
-      <template #actions>
-        <button
-          class="primary compact-button"
-          :disabled="runtime.running.value || runtime.stageStatus.value['voice-clone'] === 'completed'"
-          @click="runtime.runStage('voice-clone')"
-        >
-          <Mic :size="16" /> 克隆声音
-        </button>
       </template>
-      <div class="artifact-box">
-        <Mic :size="32" />
-        <strong>{{ runtime.stageStatus.value['voice-clone'] === 'completed' ? '声音配置已就绪' : '克隆的声音配置将在这里显示' }}</strong>
-        <span>完成克隆后，下一步语音合成将使用项目专属声音</span>
-      </div>
-    </WorkflowStageCard>
-
-    <WorkflowStageCard
-      class="voice-card"
-      :stage="getStage('speech')"
-      :status="runtime.stageStatus.value.speech"
-      @run="runtime.runStage('speech')"
-    >
-      <template #icon><Volume2 :size="19" /></template>
-      <label>
-        <span>选择声音</span>
-        <select>
-          <option>项目克隆声音</option>
-          <option>女-带货</option>
-          <option>男-讲解</option>
-        </select>
-      </label>
-      <template #actions>
-        <button
-          class="primary compact-button"
-          :disabled="runtime.running.value || runtime.stageStatus.value.speech === 'completed'"
-          @click="runtime.runStage('speech')"
-        >
-          <Volume2 :size="16" /> 生成音频
-        </button>
+      <template #stage-preview="{ stage }">
+        <MaterialParsingPreview
+          v-if="stage.id === 'transcribe'"
+          :running="runtime.running.value"
+          :status="stage.status"
+        />
+        <ScriptRewritingStage
+          v-else-if="stage.id === 'rewrite'"
+          v-model="project"
+          :transcript-text="transcriptText"
+          :running="runtime.running.value"
+          :status="stage.status"
+          @run="runtime.runStage('rewrite')"
+        />
+        <VoiceCloningStage
+          v-else-if="stage.id === 'voice-clone'"
+          v-model="project"
+          :script-text="project.notes ?? ''"
+          :voice-id="selectedVoiceId"
+          :voice-name="selectedVoiceName"
+          :running="runtime.running.value"
+          :status="stage.status"
+          @run="runtime.runStage('voice-clone')"
+          @create-voice="handleNavigate('voices')"
+        />
+        <SpeechSynthesisStage
+          v-else-if="stage.id === 'speech'"
+          :model-value="project"
+          :voice-name="selectedVoiceName"
+          :running="runtime.running.value"
+          :status="stage.status"
+          :audio-path="generatedAudioPath"
+          :audio-duration="generatedAudioDuration"
+          @run="runtime.runStage('speech')"
+          @edit-script="runtime.goToStage('rewrite')"
+          @change-voice="runtime.goToStage('voice-clone')"
+        />
+        <AvatarGenerationStage
+          v-else-if="stage.id === 'avatar'"
+          :model-value="project"
+          :audio-path="generatedAudioPath"
+          :audio-duration="generatedAudioDuration"
+          :voice-name="selectedVoiceName"
+          :running="runtime.running.value"
+          :status="stage.status"
+          :selected-avatar-id="selectedAvatarId"
+          :avatar-path="generatedAvatarPath"
+          :avatar-duration="generatedAvatarDuration"
+          @run="runtime.runStage('avatar')"
+          @update:selected-avatar-id="selectedAvatarId = $event"
+          @create-avatar="handleNavigate('avatars')"
+          @change-audio="runtime.goToStage('speech')"
+        />
+        <VideoCompositionStage
+          v-else-if="stage.id === 'compose'"
+          :model-value="project"
+          :avatar-path="generatedAvatarPath"
+          :audio-path="generatedAudioPath"
+          :audio-duration="generatedAudioDuration"
+          :avatar-name="selectedAvatarId"
+          :running="runtime.running.value"
+          :status="stage.status"
+          :video-path="generatedVideoPath"
+          :cover-path="generatedCoverPath"
+          @run="runtime.runStage('compose')"
+          @edit-script="runtime.goToStage('rewrite')"
+          @edit-avatar="runtime.goToStage('avatar')"
+        />
+        <ContentReviewStage
+          v-else-if="stage.id === 'review'"
+          :metadata="prep.metadata.value"
+          :video-path="generatedVideoPath"
+          :cover-path="generatedCoverPath"
+          :cover-candidates="stitchCoverCandidates"
+          :target-platforms="project.targetPlatforms"
+          :platform-profiles="platformProfiles"
+          :running="runtime.running.value"
+          :status="stage.status"
+          @update:metadata="prep.updateMetadata"
+          @confirm="runtime.runStage('review')"
+          @open-video="handleOpenVideo"
+          @return-to-compose="runtime.goToStage('compose')"
+        />
+        <PublishStage
+          v-else-if="stage.id === 'publish'"
+          :metadata="prep.metadata.value"
+          :target-platforms="project.targetPlatforms"
+          :accounts="publishAccounts"
+          :selected-account-id="selectedPublishAccountId"
+          :platform-profiles="platformProfiles"
+          :can-publish="prep.canPublish.value"
+          :running="runtime.running.value"
+          :status="stage.status"
+          :video-path="generatedVideoPath"
+          @update:selected-account-id="selectedPublishAccountId = $event"
+          @update:metadata="prep.updateMetadata"
+          @create-tasks="openPublishDialog"
+        />
+        <WorkbenchPreviewPlaceholder v-else :label="stagePreviewLabel(stage.id)" />
       </template>
-      <div class="artifact-box">
-        <Volume2 :size="32" />
-        <strong>{{ generatedAudioPath ? "音频已生成" : "合成的音频将在这里显示" }}</strong>
-        <span>{{ generatedAudioPath || "完成合成后可在此处播放预览" }}</span>
-      </div>
-    </WorkflowStageCard>
+    </WorkbenchView>
 
-    <WorkflowStageCard
-      class="avatar-card"
-      :stage="getStage('avatar')"
-      :status="runtime.stageStatus.value.avatar"
-      @run="runtime.runStage('avatar')"
-    >
-      <template #icon><UserRound :size="19" /></template>
-      <template #heading-extra><button class="link-button">上传形象</button></template>
-      <div class="segmented">
-        <button class="selected">单形象</button>
-        <button>多镜头</button>
-      </div>
-      <label>
-        <span>选择形象</span>
-        <select>
-          <option>示例1-绿幕</option>
-        </select>
-      </label>
-      <label>
-        <span>模型版本</span>
-        <select>
-          <option>高清模型V2</option>
-        </select>
-      </label>
-      <template #actions>
-        <button
-          class="primary compact-button"
-          :disabled="runtime.running.value || runtime.stageStatus.value.avatar === 'completed'"
-          @click="runtime.runStage('avatar')"
-        >
-          <UserRound :size="16" /> 生成视频
-        </button>
-      </template>
-      <div class="artifact-box preview-box">
-        <UserRound :size="44" />
-        <strong>{{ generatedAvatarPath ? "视频生成完成" : "暂无预览视频" }}</strong>
-        <span>{{ generatedAvatarPath || "生成视频后将在此处显示预览" }}</span>
-      </div>
-    </WorkflowStageCard>
+    <SettingsView v-else-if="navigation.view === 'settings'" />
+    <TaskCenterView
+      v-else-if="navigation.view === 'tasks'"
+      @return-to-stage="handleReturnToStage"
+    />
+    <AccountManagementView
+      v-else-if="navigation.view === 'accounts'"
+      :accounts="allAccounts"
+      :platform-profiles="platformProfiles"
+    />
+    <VoiceLibraryView
+      v-else-if="navigation.view === 'voices'"
+      @select="handleVoiceSelect"
+    />
+    <AvatarLibraryView
+      v-else-if="navigation.view === 'avatars'"
+      @select="handleAvatarSelect"
+    />
+    <MaterialLibraryView
+      v-else-if="navigation.view === 'materials'"
+      @select="handleMaterialSelect"
+    />
+    <div v-else class="placeholder-view">
+      <h1>{{ navigation.view }}</h1>
+      <p>该页面正在实现中，将在后续 Task 中完成。</p>
+    </div>
 
-    <WorkflowStageCard
-      class="compose-card"
-      :stage="getStage('compose')"
-      :status="runtime.stageStatus.value.compose"
-      @run="runtime.runStage('compose')"
+    <AppDialog
+      :open="showPublishDialog"
+      title="确认创建发布任务"
+      data-testid="publish-dialog"
+      @close="cancelPublish"
     >
-      <template #icon><FileVideo :size="19" /></template>
-      <div class="compose-grid">
-        <div class="compose-controls">
-          <label>
-            <span>视频源</span>
-            <input :value="generatedAvatarPath || '自动使用上一步数字人视频，或手动选择'" readonly />
-          </label>
-          <div class="toggle-row"><input type="checkbox" checked /> 启用字幕 <button>字幕设置</button></div>
-          <label>
-            <span>混剪（画中画）素材</span>
-            <select><option>不混剪</option></select>
-          </label>
-          <label>
-            <span>背景音乐</span>
-            <div class="action-input">
-              <input placeholder="选择背景音乐" />
-              <button><Music2 :size="16" /></button>
-            </div>
-          </label>
-          <div class="slider-row">
-            <span>人声音量</span>
-            <input type="range" min="0" max="1" step="0.1" value="1" />
-            <b>1</b>
-          </div>
-          <div class="slider-row">
-            <span>BGM音量</span>
-            <input type="range" min="0" max="1" step="0.1" value="0.3" />
-            <b>0.3</b>
-          </div>
+      <div class="publish-dialog-summary">
+        <div class="publish-dialog-row">
+          <span class="publish-dialog-label">标题</span>
+          <span class="publish-dialog-value">{{ publishSummary.title }}</span>
         </div>
-        <div class="video-preview">
-          <FileVideo :size="52" />
-          <strong>{{ generatedVideoPath ? "成片已生成" : "暂无预览视频" }}</strong>
-          <span>{{ generatedVideoPath || "生成视频后将在此处显示预览" }}</span>
+        <div class="publish-dialog-row">
+          <span class="publish-dialog-label">描述</span>
+          <span class="publish-dialog-value">
+            {{ publishSummary.description }}{{ publishSummary.descriptionLong ? '…' : '' }}
+          </span>
+        </div>
+        <div class="publish-dialog-row">
+          <span class="publish-dialog-label">封面</span>
+          <span class="publish-dialog-value">{{ publishSummary.coverText }}</span>
+        </div>
+        <div class="publish-dialog-row">
+          <span class="publish-dialog-label">平台</span>
+          <span class="publish-dialog-value">{{ publishSummary.platformText }}</span>
+        </div>
+        <div class="publish-dialog-row">
+          <span class="publish-dialog-label">账号</span>
+          <span class="publish-dialog-value">{{ publishSummary.accountText }}</span>
+        </div>
+        <div class="publish-dialog-row">
+          <span class="publish-dialog-label">发布模式</span>
+          <span class="publish-dialog-value">{{ publishSummary.modeText }}</span>
+        </div>
+        <div class="publish-dialog-row">
+          <span class="publish-dialog-label">视频文件</span>
+          <span class="publish-dialog-value">{{ publishSummary.videoFile }}</span>
         </div>
       </div>
       <template #actions>
         <button
-          class="primary wide-button"
-          :disabled="runtime.running.value || runtime.stageStatus.value.compose === 'completed'"
-          @click="runtime.runStage('compose')"
+          type="button"
+          class="secondary"
+          data-testid="publish-dialog-cancel"
+          @click="cancelPublish"
         >
-          <FileVideo :size="16" /> 剪辑视频
+          取消
+        </button>
+        <button
+          type="button"
+          class="primary"
+          data-testid="publish-dialog-confirm"
+          :disabled="runtime.running.value || !prep.canPublish.value || !generatedVideoPath"
+          @click="confirmPublish"
+        >
+          确认创建任务
         </button>
       </template>
-    </WorkflowStageCard>
-
-    <PublishPrepCard
-      :metadata="prep.metadata.value"
-      :status="runtime.stageStatus.value.review"
-      :disabled="runtime.running.value || runtime.stageStatus.value.review === 'completed'"
-      @update="prep.updateMetadata"
-      @review="runtime.runStage('review')"
-    />
-
-    <PublishCard
-      :project-id="runtime.workflow.value.projectId"
-      :project-name="project.name"
-      :video-path="generatedVideoPath"
-      :target-platforms="project.targetPlatforms"
-      :mode="prep.metadata.value.mode"
-      :status="runtime.stageStatus.value.publish"
-      :disabled="runtime.running.value || runtime.stageStatus.value.publish === 'completed'"
-      :is-publishing="prep.isPublishing.value"
-      @update-mode="prep.updateMetadata({ mode: $event })"
-      @update-platforms="project.targetPlatforms = $event"
-      @publish="handlePublish"
-    />
-
-    <section class="workflow-card log-card">
-      <div class="card-heading">
-        <span class="card-icon"><ClipboardCheck :size="19" /></span>
-        <h2>执行记录</h2>
-      </div>
-      <div v-if="runtime.logs.value.length === 0" class="empty-log">等待启动第一步流程</div>
-      <ul v-else class="log-list">
-        <li v-for="log in runtime.logs.value.slice(0, 8)" :key="log.id">
-          <strong>{{ log.stage }}</strong>
-          <span>{{ log.message }}</span>
-        </li>
-      </ul>
-      <div v-if="latestHistoryItems.length > 0" class="history-section">
-        <h3>最近任务历史</h3>
-        <ul class="history-list">
-          <li v-for="item in latestHistoryItems" :key="item.id">
-            <strong>{{ item.title }}</strong>
-            <span>{{ item.platforms.map((p) => getPlatformLabel(p)).join("、") }} · {{ item.createdAt }}</span>
-            <span class="history-video">视频：{{ item.videoPath }}</span>
-            <span class="history-tasks">任务：{{ item.taskIds.join("、") }}</span>
-          </li>
-        </ul>
-      </div>
-      <TaskCenterPreview ref="taskPreviewRef" />
-    </section>
-    </template>
-    <SettingsView v-else />
-  </WorkbenchShell>
+    </AppDialog>
+  </AppShell>
 </template>
 
 <style scoped>
-.history-section h3 {
-  margin: 12px 0 8px;
-  font-size: 12px;
-  font-weight: 600;
+.placeholder-view {
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  min-height: 240px;
+  padding: 24px;
   color: var(--mx-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  text-align: center;
 }
 
-.history-list li {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.placeholder-view h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  text-transform: capitalize;
+  color: var(--mx-text-primary);
+}
+
+.placeholder-view p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.publish-dialog-summary {
+  display: grid;
+  gap: 12px;
   padding: 8px 0;
-  border-bottom: 1px solid var(--mx-border-subtle);
 }
 
-.history-list li:last-child {
-  border-bottom: none;
+.publish-dialog-row {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 12px;
+  align-items: baseline;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
-.history-video,
-.history-tasks {
-  font-size: 11px;
-  color: var(--mx-text-tertiary);
-  word-break: break-all;
+.publish-dialog-label {
+  color: var(--mx-text-secondary);
 }
 
-.history-tasks {
-  color: var(--mx-cyan);
+.publish-dialog-value {
+  color: var(--mx-text-primary);
+  word-break: break-word;
 }
 </style>

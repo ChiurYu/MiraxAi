@@ -1,0 +1,562 @@
+<!DOCTYPE html><html class="dark" lang="zh-CN"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>账号管理 - Mirax AI Workbench</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary-fixed": "#ffddb6",
+                      "surface-container-high": "#222a3d",
+                      "on-secondary": "#263143",
+                      "surface-dim": "#0b1326",
+                      "on-primary": "#12334b",
+                      "on-primary-fixed-variant": "#2b4963",
+                      "on-error": "#690005",
+                      "secondary-fixed-dim": "#bcc7de",
+                      "secondary-container": "#3e495d",
+                      "outline": "#8d9197",
+                      "on-tertiary-fixed": "#2a1800",
+                      "on-secondary-fixed-variant": "#3c475a",
+                      "tertiary": "#eabf8a",
+                      "primary-fixed-dim": "#abcae8",
+                      "on-secondary-container": "#aeb9d0",
+                      "on-error-container": "#ffdad6",
+                      "surface-container-low": "#131b2e",
+                      "on-background": "#dae2fd",
+                      "surface-tint": "#abcae8",
+                      "inverse-primary": "#43617c",
+                      "surface-container-highest": "#2d3449",
+                      "primary": "#abcae8",
+                      "primary-container": "#3e5c76",
+                      "inverse-surface": "#dae2fd",
+                      "primary-fixed": "#cce5ff",
+                      "on-secondary-fixed": "#111c2d",
+                      "on-primary-container": "#b5d4f2",
+                      "error-container": "#93000a",
+                      "tertiary-container": "#735328",
+                      "surface-container": "#171f33",
+                      "secondary": "#bcc7de",
+                      "tertiary-fixed-dim": "#eabf8a",
+                      "on-tertiary-container": "#f5c993",
+                      "on-surface-variant": "#c3c7cd",
+                      "error": "#ffb4ab",
+                      "secondary-fixed": "#d8e3fb",
+                      "inverse-on-surface": "#283044",
+                      "background": "#0b1326",
+                      "surface-variant": "#2d3449",
+                      "on-tertiary": "#452b03",
+                      "outline-variant": "#42474d",
+                      "on-surface": "#dae2fd",
+                      "on-primary-fixed": "#001d31",
+                      "on-tertiary-fixed-variant": "#5e4118",
+                      "surface-container-lowest": "#060e20",
+                      "surface-bright": "#31394d",
+                      "surface": "#0b1326"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "xl": "32px",
+                      "sidebar-width": "64px",
+                      "lg": "24px",
+                      "xs": "4px",
+                      "md": "16px",
+                      "control-panel-width": "320px",
+                      "sm": "8px",
+                      "base": "8px"
+              },
+              "fontFamily": {
+                      "headline-md": ["Inter"],
+                      "body-sm": ["Inter"],
+                      "label-caps": ["Inter"],
+                      "display-lg": ["Inter"],
+                      "mono-label": ["Inter"],
+                      "body-md": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                      "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                      "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                      "mono-label": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Scrollbar styling for panels */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #3e495d;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: #aeb9d0;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface h-screen flex overflow-hidden antialiased selection:bg-primary selection:text-on-primary min-w-[1280px]">
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-0 h-full w-[72px] bg-surface-container border-r border-outline-variant flex flex-col items-center py-md space-y-base z-50 shrink-0">
+<div class="mb-lg mt-sm flex flex-col items-center cursor-pointer group">
+<div class="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center text-on-primary-container mb-xs group-hover:bg-primary group-hover:text-on-primary transition-colors duration-200">
+<span class="font-headline-md font-bold">M</span>
+</div>
+<span class="font-label-caps text-label-caps text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">AI</span>
+</div>
+<div class="flex-1 w-full flex flex-col items-center space-y-2 px-2">
+<!-- 1: 工作台 -->
+<a class="w-full aspect-square flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface rounded-xl transition-all duration-150 active:scale-95 group" href="#">
+<span class="material-symbols-outlined mb-1 group-hover:-translate-y-0.5 transition-transform">dashboard</span>
+<span class="font-label-caps text-[10px] leading-tight">工作台</span>
+</a>
+<!-- 2: 声音 -->
+<a class="w-full aspect-square flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface rounded-xl transition-all duration-150 active:scale-95 group" href="#">
+<span class="material-symbols-outlined mb-1 group-hover:-translate-y-0.5 transition-transform">mic</span>
+<span class="font-label-caps text-[10px] leading-tight">声音</span>
+</a>
+<!-- 3: 形象 -->
+<a class="w-full aspect-square flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface rounded-xl transition-all duration-150 active:scale-95 group" href="#">
+<span class="material-symbols-outlined mb-1 group-hover:-translate-y-0.5 transition-transform">face</span>
+<span class="font-label-caps text-[10px] leading-tight">形象</span>
+</a>
+<!-- 4: 素材 -->
+<a class="w-full aspect-square flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface rounded-xl transition-all duration-150 active:scale-95 group" href="#">
+<span class="material-symbols-outlined mb-1 group-hover:-translate-y-0.5 transition-transform">folder_open</span>
+<span class="font-label-caps text-[10px] leading-tight">素材</span>
+</a>
+<!-- 5: 任务 -->
+<a class="w-full aspect-square flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface rounded-xl transition-all duration-150 active:scale-95 group" href="#">
+<span class="material-symbols-outlined mb-1 group-hover:-translate-y-0.5 transition-transform">task</span>
+<span class="font-label-caps text-[10px] leading-tight">任务</span>
+</a>
+<!-- 6: 账号 (ACTIVE) -->
+
+</div>
+<div class="mt-auto w-full px-2">
+<!-- 7: 设置 -->
+<a class="w-full aspect-square flex flex-col items-center justify-center text-primary bg-secondary-container rounded-xl transition-all duration-150 active:scale-95 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] border border-outline-variant mb-2" href="#">
+<span class="material-symbols-outlined icon-fill mb-1">person</span>
+<span class="font-label-caps text-[10px] leading-tight text-primary font-bold">账号</span>
+</a><a class="w-full aspect-square flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface rounded-xl transition-all duration-150 active:scale-95 group" href="#">
+<span class="material-symbols-outlined mb-1 group-hover:rotate-45 transition-transform duration-300">settings</span>
+<span class="font-label-caps text-[10px] leading-tight">设置</span>
+</a>
+</div>
+</nav>
+<!-- Main Application Canvas Area -->
+<div class="flex-1 flex flex-col ml-[72px] bg-background relative z-10 w-[calc(100%-72px)]">
+<!-- TopAppBar -->
+<header class="h-12 bg-surface-container-high border-b border-outline-variant flex items-center justify-between px-lg w-full flex-shrink-0 z-40">
+<div class="flex items-center space-x-4">
+<span class="font-headline-md text-headline-md font-semibold text-on-surface tracking-tight">账号</span>
+</div>
+<div class="flex items-center space-x-sm">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-variant hover:text-primary transition-colors relative">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-error rounded-full"></span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">help_outline</span>
+</button>
+<div class="w-px h-5 bg-outline-variant mx-1"></div>
+<button class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant hover:border-primary transition-colors cursor-pointer">
+<img alt="User Avatar" class="w-full h-full object-cover" data-alt="A professional headshot of a user in a modern studio environment, soft cinematic lighting, neutral background, high resolution." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqp0x5kLNZ3vahpQ8DKxxuIOdNPfSDd9yOXJ9Dg4yevEVJ9PPB63CCmta3lgEzIlGwiEkrrP_RciixOiiFvtUI8A7DhNsWogOKipYTOMm6WahM-y8E3y-H2UTdtqQEnCfICYUrB0b0zSsEODjGI27vNKAnev8r_D04-jzcjX85A6h-lXnXzHqANPPMszFZ2hMbBckFpHjaJ7ROoy_hQK2cyhwwujZxl02Ne-ESQDe7BGoUyxmUcTj4HJuct98qFBpfXe1Wsfx_thI">
+</button>
+</div>
+</header>
+<!-- Page Header & Actions -->
+<div class="px-xl py-lg flex-shrink-0 border-b border-outline-variant bg-surface-container-lowest flex justify-between items-start">
+<div class="max-w-3xl">
+<h1 class="font-display-lg text-display-lg text-on-surface mb-xs">账号管理</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+                    管理各平台发布账号的授权状态、发布能力和使用范围。只有授权有效的账号才能用于发布任务。
+                </p>
+</div>
+<div class="flex items-center space-x-sm mt-1">
+<button class="flex items-center px-4 py-2 bg-surface-variant text-on-surface font-body-sm rounded-lg hover:bg-surface-container-highest border border-outline-variant transition-colors group">
+<span class="material-symbols-outlined text-[18px] mr-1.5 group-hover:rotate-180 transition-transform duration-500">sync</span>
+                    刷新状态
+                </button>
+<button class="flex items-center px-4 py-2 bg-surface-variant text-on-surface font-body-sm rounded-lg hover:bg-surface-container-highest border border-outline-variant transition-colors">
+<span class="material-symbols-outlined text-[18px] mr-1.5">network_check</span>
+                    测试全部已连接账号
+                </button>
+<button class="flex items-center px-5 py-2 bg-primary text-on-primary font-body-sm font-semibold rounded-lg hover:brightness-110 shadow-sm transition-all active:scale-95">
+<span class="material-symbols-outlined text-[18px] mr-1.5">add</span>
+                    添加账号
+                </button>
+</div>
+</div>
+<!-- Filter Toolbar -->
+<div class="px-xl py-sm flex items-center justify-between border-b border-outline-variant bg-surface-container">
+<div class="flex items-center space-x-4">
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-2 top-1.5 text-[18px] text-on-surface-variant">search</span>
+<input class="w-full bg-surface-variant border border-outline-variant rounded-md pl-8 pr-3 py-1.5 text-body-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" placeholder="搜索平台、账号名称或账号 ID" type="text">
+</div>
+<div class="flex items-center space-x-2 text-body-sm">
+<span class="text-on-surface-variant font-medium">平台:</span>
+<select class="bg-surface-variant border border-outline-variant rounded-md px-2 py-1.5 text-on-surface focus:outline-none focus:border-primary">
+<option>全部</option>
+<option>抖音</option>
+<option>小红书</option>
+<option>快手</option>
+<option>视频号</option>
+<option>Bilibili</option>
+</select>
+</div>
+<div class="flex items-center space-x-2 text-body-sm">
+<span class="text-on-surface-variant font-medium">授权状态:</span>
+<select class="bg-surface-variant border border-outline-variant rounded-md px-2 py-1.5 text-on-surface focus:outline-none focus:border-primary">
+<option>全部</option>
+<option>已连接</option>
+<option>检查中</option>
+<option>需要重新授权</option>
+<option>已断开</option>
+<option>暂不可用</option>
+</select>
+</div>
+<div class="flex items-center space-x-2 text-body-sm">
+<span class="text-on-surface-variant font-medium">使用状态:</span>
+<select class="bg-surface-variant border border-outline-variant rounded-md px-2 py-1.5 text-on-surface focus:outline-none focus:border-primary">
+<option>全部</option>
+<option>已启用</option>
+<option>已停用</option>
+</select>
+</div>
+</div>
+<div class="flex items-center space-x-2 text-body-sm">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">sort</span>
+<select class="bg-transparent border-none text-on-surface-variant focus:outline-none focus:ring-0 px-1 py-1 cursor-pointer hover:text-on-surface">
+<option>最近检查</option>
+</select>
+</div>
+</div>
+<!-- Three-Pane Split Workspace Area -->
+<div class="flex-1 flex overflow-hidden w-full">
+<!-- Center: Account List (Main Canvas) -->
+<div class="min-w-0 flex-1 flex flex-col bg-surface-dim overflow-y-auto p-lg">
+<!-- Data Table Container -->
+<div class="bg-surface-container rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col min-w-[700px]">
+<!-- Table Header -->
+<div class="grid grid-cols-[minmax(200px,2fr)_minmax(120px,1fr)_minmax(150px,1.5fr)_minmax(100px,1fr)_minmax(150px,1.5fr)_140px] px-md py-sm bg-surface-container-highest border-b border-outline-variant text-on-surface-variant font-label-caps text-label-caps items-center">
+<div class="pl-2">平台与账号</div>
+<div class="">授权状态</div>
+<div class="">发布能力</div>
+<div class="">最近检查</div>
+<div class="">最近使用</div>
+<div class="text-right pr-2">操作</div>
+</div>
+<!-- Table Body Rows -->
+<div class="flex flex-col">
+<!-- Row 1: Selected / Active -->
+<div class="grid grid-cols-[minmax(200px,2fr)_minmax(120px,1fr)_minmax(150px,1.5fr)_minmax(100px,1fr)_minmax(150px,1.5fr)_140px] px-md py-3 bg-secondary-container/20 border-l-2 border-l-primary border-b border-outline-variant hover:bg-surface-variant/50 transition-colors cursor-pointer items-center group">
+<div class="flex items-center space-x-3 pl-1 min-w-0 pr-2">
+<div class="w-8 h-8 rounded bg-surface-variant flex items-center justify-center text-on-surface shrink-0">
+<span class="font-bold text-xs tracking-tighter">抖音</span>
+</div>
+<div class="flex flex-col truncate min-w-0">
+<span class="font-body-sm font-semibold text-primary truncate" title="清禾穿搭">清禾穿搭</span>
+<span class="font-mono-label text-mono-label text-on-surface-variant truncate" title="@qinghe_style">@qinghe_style</span>
+</div>
+</div>
+<div class="flex items-center space-x-1.5 shrink-0">
+<span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)] shrink-0"></span>
+<span class="font-body-sm text-on-surface">已连接</span>
+</div>
+<div class="flex items-center space-x-1 overflow-hidden shrink-0">
+<span class="px-2 py-0.5 rounded-md bg-surface-variant text-on-surface-variant font-label-caps text-[10px] border border-outline-variant/50 shrink-0">直接发布</span>
+<span class="px-2 py-0.5 rounded-md bg-surface-variant text-on-surface-variant font-label-caps text-[10px] border border-outline-variant/50 shrink-0">平台草稿</span>
+</div>
+<div class="font-mono-label text-mono-label text-on-surface-variant shrink-0">刚刚</div>
+<div class="flex flex-col truncate pr-2 min-w-0">
+<span class="font-body-sm text-on-surface truncate" title="夏季通勤穿搭...">夏季通勤穿搭...</span>
+<span class="font-mono-label text-[10px] text-on-surface-variant truncate" title="任务ID: #892">任务ID: #892</span>
+</div>
+<div class="flex justify-end pr-1 space-x-2 shrink-0">
+<button class="text-on-surface-variant hover:text-primary font-body-sm text-xs transition-colors">查看</button>
+<button class="text-on-surface-variant hover:text-primary font-body-sm text-xs transition-colors">测试登录</button>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="grid grid-cols-[minmax(200px,2fr)_minmax(120px,1fr)_minmax(150px,1.5fr)_minmax(100px,1fr)_minmax(150px,1.5fr)_140px] px-md py-3 bg-surface-container border-b border-outline-variant hover:bg-surface-variant/50 transition-colors cursor-pointer items-center border-l-2 border-l-transparent group">
+<div class="flex items-center space-x-3 pl-1 min-w-0 pr-2">
+<div class="w-8 h-8 rounded bg-[#ff2442]/20 border border-[#ff2442]/30 flex items-center justify-center text-[#ff2442] shrink-0">
+<span class="font-bold text-[10px] tracking-tighter">小红书</span>
+</div>
+<div class="flex flex-col truncate min-w-0">
+<span class="font-body-sm font-medium text-on-surface truncate" title="清禾通勤笔记">清禾通勤笔记</span>
+<span class="font-mono-label text-mono-label text-on-surface-variant truncate" title="9527xxxx">9527xxxx</span>
+</div>
+</div>
+<div class="flex items-center space-x-1.5 shrink-0">
+<span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)] shrink-0"></span>
+<span class="font-body-sm text-on-surface">已连接</span>
+</div>
+<div class="flex items-center space-x-1 overflow-hidden shrink-0">
+<span class="px-2 py-0.5 rounded-md bg-surface-variant text-on-surface-variant font-label-caps text-[10px] border border-outline-variant/50 shrink-0">平台草稿</span>
+</div>
+<div class="font-mono-label text-mono-label text-on-surface-variant shrink-0">5分钟前</div>
+<div class="font-mono-label text-mono-label text-on-surface-variant shrink-0">—</div>
+<div class="flex justify-end pr-1 space-x-2 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-on-surface-variant hover:text-primary font-body-sm text-xs transition-colors">查看</button>
+<button class="text-on-surface-variant hover:text-primary font-body-sm text-xs transition-colors">测试登录</button>
+</div>
+</div>
+<!-- Row 3 -->
+<div class="grid grid-cols-[minmax(200px,2fr)_minmax(120px,1fr)_minmax(150px,1.5fr)_minmax(100px,1fr)_minmax(150px,1.5fr)_140px] px-md py-3 bg-surface-container border-b border-outline-variant hover:bg-surface-variant/50 transition-colors cursor-pointer items-center border-l-2 border-l-transparent group">
+<div class="flex items-center space-x-3 pl-1 min-w-0 pr-2">
+<div class="w-8 h-8 rounded bg-[#ff7a00]/20 border border-[#ff7a00]/30 flex items-center justify-center text-[#ff7a00] shrink-0">
+<span class="font-bold text-xs tracking-tighter">快手</span>
+</div>
+<div class="flex flex-col truncate min-w-0">
+<span class="font-body-sm font-medium text-on-surface truncate" title="清禾日常">清禾日常</span>
+<span class="font-mono-label text-mono-label text-on-surface-variant truncate" title="KS-72819">KS-72819</span>
+</div>
+</div>
+<div class="flex items-center space-x-1.5 shrink-0">
+<span class="w-2 h-2 rounded-full bg-tertiary shadow-[0_0_8px_rgba(234,191,138,0.4)] shrink-0 animate-pulse"></span>
+<span class="font-body-sm text-tertiary">检查中</span>
+</div>
+<div class="font-body-sm text-on-surface-variant italic text-[12px] shrink-0">正在确认...</div>
+<div class="font-mono-label text-mono-label text-on-surface-variant shrink-0">刚刚</div>
+<div class="font-mono-label text-mono-label text-on-surface-variant shrink-0">—</div>
+<div class="flex justify-end pr-1 space-x-2 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-on-surface-variant hover:text-primary font-body-sm text-xs transition-colors">查看</button>
+</div>
+</div>
+<!-- Row 4 -->
+<div class="grid grid-cols-[minmax(200px,2fr)_minmax(120px,1fr)_minmax(150px,1.5fr)_minmax(100px,1fr)_minmax(150px,1.5fr)_140px] px-md py-3 bg-surface-container border-b border-outline-variant hover:bg-surface-variant/50 transition-colors cursor-pointer items-center border-l-2 border-l-transparent group opacity-75">
+<div class="flex items-center space-x-3 pl-1 min-w-0 pr-2">
+<div class="w-8 h-8 rounded bg-[#07c160]/20 border border-[#07c160]/30 flex items-center justify-center text-[#07c160] shrink-0">
+<span class="font-bold text-[10px] tracking-tighter">视频号</span>
+</div>
+<div class="flex flex-col truncate min-w-0">
+<span class="font-body-sm font-medium text-on-surface truncate" title="清禾职场穿搭">清禾职场穿搭</span>
+<span class="font-mono-label text-mono-label text-on-surface-variant truncate" title="WX-STYLE-08">WX-STYLE-08</span>
+</div>
+</div>
+<div class="flex items-center space-x-1.5 shrink-0">
+<span class="w-2 h-2 rounded-full bg-outline shrink-0"></span>
+<span class="font-body-sm text-on-surface-variant">已断开</span>
+</div>
+<div class="font-body-sm text-error text-[12px] shrink-0">登录失效</div>
+<div class="font-mono-label text-mono-label text-on-surface-variant shrink-0">2天前</div>
+<div class="font-mono-label text-mono-label text-on-surface-variant shrink-0">—</div>
+<div class="flex justify-end pr-1 space-x-2 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-on-surface-variant hover:text-primary font-body-sm text-xs transition-colors">查看</button>
+<button class="text-primary hover:text-primary-fixed font-body-sm text-xs transition-colors">重新连接</button>
+</div>
+</div>
+<!-- Row 5 -->
+<div class="grid grid-cols-[minmax(200px,2fr)_minmax(120px,1fr)_minmax(150px,1.5fr)_minmax(100px,1fr)_minmax(150px,1.5fr)_140px] px-md py-3 bg-error-container/10 border-b border-outline-variant hover:bg-surface-variant/50 transition-colors cursor-pointer items-center border-l-2 border-l-error group">
+<div class="flex items-center space-x-3 pl-1 min-w-0 pr-2">
+<div class="w-8 h-8 rounded bg-[#00a1d6]/20 border border-[#00a1d6]/30 flex items-center justify-center text-[#00a1d6] shrink-0">
+<span class="font-bold text-[10px] tracking-tighter">Bilibili</span>
+</div>
+<div class="flex flex-col truncate min-w-0">
+<span class="font-body-sm font-medium text-on-surface truncate" title="清禾视频号">清禾视频号</span>
+<span class="font-mono-label text-mono-label text-on-surface-variant truncate" title="UID 4829xxxx">UID 4829xxxx</span>
+</div>
+</div>
+<div class="flex items-center space-x-1.5 shrink-0">
+<span class="material-symbols-outlined text-[14px] text-error shrink-0">warning</span>
+<span class="font-body-sm text-error font-medium">需要重新授权</span>
+</div>
+<div class="font-body-sm text-error text-[12px] shrink-0">授权过期</div>
+<div class="font-mono-label text-mono-label text-on-surface-variant shrink-0">3天前</div>
+<div class="font-mono-label text-mono-label text-on-surface-variant shrink-0">—</div>
+<div class="flex justify-end pr-1 space-x-2 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-on-surface-variant hover:text-primary font-body-sm text-xs transition-colors">查看</button>
+<button class="text-primary hover:text-primary-fixed font-body-sm text-xs transition-colors">重新授权</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Pagination / Footer area of list -->
+<div class="mt-4 flex justify-between items-center text-on-surface-variant">
+<span class="font-body-sm">共 5 个账号｜2 个需处理｜2 个已连接｜1 个检查中</span>
+</div>
+</div>
+<!-- Right Panel: Contextual Properties (Variable Width, default to control-panel-width) -->
+<div class="w-[380px] bg-surface-container border-l border-outline-variant flex flex-col flex-shrink-0 z-20 shadow-[-4px_0_12px_rgba(0,0,0,0.1)] h-full overflow-hidden">
+<!-- Panel Header -->
+<div class="h-16 px-md flex items-center justify-between border-b border-outline-variant bg-surface-container-high shrink-0 sticky top-0 z-10">
+<h2 class="font-headline-md text-sm font-semibold text-on-surface flex items-center">
+<span class="material-symbols-outlined text-[18px] mr-2 text-on-surface-variant">tune</span>
+                        账号详情
+                    </h2>
+<button class="w-8 h-8 flex items-center justify-center rounded text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Panel Scrollable Content -->
+<div class="flex-1 overflow-y-auto p-md space-y-6">
+<!-- Identity Section -->
+<div class="flex items-start justify-between">
+<div class="flex items-center space-x-3 min-w-0 pr-2">
+<div class="w-12 h-12 rounded-lg bg-surface-variant flex items-center justify-center text-on-surface shrink-0 border border-outline-variant">
+<span class="font-bold text-sm tracking-tighter">抖音</span>
+</div>
+<div class="flex flex-col min-w-0">
+<h3 class="font-body-sm font-bold text-on-surface text-base truncate" title="清禾穿搭">清禾穿搭</h3>
+<div class="flex items-center text-on-surface-variant mt-0.5 min-w-0">
+<span class="font-mono-label text-xs truncate" title="@qinghe_style">@qinghe_style</span>
+<button class="ml-1 text-on-surface-variant hover:text-primary transition-colors flex items-center shrink-0" title="复制">
+<span class="material-symbols-outlined text-[12px]">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Toggle -->
+<div class="flex items-center mt-1 shrink-0">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value="">
+<div class="w-9 h-5 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+<div class="h-px bg-outline-variant/50 w-full"></div>
+<!-- Authorization Section -->
+<div class="space-y-3">
+<h4 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">授权状态</h4>
+<div class="bg-surface p-3 rounded-lg border border-outline-variant/50 flex flex-col space-y-3">
+<div class="flex justify-between items-center">
+<span class="font-body-sm text-on-surface-variant">当前状态</span>
+<div class="flex items-center space-x-1.5">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+<span class="font-body-sm font-medium text-emerald-400">已连接</span>
+</div>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-body-sm text-on-surface-variant">授权方式</span>
+<span class="font-body-sm text-on-surface">官方平台登录</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-body-sm text-on-surface-variant">浏览器环境</span>
+<span class="font-body-sm text-on-surface">正常</span>
+</div>
+<div class="flex justify-between items-center pt-2 border-t border-outline-variant/30">
+<span class="font-body-sm text-on-surface-variant">上次更新</span>
+<span class="font-mono-label text-on-surface">2026-06-22</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-body-sm text-on-surface-variant">最近检查</span>
+<span class="font-mono-label text-on-surface">刚刚</span>
+</div>
+</div>
+</div>
+<!-- Capabilities Checklist -->
+<div class="space-y-3">
+<h4 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">平台发布能力</h4>
+<div class="bg-surface p-3 rounded-lg border border-outline-variant/50 grid grid-cols-2 gap-y-2 gap-x-4">
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-[16px] text-primary">check_circle</span>
+<span class="font-body-sm text-on-surface truncate" title="保存为平台草稿">保存为平台草稿: 支持</span>
+</div>
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-[16px] text-primary">check_circle</span>
+<span class="font-body-sm text-on-surface truncate" title="直接发布">直接发布: 支持</span>
+</div>
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-[16px] text-primary">check_circle</span>
+<span class="font-body-sm text-on-surface truncate" title="自定义封面">自定义封面: 支持</span>
+</div>
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-[16px] text-primary">check_circle</span>
+<span class="font-body-sm text-on-surface truncate" title="标题与描述">标题与描述: 支持</span>
+</div>
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-[16px] text-primary">check_circle</span>
+<span class="font-body-sm text-on-surface truncate" title="话题标签">话题标签: 支持</span>
+</div>
+<div class="flex items-center space-x-2 opacity-50">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">cancel</span>
+<span class="font-body-sm text-on-surface-variant line-through decoration-outline-variant truncate" title="定时发布: 暂不支持">定时发布: 暂不支持</span>
+</div>
+</div>
+</div>
+<!-- Usage History -->
+<div class="space-y-3">
+<h4 class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider">最近使用记录</h4>
+<div class="bg-surface p-3 rounded-lg border border-outline-variant/50 flex flex-col space-y-2">
+<div class="flex flex-col group cursor-pointer p-1.5 -mx-1.5 rounded hover:bg-surface-variant transition-colors">
+<div class="flex justify-between items-start">
+<span class="font-body-sm text-on-surface group-hover:text-primary transition-colors font-medium">夏季通勤穿搭草稿发布</span>
+<span class="font-mono-label text-xs text-primary bg-primary/10 px-1.5 py-0.5 rounded">处理中</span>
+</div>
+<div class="flex justify-between items-center mt-1">
+<span class="font-label-caps text-[10px] text-on-surface-variant">PUB-20260622-0018</span>
+<span class="font-mono-label text-[10px] text-on-surface-variant">刚刚</span>
+</div>
+<div class="flex space-x-3 mt-2">
+<a class="font-body-sm text-primary hover:underline text-[11px] inline-flex items-center" href="#">查看任务</a>
+<a class="font-body-sm text-primary hover:underline text-[11px] inline-flex items-center" href="#">打开项目</a>
+</div>
+</div>
+<a class="font-body-sm text-primary hover:underline mt-2 inline-flex items-center text-xs" href="#">
+                                前往任务中心查看全部
+                                <span class="material-symbols-outlined text-[14px] ml-0.5">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Panel Footer / Actions -->
+<div class="p-md border-t border-outline-variant bg-surface-container-high space-y-4 shrink-0 sticky bottom-0 z-10">
+<div class="flex items-start space-x-2 px-1">
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant mt-0.5 shrink-0">shield_locked</span>
+<p class="font-label-caps text-[10px] text-on-surface-variant leading-tight">账号授权通过平台官方登录流程完成。Mirax AI 不保存平台密码；授权信息仅用于执行用户主动创建的发布任务。</p>
+</div>
+<div class="flex flex-col space-y-2">
+<button class="w-full py-2 bg-primary text-on-primary font-body-sm font-semibold rounded-lg hover:brightness-110 shadow-sm transition-all active:scale-95">
+                            测试登录状态
+                        </button>
+<button class="w-full py-2 bg-surface text-on-surface font-body-sm font-medium rounded-lg border border-outline-variant hover:bg-surface-variant transition-colors">
+                            刷新账号状态
+                        </button>
+<button class="w-full py-2 bg-surface text-on-surface font-body-sm font-medium rounded-lg border border-outline-variant hover:bg-surface-variant transition-colors">
+                            打开相关任务
+                        </button>
+<div class="flex space-x-2">
+<button class="flex-1 py-2 bg-surface text-on-surface font-body-sm rounded-lg border border-outline-variant hover:bg-surface-variant transition-colors">
+                                暂停使用
+                            </button>
+<button class="flex-1 py-2 bg-error-container/10 text-error font-body-sm rounded-lg border border-error/30 hover:bg-error-container/20 transition-colors">
+                                移除账号
+                            </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+</body></html>

@@ -4,6 +4,7 @@ import {
   getNextStage,
   getStageProgress,
   updateStageStatus,
+  WORKFLOW_STAGES,
   type Workflow,
   type WorkflowStage,
   type WorkflowStageId,
@@ -43,6 +44,62 @@ export function useWorkflowRuntime(options: UseWorkflowRuntimeOptions) {
     if (stageStatus.value[stageId] === "failed") {
       workflow.value = updateStageStatus(workflow.value, stageId, "pending");
     }
+  }
+
+  function stageIndex(stageId: WorkflowStageId): number {
+    return WORKFLOW_STAGES.indexOf(stageId);
+  }
+
+  function areDependenciesCompleted(stageId: WorkflowStageId): boolean {
+    const targetIndex = stageIndex(stageId);
+    const previousRequired = workflow.value.stages.filter((s) => {
+      const index = stageIndex(s.id);
+      return index < targetIndex && s.required && s.id !== "review";
+    });
+    return previousRequired.every((s) => s.status === "completed" || s.status === "skipped");
+  }
+
+  function canGoToStage(stageId: WorkflowStageId): boolean {
+    if (running.value) return false;
+    const target = workflow.value.stages.find((s) => s.id === stageId);
+    if (!target) return false;
+    if (stageId === activeStageId.value) return true;
+    if (target.status === "completed" || target.status === "skipped") return true;
+    return areDependenciesCompleted(stageId);
+  }
+
+  function goToStage(stageId: WorkflowStageId) {
+    if (!canGoToStage(stageId)) return;
+    activeStageId.value = stageId;
+  }
+
+  function goToNextStage() {
+    const currentIndex = stageIndex(activeStageId.value);
+    const nextId = WORKFLOW_STAGES[currentIndex + 1];
+    if (nextId) {
+      goToStage(nextId);
+    }
+  }
+
+  function goToPreviousStage() {
+    const currentIndex = stageIndex(activeStageId.value);
+    const prevId = WORKFLOW_STAGES[currentIndex - 1];
+    if (prevId) {
+      goToStage(prevId);
+    }
+  }
+
+  function markStageDirty(stageId: WorkflowStageId) {
+    const targetIndex = stageIndex(stageId);
+    let nextWorkflow = workflow.value;
+    for (let i = targetIndex; i < WORKFLOW_STAGES.length; i++) {
+      const id = WORKFLOW_STAGES[i];
+      const stage = nextWorkflow.stages.find((s) => s.id === id);
+      if (stage && (stage.status === "completed" || stage.status === "skipped" || stage.status === "failed")) {
+        nextWorkflow = updateStageStatus(nextWorkflow, id, "pending");
+      }
+    }
+    workflow.value = nextWorkflow;
   }
 
   async function processStage(stageId: WorkflowStageId, title: string): Promise<string> {
@@ -173,5 +230,10 @@ export function useWorkflowRuntime(options: UseWorkflowRuntimeOptions) {
     runStage,
     resetWorkflow,
     addLog,
+    canGoToStage,
+    goToStage,
+    goToNextStage,
+    goToPreviousStage,
+    markStageDirty,
   };
 }

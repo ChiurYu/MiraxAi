@@ -1,0 +1,149 @@
+{
+  "description": "Canonical Stitch 示例媒体来源映射。原始远程 URL 集中记录在此，避免进入 apps/desktop/src 源码目录。",
+  "localizedRoot": "apps/desktop/src/assets/stitch",
+  "canonicalSourceRoot": "docs/design-source/stitch",
+  "assets": [
+    {
+      "file": "avatars/qinghe-thumb.jpg",
+      "sourceHtml": "Workbench/workbench_avatar_generation_v3/code.html",
+      "originalUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuDqtUy2j7QTM7NcDugVLPm8U5i728irV_nGMVsKZNWEiPO7RnPmnZpbfNYtEeF1ww8eLk-5wdO1p33JcNLByY33cJ08w6ZPLqDYYoYdt684MKN23yI1jcuKnITVVT5oaaeqB0BcWrc8OWCneR0sJ-vu2jYZWOcb0zyepPSUNC899sJ0xDkNTYsfbibOeObiQnRxs6P8XW2l7sjh9YQFJLN502Pc2SZ5-ErcMsPdO7eT0dSm9pKzhM_u7hOZJmqI-ixp9Jj7ZDTtJQY",
+      "usage": "Workbench 形象生成阶段顶部已选形象缩略图（清禾）",
+      "status": "downloaded",
+      "date": "2026-06-25"
+    },
+    {
+      "file": "avatars/qinghe-newsroom.jpg",
+      "sourceHtml": "Workbench/workbench_avatar_generation_v3/code.html",
+      "originalUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuDQpXZuQG0EOey8GcU09H3rW3SsHH5Vd5v4iNQ6jH1JbCMhFN20k1lcGIy5_vQGN1zF-_xx359KqzJsnyr0pfU36liw-0iNu0d2rx74d1XqRzVh-510GGNSxgO9AHy2QKC4wRZn2oqWBycrP2xRjIOt7XzsAbnYK-XklBcwKuYdm5B7R712FrHfIKqqb6P1zLTjgU93bimABC-RUOJGNHb-s3QooUMpKuZcUwRP3hMMon7_-o9rTgb9X0m3etvxEvuJEVFke6iff0U",
+      "usage": "Workbench 形象生成阶段右侧 9:16 预览背景 / 数字人视频帧（清禾｜新闻演播室）",
+      "status": "downloaded",
+      "date": "2026-06-25"
+    },
+    {
+      "file": "avatars/xialan-greenscreen.jpg",
+      "sourceHtml": "Workbench/workbench_avatar_generation_v3/code.html",
+      "originalUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuAPgUU6A4ysXPpSl0WmsuEvyi4094f0zlemp1XMq1KxfzrxJoAf_CWtYZUcQsM5RF_8fZpn8BbjSkM-XXPhASAkBWGv_90L3OW04SKthodZVbfiGq1-NIRhYvRPzP4-jYf0LuTuEcH3beIsW5FZ8-kMeqRWUFG5xAsi-qLIk--4Mtt6Tve5BUAXnFTg762OP5A9HilNYQ1LjwNmnaZr2WUgzYgDr9RgNBBIWaZ44wZD_fKlN8iLkq_kPQP3zs93ZTcpFpGyBCez-8I",
+      "usage": "Workbench 形象生成阶段形象候选（夏岚｜绿幕）",
+      "status": "downloaded",
+      "date": "2026-06-25"
+    },
+    {
+      "file": "avatars/chenyu-office.jpg",
+      "sourceHtml": "Workbench/workbench_avatar_generation_v3/code.html",
+      "originalUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuB8G0E7GcryN7vHGYXFX2wes_nEGSmPVc87-Xe6aR7HpJYJYcMDczpjw5deAFyBDBrAd6-bbqKKzyKX7-JpxcEjQ5S52ACvLwBfvHktXXfLsMIYhB6mz5brZC08gkNDwVQxYVo5en0lDKxvEssR1N_wIXCaTKotYpQUkH4iazKpqHehI-AnpNhSGPorIY2eGeA8oX33ctVvVyN3i_v2-eig9yxQhSAMX9_HHjIkyqcBsfYQwhZCNPmBiBifapdSwWIkl3rPhlYrMI4",
+      "usage": "Workbench 形象生成阶段形象候选（陈屿｜商务空间）",
+      "status": "downloaded",
+      "date": "2026-06-25"
+    },
+    {
+      "file": "avatars/linxi-park.jpg",
+      "sourceHtml": "Workbench/workbench_avatar_generation_v3/code.html",
+      "originalUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuBkGtwy6JjqAkPkVTz7wKqXb_7pQd2SpMQvNrtC9gyfosQ-UpALKUo83bJ78cxoJ4fg1Bsa2LfXsMY3pqUNmVbQsv1t8CcUw0DtB_tNly-9zdfsOMAvotjJmKjOrka1XR1ihqv0FLNFWNGVLWpGuz2vBpM3FjYxGTIfD-RXX2VqgH8TE0CRntew6cqRa7gq4piZBatONyQxsYy9lgXM_IrkxRtt4OAX5m2QXeFFmM1qh7LcPgKhQ9SCP_9eR0JKBI7QYICiGZy_DQI",
+      "usage": "Workbench 形象生成阶段形象候选（林溪｜自然场景 / 训练中）",
+      "status": "downloaded",
+      "date": "2026-06-25"
+    },
+    {
+      "file": "avatars/avatar-prompt-texture.jpg",
+      "sourceHtml": "Workbench/workbench_avatar_generation_v3/code.html",
+      "originalUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuDFXx_-XRcjZPaRIQbnIDXIUA6b_wgVr3Q5e9s27w9byxYQy951yjEK4pN1x_PEujW_tkA5nyXByPHO-e-QY-PoD1EBjuWhP7bwH4xd5TItiMqnM5xVkDaKPf79zBlbgLfshc2Zkdb5o7ueq4Xz6hmcjsrzo_CPTX314vddCPK1e1otq1C38BUN82UqC_VdhYKVUdat-ujEBnQgIhwAoEP1nUcFarsJ5BgjsLxdKt7g_tPQ6FvS_MWsYFssmqsAzkbBak0PkWzD8q4",
+      "usage": "Workbench 形象生成阶段右侧预览区的提示词水印纹理背景",
+      "status": "downloaded",
+      "date": "2026-06-25"
+    },
+    {
+      "file": "avatars/user-profile-dark.jpg",
+      "sourceHtml": "Other/asset_management_avatar_v3/code.html",
+      "originalUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuD51hLX9uQKWlS_8VgiRrl-JaNBqhQifLxelvRXUWzngUm9jk6eKi1oeqYwqIF2wggFf-qUjQgGrFIU9PrdcfuBpe37mWR6a8NI4kXFFZ3lNMfAjpdQlFVcwtQO5lgOsrh-yt4vCVuxt9fl36fb--7zJF_f1zGnHtlY0fy46unpddCoT6UqIVCeWfK-aADqscq-TA5j7QOyq53dUey_1AA4GPn7wfhK89OGMNJ_pc_JpoZChDTAMBmqmzI3FZGE5IEoUhWPd1C0BFs",
+      "usage": "形象库 ASSET-02 页面顶部栏用户头像",
+      "status": "downloaded",
+      "date": "2026-06-25"
+    },
+    {
+      "file": "avatars/qinghe-studio-v2.jpg",
+      "sourceHtml": "Other/asset_management_avatar_v3/code.html; Workbench/workbench_content_review_v3/code.html",
+      "originalUrl": "https://lh3.googleusercontent.com/aida/AP1WRLv6aK-rXcDKgNtmuoOTxY_J2OtZbw-lqFJ9THbob6cXb0IMc0MwJHHJdyEpzTmUPQH5lNYXJeJaOioQ5PoYy3WFX6_7L1_tV71J7J4SFTazdf-kEkeOdqvVAvMZlcj_hlscSYG0mi1aPJYDifMwE9hbq7dpHu8bI2_n2bD1ergvp-Xat93hf1QiYHM0yXAaYqNM9OipKjuWbXcbD5qH6bbIts07awRCOWl972l89Q2o9P2fnwAKkP30RA",
+      "usage": "形象库 ASSET-02 列表项 1 / 详情预览（清禾｜演播室 V2）；Workbench 内容复核阶段封面候选",
+      "status": "fallback",
+      "derivedFrom": "avatars/qinghe-newsroom.jpg",
+      "reason": "原始 aida/ URL 返回 403，使用同角色同场景已下载资源作为语义等价替代",
+      "date": "2026-06-25"
+    },
+    {
+      "file": "avatars/xialan-greenscreen-v1.jpg",
+      "sourceHtml": "Other/asset_management_avatar_v3/code.html",
+      "originalUrl": "https://lh3.googleusercontent.com/aida/AP1WRLtf54cTPBAufE1qaLkhvKDT38W4YOye1IOV8FaRzNeBad_qn8gW1AEYkl7fYk9fJpOiTl6lUXoyhLZboQLlYV3zYdzrWm6eZgyDsIhrHs2Pvn9HkThXFpfJzZCiZY1jmGu4CUa2EueFHIAom7y321M3qjb9R3urQPp7IfreVWK0jTOLB36Po-I_yT2HLUzuQosnrdsFhIqe7Hd51gZVuetv9emuZZhKtBpI8Qyc08p7SflH1Qgxq8732s8",
+      "usage": "形象库 ASSET-02 列表项 2（夏岚｜绿幕 V1）",
+      "status": "fallback",
+      "derivedFrom": "avatars/xialan-greenscreen.jpg",
+      "reason": "原始 aida/ URL 返回 403，使用同角色同场景已下载资源作为语义等价替代",
+      "date": "2026-06-25"
+    },
+    {
+      "file": "avatars/chenyu-business-v2.jpg",
+      "sourceHtml": "Other/asset_management_avatar_v3/code.html",
+      "originalUrl": "https://lh3.googleusercontent.com/aida/AP1WRLuuEKsEGjoY1FLjZ9PsjR2K_2N9ThlcAwVEFuemjdkPWHen6NtLIDXkyMl0Il66ByvQbAiRJNwDVV3Bb99fzWcnoWssMkdiUt5oY9lW8Z_1kv3-W50T2SupImWKzF0oUTXtPsloCmjLnxdPpSDfhQxQtt4oo0PMqAysTdFby2qKs2zXzNMX9b-Xevbr4aXwKVy-Y-ST-nK_PnaPyBeSaetIQzZcEZEoungEKOT6rDP-Vn8yZnX49EburPs",
+      "usage": "形象库 ASSET-02 列表项 3（陈屿｜商务空间 V2）",
+      "status": "fallback",
+      "derivedFrom": "avatars/chenyu-office.jpg",
+      "reason": "原始 aida/ URL 返回 403，使用同角色同场景已下载资源作为语义等价替代",
+      "date": "2026-06-25"
+    },
+    {
+      "file": "materials/user-profile-materials.jpg",
+      "sourceHtml": "Other/asset_management_materials_v3/code.html",
+      "originalUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuA-FDIIDVHOHU-yxHBMif-WVV2AFdV69ir_lDgMov7eYbaFV0VCpqDLySZ8evR96RaJM_2PcrsvbK3q9HX8fd2zHwiukQFLWZjU8rNXE5S16j_jRV5g-bwL3M7C4pKdfsgZXpUd24KoyZm3HUhfGclViHR32lpsJH_Nd03J0yp3tQoucNeSCPnGU8fERi068BYtCgd2_yQnKFXr_gYxZMdGlsDRS9hz34vD3vfRZoh3vExH9ALuu3RvC6eGWbWUl0oHFRjU2EW67ds",
+      "usage": "素材库 ASSET-03 页面顶部栏用户头像",
+      "status": "downloaded",
+      "date": "2026-06-25"
+    },
+    {
+      "file": "materials/summer-commute-reference-cover.jpg",
+      "sourceHtml": "Other/asset_management_materials_v3/code.html",
+      "originalUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuA70xLm5yIX54eYvDVWMsBO0pGhcMr2aiTOnyecj9WavvYoc0JB13siMesUNIOk4mLUmIuAY6jUhVqnPqtODGyUvKJHHKEZEGbIq785qDY8UTcbX9L4LuTWR0l4x2h_amsI5wYiokQc_tGpoXJ1VZT89zXYmAc3wrIaw2CCuRi0n2PzTTNEwPkau5Y0wrR-1OTPsq8UZUImRJ51an1ZV9bzquCn2rj2jyjg1z0JSahuW4lCaXLvBO7CBCp81eWQeOuIFWgutBABPOM",
+      "usage": "素材库 ASSET-03 列表项 1 夏季通勤参考视频封面 / 详情面板 9:16 预览",
+      "status": "downloaded",
+      "date": "2026-06-25"
+    },
+    {
+      "file": "materials/qinghe-studio-source-cover.jpg",
+      "sourceHtml": "Other/asset_management_materials_v3/code.html",
+      "originalUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuBvUMCDCeY8nN4bOjlls_0ntbOuCwz8uZTURqXFjCO31NekvTa2wNk4HsufB31f5yrM-mfH4pzaVgkcWpAbB6_-qFK6rda04nMa2tvGWpM55LfzqHKzCdiI_snklyQEmitnSu8DG-qwdccN3bsQnyA4PRwcEqB77SvMDyLjMcEdRX5kWFhw_asfmvA4kFZXFXTqjkXCQDM_s_eNvgYYnaVTXU2kQkdTcTtKb1LQ5NUit2Y7weqpZ-RSw-8hgo7e_dPKK2RKghJe5IM",
+      "usage": "素材库 ASSET-03 列表项 2 清禾演播室源视频封面",
+      "status": "downloaded",
+      "date": "2026-06-25"
+    },
+    {
+      "file": "materials/summer-outfit-cover-01.jpg",
+      "sourceHtml": "Other/asset_management_materials_v3/code.html",
+      "originalUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuCP5-FjiqTk3MjTTacLplT0T31WuvnNggOR2bXwpPwCHU2Qs3BIdiPxVWeKSoYacMmO36SEm8F5PBh1Pb-qIBqb_geQdi8UnRTdmquVuzRmhgPRPLE9jErAplcfyXrSajkFVZA71_Rg6VEKcUohmNF4-ijcKUIZiVUjNka3f8QUXegR3Jo4G2JqRhZiu-1stNZ2CBdHe8Dp5wRxGGsXkviyXuIE3pTSLNIeXm5fhbQkX4QJUEr3VcAFoawdVWR9n2ZTFf0w-AoYSh8",
+      "usage": "素材库 ASSET-03 列表项 3 夏季穿搭封面候选 01",
+      "status": "downloaded",
+      "date": "2026-06-25"
+    },
+    {
+      "file": "materials/city-street-transition-cover.jpg",
+      "sourceHtml": "Other/asset_management_materials_v3/code.html",
+      "originalUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuDK1z4hRoKfqxY2TNNIe_kT1KgD5jejj2bAP6qcQNAIMPJp-0mfxKeK8lISWFNS6RlHw8xMh1jYeGIlwswEf-UXROJZEklQrEuPwlUiHhbAhhuXwLTIcq7QY9jdJMiILhZkiCC4ES2nN5NTKcCPfcWnbiuPw2TM5HejB4vZG3N4sa_L-i9DPrcewF8mbD1rDNTC36yToxkOcJ7FSxzeRBJqDhvK1Ca7B5TqL3XUaQdewDjUAVnVrc-IyprLjByZVfSNGWltgubKsfs",
+      "usage": "素材库 ASSET-03 列表项 4 城市街景转场视频封面",
+      "status": "downloaded",
+      "date": "2026-06-25"
+    },
+    {
+      "file": "materials/fabric-texture-detail.jpg",
+      "sourceHtml": "Other/asset_management_materials_v3/code.html",
+      "originalUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuBiEMDIb1BDbuc0EehQi9xx7303IZrIsF2p52LgKMUmtCfnESwcyPXi5t8ZPyQteNlA5XuWsCCoKKrdqsgGDOVGgoVaXi3eCKDPUtRsrHz_oeS2jGgf0PazC0aYiGD19L_BslVD-kGASvv09QvWL_bXpM_w3NkJWTHKQ02UBY3ZxERi0aEq5PgNfgxaecGFCI8mC-enB9IZRN6J5SDgMElCKzoLG5jm_za_PEMz0tirGl5m1g2XSLMlgeQSARiD6oox1nfS7dLe070",
+      "usage": "素材库 ASSET-03 列表项 7 通勤穿搭细节图",
+      "status": "downloaded",
+      "date": "2026-06-25"
+    },
+    {
+      "file": "voices/user-profile-voice.jpg",
+      "sourceHtml": "Other/asset_management_voice_v3/code.html",
+      "originalUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuDrQ0Mye9h7SP3G19Ju560A0ghkgzy6smJjRE3WTpS1DgM8k7-rcb50qfUC1rcktzpNiJnl7MHe4oD8G6bwEMBvNPM5C7wp9eWYAPOENSCCTLFNfzTD-jRB3cP74P0m1KhrZkz5JutO5WcK5i1_XSsY1HwDQuX7drHHLvFiT6zi8ScSPQwNQcHcT9qGvc3GUs3qW2VXUDjOZet3R7wcGMPdUvO0_vxOHcTCgbxqeYlBr5kXfTnB3z_7_aSMPsM7uQfIXPQ7K5kPaqw",
+      "usage": "声音库 ASSET-01 页面顶部栏用户头像",
+      "status": "downloaded",
+      "date": "2026-06-25"
+    }
+  ]
+}

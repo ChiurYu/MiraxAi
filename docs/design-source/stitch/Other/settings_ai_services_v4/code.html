@@ -1,0 +1,550 @@
+<!DOCTYPE html><html class="dark" lang="zh-CN"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Settings: AI Services v4 - Mirax AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#eabf8a",
+                        "inverse-primary": "#43617c",
+                        "inverse-on-surface": "#283044",
+                        "surface-tint": "#abcae8",
+                        "outline": "#8d9197",
+                        "secondary": "#bcc7de",
+                        "on-primary-fixed": "#001d31",
+                        "secondary-container": "#3e495d",
+                        "on-secondary-container": "#aeb9d0",
+                        "tertiary": "#eabf8a",
+                        "outline-variant": "#42474d",
+                        "on-secondary-fixed": "#111c2d",
+                        "on-surface": "#dae2fd",
+                        "on-secondary": "#263143",
+                        "on-background": "#dae2fd",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-fixed": "#ffddb6",
+                        "inverse-surface": "#dae2fd",
+                        "on-tertiary-container": "#f5c993",
+                        "background": "#0b1326",
+                        "on-tertiary-fixed": "#2a1800",
+                        "on-tertiary": "#452b03",
+                        "error-container": "#93000a",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "primary-fixed-dim": "#abcae8",
+                        "on-primary-container": "#b5d4f2",
+                        "surface-container-lowest": "#060e20",
+                        "secondary-fixed": "#d8e3fb",
+                        "tertiary-container": "#735328",
+                        "primary-container": "#3e5c76",
+                        "on-primary": "#12334b",
+                        "surface-container": "#171f33",
+                        "primary": "#abcae8",
+                        "on-tertiary-fixed-variant": "#5e4118",
+                        "on-surface-variant": "#c3c7cd",
+                        "surface-container-low": "#131b2e",
+                        "surface-container-high": "#222a3d",
+                        "surface-dim": "#0b1326",
+                        "on-primary-fixed-variant": "#2b4963",
+                        "surface-container-highest": "#2d3449",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "primary-fixed": "#cce5ff",
+                        "surface-variant": "#2d3449",
+                        "on-error": "#690005",
+                        "error": "#ffb4ab",
+                        "surface-bright": "#31394d",
+                        "surface": "#0b1326"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "lg": "24px",
+                        "base": "8px",
+                        "xl": "32px",
+                        "sm": "8px",
+                        "xs": "4px",
+                        "sidebar-width": "72px",
+                        "md": "16px",
+                        "control-panel-width": "320px"
+                    },
+                    "fontFamily": {
+                        "mono-label": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "mono-label": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom Scrollbar for sleek UI */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #42474d; /* outline-variant */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #8d9197; /* outline */
+        }
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-surface h-screen w-screen overflow-hidden flex font-body-sm">
+<!-- Global Rail (72px) -->
+<nav class="w-[72px] h-full bg-surface-container-low border-r border-outline-variant flex flex-col items-center py-md z-50 flex-shrink-0">
+<div class="mb-8 flex flex-col items-center gap-2">
+<div class="w-10 h-10 bg-primary/10 rounded flex items-center justify-center text-primary border border-primary/20">
+<span class="font-headline-md font-bold">M</span>
+</div>
+</div>
+<div class="flex-1 w-full flex flex-col items-center gap-4">
+<button class="w-full flex flex-col items-center gap-1 group text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:scale-95 py-2">
+<span class="material-symbols-outlined text-[24px]">dashboard</span>
+<span class="font-label-caps text-[10px]">工作台</span>
+</button>
+<button class="w-full flex flex-col items-center gap-1 group text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:scale-95 py-2">
+<span class="material-symbols-outlined text-[24px]">mic</span>
+<span class="font-label-caps text-[10px]">声音</span>
+</button>
+<button class="w-full flex flex-col items-center gap-1 group text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:scale-95 py-2">
+<span class="material-symbols-outlined text-[24px]">face</span>
+<span class="font-label-caps text-[10px]">形象</span>
+</button>
+<button class="w-full flex flex-col items-center gap-1 group text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:scale-95 py-2">
+<span class="material-symbols-outlined text-[24px]">folder_open</span>
+<span class="font-label-caps text-[10px]">素材</span>
+</button>
+<button class="w-full flex flex-col items-center gap-1 group text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:scale-95 py-2">
+<span class="material-symbols-outlined text-[24px]">assignment</span>
+<span class="font-label-caps text-[10px]">任务</span>
+</button>
+</div>
+<div class="w-full flex flex-col items-center gap-4 mt-auto">
+<button class="w-full flex flex-col items-center gap-1 group text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:scale-95 py-2">
+<span class="material-symbols-outlined text-[24px]">person</span>
+<span class="font-label-caps text-[10px]">账号</span>
+</button>
+<button class="w-full flex flex-col items-center gap-1 text-primary font-bold cursor-pointer active:scale-95 py-2 border-l-2 border-primary bg-primary/5">
+<span class="material-symbols-outlined text-[24px] icon-fill">settings</span>
+<span class="font-label-caps text-[10px]">设置</span>
+</button>
+</div>
+</nav>
+<!-- Category Sidebar (200px) -->
+<aside class="w-[200px] h-full bg-surface border-r border-outline-variant flex flex-col flex-shrink-0 z-40">
+<div class="h-12 border-b border-outline-variant flex items-center px-4 shrink-0">
+<h2 class="font-headline-md text-[16px] text-on-surface">设置</h2>
+</div>
+<div class="flex-1 overflow-y-auto py-2">
+<ul class="space-y-1 px-2">
+<li class="">
+<button class="w-full flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high transition-colors text-left group">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+<span class="font-body-md">通用</span>
+</button>
+</li>
+<li class="">
+<button class="w-full flex items-center gap-3 px-3 py-2 rounded bg-surface-container-highest text-primary font-medium text-left">
+<span class="material-symbols-outlined text-[18px]">api</span>
+<span class="font-body-md">AI 服务</span>
+</button>
+</li>
+<li class="">
+<button class="w-full flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high transition-colors text-left group">
+<span class="material-symbols-outlined text-[18px]">computer</span>
+<span class="font-body-md">本地依赖</span>
+</button>
+</li>
+<li class="">
+<button class="w-full flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high transition-colors text-left group">
+<span class="material-symbols-outlined text-[18px]">output</span>
+<span class="font-body-md">输出与存储</span>
+</button>
+</li>
+<li class="">
+<button class="w-full flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high transition-colors text-left group">
+<span class="material-symbols-outlined text-[18px]">chat</span>
+<span class="font-body-md">提示词</span>
+</button>
+</li>
+<li class="">
+<button class="w-full flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high transition-colors text-left group">
+<span class="material-symbols-outlined text-[18px]">database</span>
+<span class="font-body-md">数据</span>
+</button>
+</li>
+<li class="">
+<button class="w-full flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high transition-colors text-left group">
+<span class="material-symbols-outlined text-[18px]">system_update</span>
+<span class="font-body-md">更新与支持</span>
+</button>
+</li>
+</ul>
+</div>
+<div class="p-4 border-t border-outline-variant bg-surface-container-low shrink-0">
+<div class="flex gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] shrink-0">lock</span>
+<p class="font-mono-label text-[11px] leading-tight">设置保存在本机。敏感信息不会显示在页面中。</p>
+</div>
+</div>
+</aside>
+<!-- Main Workspace -->
+<main class="flex-1 h-full bg-background flex flex-col overflow-hidden relative">
+<!-- Topbar Breadcrumbs -->
+<header class="h-12 border-b border-outline-variant bg-surface flex items-center px-6 shrink-0 gap-2">
+<span class="text-on-surface-variant font-body-sm">Mirax AI</span>
+<span class="material-symbols-outlined text-[16px] text-outline">chevron_right</span>
+<span class="text-on-surface font-body-sm font-medium">设置</span>
+</header>
+<!-- Workspace Content -->
+<div class="flex-1 overflow-auto p-8 flex flex-col gap-6 max-w-[1200px] w-full mx-auto relative pr-[420px]"> <!-- Added pr-[420px] for drawer space -->
+<!-- Header Section -->
+<div class="flex justify-between items-start">
+<div class="flex flex-col gap-1">
+<h1 class="font-display-lg text-[24px] text-on-surface">AI 服务</h1>
+<p class="font-body-md text-on-surface-variant">配置文案、语音、数字人和媒体工作流所需的 Provider。</p>
+</div>
+<div class="flex items-center gap-3 whitespace-nowrap">
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors" title="刷新状态">
+<span class="material-symbols-outlined text-[18px]">refresh</span>
+</button>
+<button class="h-8 px-3 flex items-center gap-2 rounded border border-outline-variant text-on-surface hover:bg-surface-container-high transition-colors font-body-sm">
+<span class="material-symbols-outlined text-[16px]">network_check</span>
+                        测试全部连接
+                    </button>
+<button class="h-8 px-4 flex items-center gap-2 rounded bg-primary text-on-primary hover:bg-primary/90 transition-colors font-body-sm font-medium">
+<span class="material-symbols-outlined text-[16px]">add</span>
+                        添加 Provider
+                    </button>
+</div>
+</div>
+<!-- Status Tabs & Filter Toolbar -->
+<div class="flex flex-col gap-4 border-b border-outline-variant pb-4">
+<div class="flex gap-6">
+<button class="font-body-sm font-medium text-primary border-b-2 border-primary pb-2 -mb-[18px]">全部(4)</button>
+<button class="font-body-sm text-on-surface-variant hover:text-on-surface pb-2 -mb-[18px]">已连接(2)</button>
+<button class="font-body-sm text-on-surface-variant hover:text-on-surface pb-2 -mb-[18px]">需要配置(1)</button>
+<button class="font-body-sm text-on-surface-variant hover:text-on-surface pb-2 -mb-[18px]">连接失败(1)</button>
+</div>
+<div class="flex items-center gap-3 mt-4">
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[16px] text-outline">search</span>
+<input class="w-full h-8 bg-surface-container-low border border-outline-variant rounded pl-9 pr-3 text-[13px] text-on-surface placeholder:text-outline focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="搜索 Provider..." type="text">
+</div>
+<button class="h-8 px-3 flex items-center gap-2 rounded border border-outline-variant bg-surface-container-low text-on-surface text-[13px] hover:bg-surface-container-high">
+                        类型
+                        <span class="material-symbols-outlined text-[14px]">arrow_drop_down</span>
+</button>
+<button class="h-8 px-3 flex items-center gap-2 rounded border border-outline-variant bg-surface-container-low text-on-surface text-[13px] hover:bg-surface-container-high">
+                        状态
+                        <span class="material-symbols-outlined text-[14px]">arrow_drop_down</span>
+</button>
+<button class="h-8 px-3 flex items-center gap-2 rounded border border-outline-variant bg-surface-container-low text-on-surface text-[13px] hover:bg-surface-container-high">
+                        能力
+                        <span class="material-symbols-outlined text-[14px]">arrow_drop_down</span>
+</button>
+<div class="ml-auto flex items-center gap-2">
+<span class="text-[12px] text-on-surface-variant">排序:</span>
+<button class="h-8 px-2 flex items-center gap-1 text-on-surface text-[13px] hover:text-primary">
+                            最近测试
+                            <span class="material-symbols-outlined text-[14px]">arrow_downward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Provider Table -->
+<div class="bg-surface border border-outline-variant rounded-lg overflow-hidden flex flex-col">
+<!-- Table Header -->
+<div class="grid grid-cols-[minmax(180px,1.5fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(160px,1.5fr)_minmax(140px,1.2fr)_minmax(100px,1fr)_80px] px-4 h-10 items-center border-b border-outline-variant bg-surface-container-low font-label-caps text-on-surface-variant">
+<div class="">Provider</div>
+<div class="">类型</div>
+<div class="">默认模型</div>
+<div class="">能力</div>
+<div class="">连接状态</div>
+<div class="">最近测试</div>
+<div class="text-right">操作</div>
+</div>
+<!-- Table Body -->
+<div class="flex flex-col divide-y divide-outline-variant font-body-sm text-on-surface">
+<!-- Row 1 (Active/Selected) -->
+<div class="grid grid-cols-[minmax(180px,1.5fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(160px,1.5fr)_minmax(140px,1.2fr)_minmax(100px,1fr)_80px] px-4 h-12 items-center bg-primary/5 hover:bg-primary/10 cursor-pointer transition-colors relative border-l-2 border-primary">
+<div class="flex items-center gap-2 font-medium truncate pr-2 pl-[-2px]">
+<span class="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
+                            Mirax 文案服务
+                        </div>
+<div class="truncate text-on-surface-variant pr-2">OpenAI 兼容</div>
+<div class="truncate font-mono-label text-[12px] pr-2">gpt-4.1-mini</div>
+<div class="flex items-center gap-1 truncate pr-2">
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-[11px]">文案提取</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-[11px]">文案改写</span>
+<span class="text-[11px] text-outline">+1</span>
+</div>
+<div class="flex items-center gap-1.5 text-green-400 text-[12px] pr-2">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                            已连接 <span class="text-outline text-[11px] font-mono-label">(124ms)</span>
+</div>
+<div class="text-on-surface-variant text-[12px]">刚刚</div>
+<div class="flex justify-end gap-1">
+<button class="w-6 h-6 flex items-center justify-center rounded hover:bg-surface-container-high text-outline hover:text-on-surface">
+<span class="material-symbols-outlined text-[16px]">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="grid grid-cols-[minmax(180px,1.5fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(160px,1.5fr)_minmax(140px,1.2fr)_minmax(100px,1fr)_80px] px-4 h-12 items-center hover:bg-surface-container-high cursor-pointer transition-colors">
+<div class="flex items-center gap-2 font-medium truncate pr-2">
+<span class="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
+                            Gemini 内容服务
+                        </div>
+<div class="truncate text-on-surface-variant pr-2">Google Gemini</div>
+<div class="truncate font-mono-label text-[12px] pr-2">Gemini 2.5 Flash</div>
+<div class="flex items-center gap-1 truncate pr-2">
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-[11px]">文案改写</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-[11px]">内容复核</span>
+<span class="text-[11px] text-outline">+1</span>
+</div>
+<div class="flex items-center gap-1.5 text-green-400 text-[12px] pr-2">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                            已连接
+                        </div>
+<div class="text-on-surface-variant text-[12px]">10 分钟前</div>
+<div class="flex justify-end gap-1">
+<button class="w-6 h-6 flex items-center justify-center rounded hover:bg-surface-container-high text-outline hover:text-on-surface">
+<span class="material-symbols-outlined text-[16px]">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Row 3 -->
+<div class="grid grid-cols-[minmax(180px,1.5fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(160px,1.5fr)_minmax(140px,1.2fr)_minmax(100px,1fr)_80px] px-4 h-12 items-center hover:bg-surface-container-high cursor-pointer transition-colors opacity-75">
+<div class="flex items-center gap-2 font-medium truncate pr-2">
+<span class="w-2 h-2 rounded-full bg-tertiary shrink-0"></span>
+                            本地语音服务
+                        </div>
+<div class="truncate text-on-surface-variant pr-2">CosyVoice</div>
+<div class="truncate font-mono-label text-[12px] text-outline pr-2">本地服务</div>
+<div class="flex items-center gap-1 truncate pr-2">
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-[11px]">声音克隆</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-[11px]">语音合成</span>
+</div>
+<div class="flex items-center gap-1.5 text-tertiary text-[12px] pr-2 truncate">
+<span class="material-symbols-outlined text-[14px]">warning</span>
+                            需要配置 <span class="text-outline text-[11px] truncate">(地址未设置)</span>
+</div>
+<div class="text-on-surface-variant text-[12px]">15 分钟前</div>
+<div class="flex justify-end gap-1">
+<button class="w-6 h-6 flex items-center justify-center rounded hover:bg-surface-container-high text-outline hover:text-on-surface">
+<span class="material-symbols-outlined text-[16px]">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Row 4 -->
+<div class="grid grid-cols-[minmax(180px,1.5fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(160px,1.5fr)_minmax(140px,1.2fr)_minmax(100px,1fr)_80px] px-4 h-12 items-center hover:bg-surface-container-high cursor-pointer transition-colors opacity-75">
+<div class="flex items-center gap-2 font-medium truncate pr-2 text-error">
+<span class="w-2 h-2 rounded-full bg-error shrink-0"></span>
+                            本地形象服务
+                        </div>
+<div class="truncate text-on-surface-variant pr-2">HeyGem</div>
+<div class="truncate font-mono-label text-[12px] text-outline pr-2">本地服务</div>
+<div class="flex items-center gap-1 truncate pr-2">
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-[11px]">形象训练</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-[11px] truncate">口播视频生成</span>
+</div>
+<div class="flex items-center gap-1.5 text-error text-[12px] pr-2 truncate">
+<span class="material-symbols-outlined text-[14px]">error</span>
+                            连接失败 <span class="text-outline text-[11px] truncate">(未启动)</span>
+</div>
+<div class="text-on-surface-variant text-[12px]">5 分钟前</div>
+<div class="flex justify-end gap-1">
+<button class="w-6 h-6 flex items-center justify-center rounded hover:bg-surface-container-high text-outline hover:text-on-surface">
+<span class="material-symbols-outlined text-[16px]">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Detail Drawer (420px overlay) -->
+<aside class="w-[420px] h-[calc(100%-48px)] bg-surface border-l border-outline-variant absolute right-0 top-12 z-40 flex flex-col shadow-[-10px_0_30px_rgba(0,0,0,0.5)]">
+<!-- Drawer Header -->
+<div class="p-5 border-b border-outline-variant shrink-0 relative bg-surface-container-low">
+<button class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded hover:bg-surface-container-high text-outline hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+<div class="flex gap-3 mb-2">
+<div class="w-10 h-10 rounded bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined">api</span>
+</div>
+<div>
+<div class="flex items-center gap-2 mb-1">
+<h2 class="font-headline-md text-[18px] text-on-surface">Mirax 文案服务</h2>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-mono-label bg-surface-container-highest text-on-surface-variant border border-outline-variant">默认</span>
+</div>
+<div class="font-mono-label text-[12px] text-on-surface-variant">OpenAI 兼容</div>
+</div>
+</div>
+<div class="mt-4 flex items-center justify-between">
+<div class="flex items-center gap-1.5 text-green-400 text-[13px] bg-green-900/20 px-2 py-1 rounded">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+                        已连接
+                    </div>
+<!-- Toggle Switch -->
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value="">
+<div class="w-9 h-5 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+<span class="ml-2 text-[12px] font-medium text-on-surface-variant">已启用</span>
+</label>
+</div>
+</div>
+<!-- Drawer Content (Scrollable) -->
+<div class="flex-1 overflow-y-auto p-5 flex flex-col gap-6">
+<!-- Connection Stats Box -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-3 grid grid-cols-3 gap-2">
+<div>
+<div class="font-label-caps text-outline mb-1">状态</div>
+<div class="font-mono-label text-[13px] text-on-surface">已连接</div>
+</div>
+<div>
+<div class="font-label-caps text-outline mb-1">延迟</div>
+<div class="font-mono-label text-[13px] text-on-surface">124ms</div>
+</div>
+<div>
+<div class="font-label-caps text-outline mb-1">最近测试</div>
+<div class="font-mono-label text-[13px] text-on-surface">刚刚</div>
+</div>
+</div>
+<!-- Config Section -->
+<section>
+<h3 class="font-label-caps text-on-surface-variant mb-4 border-b border-outline-variant pb-1">配置参数</h3>
+<div class="space-y-4">
+<div class="flex flex-col gap-1.5">
+<label class="font-body-sm text-outline">Base URL</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-[13px] font-mono-label text-on-surface focus:border-primary outline-none transition-colors" type="text" value="https://api.example.com/v1">
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-body-sm text-outline">默认模型</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-[13px] font-mono-label text-on-surface focus:border-primary outline-none transition-colors" type="text" value="gpt-4.1-mini">
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="flex flex-col gap-1.5">
+<label class="font-body-sm text-outline">超时时间 (秒)</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded px-3 py-2 text-[13px] font-mono-label text-on-surface focus:border-primary outline-none transition-colors" type="number" value="60">
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-body-sm text-outline">最后更新</label>
+<div class="px-3 py-2 text-[13px] font-mono-label text-on-surface-variant bg-surface-container-lowest/50 rounded border border-transparent">2026-06-22</div>
+</div>
+</div>
+</div>
+</section>
+<!-- API Key Section -->
+<section>
+<div class="flex items-center justify-between mb-4 border-b border-outline-variant pb-1">
+<h3 class="font-label-caps text-on-surface-variant">认证密钥</h3>
+</div>
+<div class="bg-surface-container-low border border-outline-variant rounded p-3 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-green-400">key</span>
+<span class="font-body-sm text-on-surface">密钥已配置</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="text-[12px] font-medium text-primary hover:text-primary-fixed transition-colors">更新密钥</button>
+<span class="w-[1px] h-3 bg-outline-variant"></span>
+<button class="text-[12px] font-medium text-outline hover:text-error transition-colors">清除密钥</button>
+</div>
+</div>
+</section>
+<!-- Capabilities Selection -->
+<section>
+<div class="flex items-center justify-between mb-4 border-b border-outline-variant pb-1">
+<h3 class="font-label-caps text-on-surface-variant">能力绑定</h3>
+<span class="text-[11px] text-outline">选择此 Provider 负责的任务流</span>
+</div>
+<div class="flex flex-wrap gap-2">
+<!-- Checked -->
+<label class="flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/30 rounded cursor-pointer hover:bg-primary/20 transition-colors">
+<input checked="" class="w-3.5 h-3.5 text-primary bg-surface-container-lowest border-outline-variant rounded focus:ring-primary focus:ring-1" type="checkbox">
+<span class="font-body-sm text-on-surface">文案提取</span>
+</label>
+<label class="flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/30 rounded cursor-pointer hover:bg-primary/20 transition-colors">
+<input checked="" class="w-3.5 h-3.5 text-primary bg-surface-container-lowest border-outline-variant rounded focus:ring-primary focus:ring-1" type="checkbox">
+<span class="font-body-sm text-on-surface">文案改写</span>
+</label>
+<label class="flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/30 rounded cursor-pointer hover:bg-primary/20 transition-colors">
+<input checked="" class="w-3.5 h-3.5 text-primary bg-surface-container-lowest border-outline-variant rounded focus:ring-primary focus:ring-1" type="checkbox">
+<span class="font-body-sm text-on-surface">标题建议</span>
+</label>
+<label class="flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/30 rounded cursor-pointer hover:bg-primary/20 transition-colors">
+<input checked="" class="w-3.5 h-3.5 text-primary bg-surface-container-lowest border-outline-variant rounded focus:ring-primary focus:ring-1" type="checkbox">
+<span class="font-body-sm text-on-surface">内容复核</span>
+</label>
+<!-- Unchecked -->
+
+</div>
+</section>
+<div class="h-8"></div> <!-- Spacer for scrolling -->
+</div>
+<!-- Sticky Footer Actions -->
+<div class="p-4 border-t border-outline-variant bg-surface shrink-0 flex flex-col gap-3">
+<div class="flex items-center gap-2 w-full">
+<button class="flex-1 h-9 bg-primary text-on-primary rounded font-body-sm font-medium hover:bg-primary/90 transition-colors">
+                        保存更改
+                    </button>
+<button class="flex-1 h-9 bg-surface-container-high text-on-surface border border-outline-variant rounded font-body-sm hover:bg-surface-container-highest transition-colors flex items-center justify-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">network_check</span>
+                        测试连接
+                    </button>
+</div>
+<div class="flex items-center gap-2 w-full">
+<button class="flex-1 h-8 text-[12px] text-on-surface-variant hover:text-on-surface flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[14px]">content_copy</span>
+                        复制配置
+                    </button>
+<span class="w-[1px] h-3 bg-outline-variant"></span>
+<button class="flex-1 h-8 text-[12px] text-on-surface-variant hover:text-on-surface flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[14px]">block</span>
+                        停用 Provider
+                    </button>
+<span class="w-[1px] h-3 bg-outline-variant"></span>
+<button class="flex-1 h-8 text-[12px] text-error/80 hover:text-error flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[14px]">delete</span>
+                        删除此配置
+                    </button>
+</div>
+</div>
+</aside>
+</main>
+
+
+</body></html>

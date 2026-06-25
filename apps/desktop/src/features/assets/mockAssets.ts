@@ -1,0 +1,491 @@
+import type {
+  AssetCategoryGroup,
+  AssetListItem,
+  MaterialCategory,
+} from "./assetModels.js";
+
+function assetUrl(path: string): string {
+  return new URL(path, import.meta.url).href;
+}
+
+/**
+ * Voice assets derived from the canonical Stitch voice library.
+ * Mock data uses realistic names, languages, styles and durations.
+ * No real voice model or training result is faked.
+ */
+export const voiceAssets: AssetListItem[] = [
+  {
+    id: "voice-linyue",
+    kind: "voice",
+    name: "林悦",
+    description: "专业温和，适合产品讲解与口播文案",
+    status: "ready",
+    statusText: "已就绪",
+    source: "upload",
+    sourceLabel: "上传音频",
+    language: "普通话",
+    style: "专业温和",
+    duration: "00:30",
+    durationSeconds: 30,
+    version: "V1",
+    thumbnail: assetUrl("../../assets/stitch/voices/user-profile-voice.jpg"),
+    preview: assetUrl("../../assets/stitch/voices/user-profile-voice.jpg"),
+    createdAt: "2026-06-24T08:00:00Z",
+    updatedAt: "2026-06-25T10:24:00Z",
+    metadata: {
+      样本质量: "清晰",
+      用途: "短视频配音",
+    },
+  },
+  {
+    id: "voice-chenmo",
+    kind: "voice",
+    name: "陈默",
+    description: "沉稳叙述，适合知识类中长视频",
+    status: "ready",
+    statusText: "已就绪",
+    source: "record",
+    sourceLabel: "直接录音",
+    language: "普通话",
+    style: "沉稳叙述",
+    duration: "00:45",
+    durationSeconds: 45,
+    version: "V1",
+    thumbnail: assetUrl("../../assets/stitch/voices/user-profile-voice.jpg"),
+    preview: assetUrl("../../assets/stitch/voices/user-profile-voice.jpg"),
+    createdAt: "2026-06-23T14:00:00Z",
+    updatedAt: "2026-06-24T18:42:00Z",
+    metadata: {
+      样本质量: "良好",
+      用途: "知识解说",
+    },
+  },
+  {
+    id: "voice-xiaqing",
+    kind: "voice",
+    name: "夏清",
+    description: "轻快自然，适合生活方式类内容",
+    status: "training",
+    statusText: "训练中",
+    statusDetail: "声音模型训练",
+    source: "upload",
+    sourceLabel: "上传音频",
+    language: "普通话",
+    style: "轻快自然",
+    duration: "00:38",
+    durationSeconds: 38,
+    version: "V1",
+    thumbnail: assetUrl("../../assets/stitch/voices/user-profile-voice.jpg"),
+    preview: assetUrl("../../assets/stitch/voices/user-profile-voice.jpg"),
+    createdAt: "2026-06-24T09:00:00Z",
+    updatedAt: "2026-06-25T09:15:00Z",
+    metadata: {
+      训练进度: "85%",
+      预计完成: "10 分钟后",
+    },
+  },
+  {
+    id: "voice-zhouye",
+    kind: "voice",
+    name: "周野",
+    description: "磁性男声，适合品牌广告",
+    status: "failed",
+    statusText: "失败",
+    statusDetail: "参考音频噪声过高",
+    source: "upload",
+    sourceLabel: "上传音频",
+    language: "普通话",
+    style: "磁性男声",
+    duration: "00:36",
+    durationSeconds: 36,
+    version: "V1",
+    thumbnail: assetUrl("../../assets/stitch/voices/user-profile-voice.jpg"),
+    preview: assetUrl("../../assets/stitch/voices/user-profile-voice.jpg"),
+    createdAt: "2026-06-22T11:00:00Z",
+    updatedAt: "2026-06-22T11:30:00Z",
+    metadata: {
+      失败原因: "参考音频噪声过高",
+    },
+  },
+  {
+    id: "voice-ava",
+    kind: "voice",
+    name: "Ava",
+    description: "Clear narration for English content",
+    status: "ready",
+    statusText: "已就绪",
+    source: "system",
+    sourceLabel: "系统示例",
+    language: "English",
+    style: "Clear Narration",
+    duration: "00:28",
+    durationSeconds: 28,
+    version: "V1",
+    thumbnail: assetUrl("../../assets/stitch/voices/user-profile-voice.jpg"),
+    preview: assetUrl("../../assets/stitch/voices/user-profile-voice.jpg"),
+    createdAt: "2026-06-01T00:00:00Z",
+    updatedAt: "系统预置",
+    metadata: {
+      用途: "英文短视频",
+    },
+  },
+];
+
+/**
+ * Avatar assets derived from the canonical Stitch avatar library.
+ * Images are the localized Stitch sample assets.
+ */
+export const avatarAssets: AssetListItem[] = [
+  {
+    id: "avatar-qinghe",
+    kind: "avatar",
+    name: "清禾",
+    description: "演播室灯光，专业口播形象",
+    status: "ready",
+    statusText: "已就绪",
+    source: "local",
+    sourceLabel: "本地素材",
+    style: "演播室",
+    resolution: "1080 × 1920",
+    duration: "01:12",
+    durationSeconds: 72,
+    version: "V2",
+    thumbnail: assetUrl("../../assets/stitch/avatars/qinghe-studio-v2.jpg"),
+    preview: assetUrl("../../assets/stitch/avatars/qinghe-studio-v2.jpg"),
+    createdAt: "2026-06-20T10:00:00Z",
+    updatedAt: "2026-06-25T10:00:00Z",
+    metadata: {
+      场景标签: "演播室",
+      模型质量: "高清模型",
+      构图: "合格",
+      光线: "合格",
+    },
+  },
+  {
+    id: "avatar-xialan",
+    kind: "avatar",
+    name: "夏岚",
+    description: "绿幕背景，便于后期合成",
+    status: "ready",
+    statusText: "已就绪",
+    source: "local",
+    sourceLabel: "本地素材",
+    style: "绿幕",
+    resolution: "1080 × 1920",
+    duration: "01:00",
+    durationSeconds: 60,
+    version: "V1",
+    thumbnail: assetUrl("../../assets/stitch/avatars/xialan-greenscreen.jpg"),
+    preview: assetUrl("../../assets/stitch/avatars/xialan-greenscreen.jpg"),
+    createdAt: "2026-06-21T12:00:00Z",
+    updatedAt: "2026-06-24T16:00:00Z",
+    metadata: {
+      场景标签: "绿幕",
+      模型质量: "标清模型",
+    },
+  },
+  {
+    id: "avatar-chenyu",
+    kind: "avatar",
+    name: "陈屿",
+    description: "商务空间，适合职业类内容",
+    status: "ready",
+    statusText: "已就绪",
+    source: "local",
+    sourceLabel: "本地素材",
+    style: "商务空间",
+    resolution: "1080 × 1920",
+    duration: "00:55",
+    durationSeconds: 55,
+    version: "V2",
+    thumbnail: assetUrl("../../assets/stitch/avatars/chenyu-office.jpg"),
+    preview: assetUrl("../../assets/stitch/avatars/chenyu-office.jpg"),
+    createdAt: "2026-06-22T09:00:00Z",
+    updatedAt: "2026-06-23T14:00:00Z",
+    metadata: {
+      场景标签: "商务空间",
+      模型质量: "高清模型",
+    },
+  },
+  {
+    id: "avatar-linxi",
+    kind: "avatar",
+    name: "林溪",
+    description: "户外场景，自然光口播",
+    status: "training",
+    statusText: "训练中",
+    statusDetail: "数字人模型训练",
+    source: "local",
+    sourceLabel: "本地素材",
+    style: "户外",
+    resolution: "1080 × 1920",
+    duration: "01:05",
+    durationSeconds: 65,
+    version: "V2",
+    thumbnail: assetUrl("../../assets/stitch/avatars/linxi-park.jpg"),
+    preview: assetUrl("../../assets/stitch/avatars/linxi-park.jpg"),
+    createdAt: "2026-06-24T08:00:00Z",
+    updatedAt: "2026-06-25T08:00:00Z",
+    metadata: {
+      训练进度: "85%",
+      预计完成: "20 分钟后",
+    },
+  },
+];
+
+/**
+ * Material categories used by the material library left panel.
+ */
+export const materialCategories: AssetCategoryGroup[] = [
+  { id: "all", label: "全部素材", count: 0 },
+  { id: "video", label: "视频", count: 0 },
+  { id: "image", label: "图片", count: 0 },
+  { id: "audio", label: "音频", count: 0 },
+  { id: "cover", label: "视频封面", count: 0 },
+  { id: "bgm", label: "背景音乐", count: 0 },
+  { id: "reference", label: "对标素材", count: 0 },
+  { id: "project", label: "通勤穿搭项目", count: 0 },
+];
+
+/**
+ * Material assets derived from the canonical Stitch materials library.
+ */
+export const materialAssets: AssetListItem[] = [
+  {
+    id: "material-summer-commute",
+    kind: "material",
+    name: "夏季通勤参考视频.mp4",
+    description: "夏季通勤穿搭参考素材，用于文案选题与画面参考",
+    status: "ready",
+    statusText: "已就绪",
+    source: "local",
+    sourceLabel: "本地素材",
+    category: "reference",
+    categoryLabel: "对标素材",
+    duration: "01:45",
+    durationSeconds: 105,
+    resolution: "1080 × 1920",
+    size: "42.8 MB",
+    thumbnail: assetUrl(
+      "../../assets/stitch/materials/summer-commute-reference-cover.jpg",
+    ),
+    preview: assetUrl(
+      "../../assets/stitch/materials/summer-commute-reference-cover.jpg",
+    ),
+    createdAt: "2026-06-20T10:00:00Z",
+    updatedAt: "2026-06-25T09:00:00Z",
+    metadata: {
+      格式: "MP4",
+      用途: "文案与画面参考",
+    },
+  },
+  {
+    id: "material-qinghe-source",
+    kind: "material",
+    name: "清禾演播室源视频.mp4",
+    description: "清禾演播室形象源视频，用于数字人训练",
+    status: "ready",
+    statusText: "已就绪",
+    source: "local",
+    sourceLabel: "本地素材",
+    category: "video",
+    categoryLabel: "视频",
+    duration: "01:12",
+    durationSeconds: 72,
+    resolution: "3840 × 2160",
+    size: "128.5 MB",
+    thumbnail: assetUrl(
+      "../../assets/stitch/materials/qinghe-studio-source-cover.jpg",
+    ),
+    preview: assetUrl(
+      "../../assets/stitch/materials/qinghe-studio-source-cover.jpg",
+    ),
+    createdAt: "2026-06-21T12:00:00Z",
+    updatedAt: "2026-06-24T16:00:00Z",
+    metadata: {
+      格式: "MP4",
+      用途: "数字人源素材",
+    },
+  },
+  {
+    id: "material-summer-outfit-cover",
+    kind: "material",
+    name: "夏季穿搭封面候选01.jpg",
+    description: "夏季穿搭视频封面候选",
+    status: "ready",
+    statusText: "已就绪",
+    source: "local",
+    sourceLabel: "本地素材",
+    category: "cover",
+    categoryLabel: "视频封面",
+    duration: "—",
+    resolution: "2160 × 3840",
+    size: "3.2 MB",
+    thumbnail: assetUrl(
+      "../../assets/stitch/materials/summer-outfit-cover-01.jpg",
+    ),
+    preview: assetUrl(
+      "../../assets/stitch/materials/summer-outfit-cover-01.jpg",
+    ),
+    createdAt: "2026-06-22T09:00:00Z",
+    updatedAt: "2026-06-23T14:00:00Z",
+    metadata: {
+      格式: "JPG",
+      用途: "视频封面",
+    },
+  },
+  {
+    id: "material-city-street",
+    kind: "material",
+    name: "城市街景转场.mp4",
+    description: "城市街景空镜，用于视频转场",
+    status: "ready",
+    statusText: "已就绪",
+    source: "local",
+    sourceLabel: "本地素材",
+    category: "video",
+    categoryLabel: "视频",
+    duration: "00:15",
+    durationSeconds: 15,
+    resolution: "1920 × 1080",
+    size: "18.6 MB",
+    thumbnail: assetUrl(
+      "../../assets/stitch/materials/city-street-transition-cover.jpg",
+    ),
+    preview: assetUrl(
+      "../../assets/stitch/materials/city-street-transition-cover.jpg",
+    ),
+    createdAt: "2026-06-19T10:00:00Z",
+    updatedAt: "2026-06-20T11:00:00Z",
+    metadata: {
+      格式: "MP4",
+      用途: "转场素材",
+    },
+  },
+  {
+    id: "material-commute-bgm",
+    kind: "material",
+    name: "通勤轻快背景音乐.mp3",
+    description: "轻快背景音乐，适合通勤类短视频",
+    status: "ready",
+    statusText: "已就绪",
+    source: "system",
+    sourceLabel: "系统示例",
+    category: "bgm",
+    categoryLabel: "背景音乐",
+    duration: "02:30",
+    durationSeconds: 150,
+    size: "5.6 MB",
+    thumbnail: undefined,
+    preview: undefined,
+    createdAt: "2026-06-01T00:00:00Z",
+    updatedAt: "系统预置",
+    metadata: {
+      格式: "MP3",
+      用途: "背景音乐",
+    },
+  },
+  {
+    id: "material-fabric-texture",
+    kind: "material",
+    name: "面料纹理细节.jpg",
+    description: "面料特写纹理，用于产品展示",
+    status: "ready",
+    statusText: "已就绪",
+    source: "local",
+    sourceLabel: "本地素材",
+    category: "image",
+    categoryLabel: "图片",
+    duration: "—",
+    resolution: "1920 × 1080",
+    size: "1.8 MB",
+    thumbnail: assetUrl(
+      "../../assets/stitch/materials/fabric-texture-detail.jpg",
+    ),
+    preview: assetUrl(
+      "../../assets/stitch/materials/fabric-texture-detail.jpg",
+    ),
+    createdAt: "2026-06-23T08:00:00Z",
+    updatedAt: "2026-06-24T10:00:00Z",
+    metadata: {
+      格式: "JPG",
+      用途: "产品细节",
+    },
+  },
+  {
+    id: "material-processing-example",
+    kind: "material",
+    name: "户外街拍训练视频.mp4",
+    description: "户外街拍素材，正在生成数字人可用片段",
+    status: "processing",
+    statusText: "处理中",
+    statusDetail: "正在提取关键帧",
+    source: "upload",
+    sourceLabel: "上传素材",
+    category: "video",
+    categoryLabel: "视频",
+    duration: "00:48",
+    durationSeconds: 48,
+    resolution: "1080 × 1920",
+    size: "36.2 MB",
+    thumbnail: assetUrl(
+      "../../assets/stitch/materials/summer-commute-reference-cover.jpg",
+    ),
+    preview: assetUrl(
+      "../../assets/stitch/materials/summer-commute-reference-cover.jpg",
+    ),
+    createdAt: "2026-06-25T08:00:00Z",
+    updatedAt: "2026-06-25T08:30:00Z",
+    metadata: {
+      处理进度: "45%",
+      预计完成: "15 分钟后",
+    },
+  },
+  {
+    id: "material-failed-example",
+    kind: "material",
+    name: "损坏的对标素材.mp4",
+    description: "上传失败的对标素材",
+    status: "failed",
+    statusText: "失败",
+    statusDetail: "文件编码不支持",
+    source: "upload",
+    sourceLabel: "上传素材",
+    category: "reference",
+    categoryLabel: "对标素材",
+    duration: "—",
+    resolution: "—",
+    size: "—",
+    thumbnail: assetUrl(
+      "../../assets/stitch/materials/summer-commute-reference-cover.jpg",
+    ),
+    preview: assetUrl(
+      "../../assets/stitch/materials/summer-commute-reference-cover.jpg",
+    ),
+    createdAt: "2026-06-24T10:00:00Z",
+    updatedAt: "2026-06-24T10:05:00Z",
+    metadata: {
+      失败原因: "文件编码不支持",
+    },
+  },
+];
+
+/**
+ * Recalculate category counts from the actual material assets.
+ */
+export function getMaterialCategories(): AssetCategoryGroup[] {
+  const counts = new Map<MaterialCategory | "all", number>();
+  counts.set("all", materialAssets.length);
+  materialCategories.forEach((cat) => {
+    if (cat.id !== "all") {
+      counts.set(
+        cat.id,
+        materialAssets.filter((m) => m.category === cat.id).length,
+      );
+    }
+  });
+  return materialCategories.map((cat) => ({
+    ...cat,
+    count: counts.get(cat.id) ?? 0,
+  }));
+}

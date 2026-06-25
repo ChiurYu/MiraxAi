@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Workbench: Voice Cloning v3</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "inverse-surface": "#dae2fd",
+                        "surface-tint": "#abcae8",
+                        "surface-container-highest": "#2d3449",
+                        "on-primary-fixed": "#001d31",
+                        "on-error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#5e4118",
+                        "on-background": "#dae2fd",
+                        "secondary-fixed": "#d8e3fb",
+                        "on-surface": "#dae2fd",
+                        "on-secondary-container": "#aeb9d0",
+                        "surface-container-high": "#222a3d",
+                        "secondary": "#bcc7de",
+                        "secondary-container": "#3e495d",
+                        "primary": "#abcae8",
+                        "background": "#0b1326",
+                        "tertiary": "#eabf8a",
+                        "outline": "#8d9197",
+                        "on-tertiary-container": "#f5c993",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "tertiary-container": "#735328",
+                        "on-surface-variant": "#c3c7cd",
+                        "on-tertiary": "#452b03",
+                        "surface-dim": "#0b1326",
+                        "primary-container": "#3e5c76",
+                        "outline-variant": "#42474d",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "primary-fixed": "#cce5ff",
+                        "error": "#ffb4ab",
+                        "tertiary-fixed-dim": "#eabf8a",
+                        "primary-fixed-dim": "#abcae8",
+                        "on-primary": "#12334b",
+                        "on-primary-fixed-variant": "#2b4963",
+                        "surface-container": "#171f33",
+                        "surface-container-lowest": "#060e20",
+                        "surface-bright": "#31394d",
+                        "error-container": "#93000a",
+                        "inverse-on-surface": "#283044",
+                        "inverse-primary": "#43617c",
+                        "surface-container-low": "#131b2e",
+                        "on-secondary": "#263143",
+                        "on-tertiary-fixed": "#2a1800",
+                        "tertiary-fixed": "#ffddb6",
+                        "surface-variant": "#2d3449",
+                        "on-primary-container": "#b5d4f2",
+                        "surface": "#0b1326",
+                        "on-secondary-fixed": "#111c2d",
+                        "on-error": "#690005"
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.125rem",
+                        lg: "0.25rem",
+                        xl: "0.5rem",
+                        full: "0.75rem"
+                    },
+                    spacing: {
+                        lg: "24px",
+                        "sidebar-width": "64px",
+                        md: "16px",
+                        base: "8px",
+                        xl: "32px",
+                        "control-panel-width": "320px",
+                        xs: "4px",
+                        sm: "8px"
+                    },
+                    fontFamily: {
+                        "body-md": ["Inter"],
+                        "mono-label": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    fontSize: {
+                        "body-md": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+                        "mono-label": ["12px", { lineHeight: "16px", fontWeight: "400" }],
+                        "label-caps": ["11px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "700" }],
+                        "display-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "600" }],
+                        "body-sm": ["13px", { lineHeight: "18px", fontWeight: "400" }],
+                        "headline-md": ["20px", { lineHeight: "28px", fontWeight: "600" }]
+                    }
+                }
+            }
+        };
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface h-screen overflow-hidden flex flex-col selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 left-[72px] bg-surface border-b border-outline-variant z-20 flex flex-col"><div class="h-[54px] flex items-center justify-between px-lg border-b border-outline-variant/50"><div class="flex items-center gap-md"><button class="text-on-surface-variant hover:text-on-surface transition-colors flex items-center justify-center"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">arrow_back</span></button><div class="font-headline-md text-headline-md font-semibold text-on-surface">口播视频｜夏季通勤穿搭</div></div><div class="flex items-center gap-md"><span class="font-mono-label text-mono-label text-on-surface-variant mr-md">Autosaved</span><button class="text-on-surface-variant hover:text-on-surface transition-colors flex items-center justify-center"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span></button><button class="text-on-surface-variant hover:text-on-surface transition-colors flex items-center justify-center"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">help</span></button><button class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden border border-outline-variant hover:border-primary transition-colors"><img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVuXtbfaSFPw7IVMUPfO6J5DEe47mAvLQQ64TJbayIVXsFiOSoZ4W_21WRucF-rxxHEP9Z2GhT02hE1jJrr0TcoyizXHdL5BQdmMw2iPWzZyyBFQmx7bBaSovnigS188AkwE5vRHK7BwK8bxMw5xnyjZVaqHRafd5zXEfpq_VFEXxLBJHmdYCwqL-Sn4hLu8LXyo_Sducox7grnAqnuEA1B5NgplkTn0n-IU7anqPRPRBouhoSFlnERPRquVckAqgrmkOzHg-9j78"/></button></div></div><nav class="h-[52px] flex items-center justify-center bg-surface-container-low"><ul class="flex items-center h-full font-label-caps text-label-caps"><li class="flex items-center text-primary px-md h-full gap-xs"><span class="material-symbols-outlined" style="font-size: 18px; font-variation-settings: 'FILL' 1;">check_circle</span><span>素材解析</span><div class="w-8 h-[1px] bg-outline-variant ml-md"></div></li><li class="flex items-center text-primary px-md h-full gap-xs"><span class="material-symbols-outlined" style="font-size: 18px; font-variation-settings: 'FILL' 1;">check_circle</span><span>文案改写</span><div class="w-8 h-[1px] bg-outline-variant ml-md"></div></li><li class="flex items-center text-primary border-b-2 border-primary px-md h-full bg-surface-container-highest/30 gap-xs"><span>声音克隆</span><div class="w-8 h-[1px] bg-outline-variant ml-md"></div></li><li class="flex items-center text-on-surface-variant px-md h-full gap-xs"><span>语音合成</span><div class="w-8 h-[1px] bg-outline-variant ml-md"></div></li><li class="flex items-center text-on-surface-variant px-md h-full gap-xs"><span>形象生成</span><div class="w-8 h-[1px] bg-outline-variant ml-md"></div></li><li class="flex items-center text-on-surface-variant px-md h-full gap-xs"><span>视频合成</span><div class="w-8 h-[1px] bg-outline-variant ml-md"></div></li><li class="flex items-center text-on-surface-variant px-md h-full gap-xs"><span>内容复核</span><div class="w-8 h-[1px] bg-outline-variant ml-md"></div></li><li class="flex items-center text-on-surface-variant px-md h-full"><span>发布</span></li></ul></nav></header>
+<!-- SideNavBar (Compact Left Rail) -->
+<nav class="w-[72px] h-screen fixed left-0 top-0 bg-surface-container border-r border-outline-variant flex flex-col items-center py-lg z-30 font-body-sm text-body-sm">
+<!-- Logo -->
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center mb-xl shadow-sm"><div class="w-6 h-6 rounded-full border-2 border-primary flex items-center justify-center"><div class="w-2 h-2 rounded-full bg-primary"></div></div></div>
+<!-- Main Tabs -->
+<div class="flex flex-col gap-sm w-full px-xs">
+<a class="flex flex-col items-center justify-center py-sm text-primary bg-secondary-container rounded-xl cursor-pointer active:scale-95 transition-all" href="#">
+<span class="material-symbols-outlined mb-xs" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span>工作台</span>
+</a>
+<a class="flex flex-col items-center justify-center py-sm text-on-surface-variant hover:bg-surface-container-high rounded-xl cursor-pointer active:scale-95 transition-all" href="#">
+<span class="material-symbols-outlined mb-xs" style="font-variation-settings: 'FILL' 0;">mic</span>
+<span>声音</span>
+</a>
+<a class="flex flex-col items-center justify-center py-sm text-on-surface-variant hover:bg-surface-container-high rounded-xl cursor-pointer active:scale-95 transition-all" href="#">
+<span class="material-symbols-outlined mb-xs" style="font-variation-settings: 'FILL' 0;">face</span>
+<span>形象</span>
+</a>
+<a class="flex flex-col items-center justify-center py-sm text-on-surface-variant hover:bg-surface-container-high rounded-xl cursor-pointer active:scale-95 transition-all" href="#">
+<span class="material-symbols-outlined mb-xs" style="font-variation-settings: 'FILL' 0;">folder_open</span>
+<span>素材</span>
+</a>
+<a class="flex flex-col items-center justify-center py-sm text-on-surface-variant hover:bg-surface-container-high rounded-xl cursor-pointer active:scale-95 transition-all" href="#">
+<span class="material-symbols-outlined mb-xs" style="font-variation-settings: 'FILL' 0;">task</span>
+<span>任务</span>
+</a>
+</div>
+<div class="mt-auto flex flex-col gap-sm w-full px-xs">
+<a class="flex flex-col items-center justify-center py-sm text-on-surface-variant hover:bg-surface-container-high rounded-xl cursor-pointer active:scale-95 transition-all" href="#">
+<span class="material-symbols-outlined mb-xs" style="font-variation-settings: 'FILL' 0;">account_circle</span>
+<span>账号</span>
+</a>
+<a class="flex flex-col items-center justify-center py-sm text-on-surface-variant hover:bg-surface-container-high rounded-xl cursor-pointer active:scale-95 transition-all" href="#">
+<span class="material-symbols-outlined mb-xs" style="font-variation-settings: 'FILL' 0;">settings</span>
+<span>设置</span>
+</a>
+</div>
+</nav>
+<!-- Main Workspace - Voice Cloning -->
+<main class="flex-1 mt-[106px] mb-16 ml-[72px] flex overflow-hidden bg-background">
+<!-- LEFT SIDE (Voice Selection) -->
+<section class="w-[400px] border-r border-outline-variant bg-surface flex flex-col h-full flex-shrink-0">
+<!-- Header & Info -->
+<div class="p-lg border-b border-outline-variant">
+<h1 class="font-headline-md text-headline-md font-semibold text-on-surface mb-xs">选择声音</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant flex items-center">
+<span class="material-symbols-outlined mr-xs text-primary" style="font-variation-settings: 'FILL' 0; font-size: 16px;">description</span>
+                    已确认文案，245 字
+                </p>
+</div>
+<!-- Search & Filters -->
+<div class="p-md border-b border-outline-variant flex flex-col gap-md">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none" style="font-variation-settings: 'FILL' 0; font-size: 20px;">search</span>
+<input class="w-full bg-surface-container-highest border border-outline-variant rounded-lg pl-[36px] pr-sm py-sm text-body-md text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-shadow" placeholder="搜索声音" type="text"/>
+</div>
+<div class="flex gap-sm">
+<button class="px-md py-xs rounded-full bg-secondary-container text-on-surface font-body-sm text-body-sm border border-transparent hover:bg-surface-container-highest transition-colors">全部</button>
+<button class="px-md py-xs rounded-full bg-surface-container text-on-surface-variant font-body-sm text-body-sm border border-outline-variant hover:bg-surface-container-high transition-colors">已就绪</button>
+<button class="px-md py-xs rounded-full bg-surface-container text-on-surface-variant font-body-sm text-body-sm border border-outline-variant hover:bg-surface-container-high transition-colors">训练中</button>
+</div>
+</div>
+<!-- List -->
+<div class="flex-1 overflow-y-auto p-md flex flex-col gap-sm">
+<!-- Row 1 (Selected) -->
+<div class="flex items-center justify-between p-md rounded-xl bg-surface-container-high border border-primary cursor-pointer hover:bg-surface-container-highest transition-colors group">
+<div class="flex items-center gap-md">
+<button class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center shrink-0 hover:scale-105 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+<div>
+<div class="flex items-center gap-sm mb-xs">
+<span class="font-body-md text-body-md font-medium text-on-surface">林悦</span>
+<span class="px-xs py-[2px] rounded bg-primary-container/20 text-primary font-label-caps text-label-caps border border-primary/30">已就绪</span>
+</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-sm">
+<span>普通话</span>
+<span class="w-[3px] h-[3px] rounded-full bg-outline-variant"></span>
+<span>专业温和</span>
+</div>
+</div>
+</div>
+<div class="text-right">
+<div class="font-mono-label text-mono-label text-on-surface-variant mb-xs">00:30</div>
+<span class="material-symbols-outlined text-primary opacity-100 transition-opacity" style="font-variation-settings: 'FILL' 0;">radio_button_checked</span>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="flex items-center justify-between p-md rounded-xl bg-surface-container border border-transparent cursor-pointer hover:bg-surface-container-high transition-colors group">
+<div class="flex items-center gap-md">
+<button class="w-10 h-10 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center shrink-0 hover:bg-secondary-container transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+<div>
+<div class="flex items-center gap-sm mb-xs">
+<span class="font-body-md text-body-md font-medium text-on-surface">陈默</span>
+<span class="px-xs py-[2px] rounded bg-primary-container/20 text-primary font-label-caps text-label-caps border border-primary/30">已就绪</span>
+</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-sm">
+<span>普通话</span>
+<span class="w-[3px] h-[3px] rounded-full bg-outline-variant"></span>
+<span>沉稳叙述</span>
+</div>
+</div>
+</div>
+<div class="text-right">
+<div class="font-mono-label text-mono-label text-on-surface-variant mb-xs">00:45</div>
+<span class="material-symbols-outlined text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity" style="font-variation-settings: 'FILL' 0;">radio_button_unchecked</span>
+</div>
+</div>
+<!-- Row 3 (Training) -->
+<div class="flex items-center justify-between p-md rounded-xl bg-surface-container border border-transparent cursor-default opacity-60">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined animate-spin" style="font-variation-settings: 'FILL' 0;">sync</span>
+</div>
+<div>
+<div class="flex items-center gap-sm mb-xs">
+<span class="font-body-md text-body-md font-medium text-on-surface">夏清</span>
+<span class="px-xs py-[2px] rounded bg-tertiary-container/30 text-tertiary font-label-caps text-label-caps border border-tertiary/30">训练中</span>
+</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-sm">
+<span>普通话</span>
+<span class="w-[3px] h-[3px] rounded-full bg-outline-variant"></span>
+<span>轻快自然</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Action -->
+<div class="p-md border-t border-outline-variant bg-surface">
+<button class="w-full py-sm rounded-lg border border-outline text-on-surface font-body-md text-body-md flex items-center justify-center gap-sm hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0; font-size: 20px;">add</span>
+                    新建声音
+                </button>
+</div>
+</section>
+<!-- RIGHT SIDE (Selected Voice Details) -->
+<section class="flex-1 bg-surface-dim p-xl flex flex-col items-center justify-center overflow-y-auto">
+<div class="w-full max-w-[600px] bg-surface rounded-2xl border border-outline-variant shadow-sm overflow-hidden">
+<!-- Detail Header -->
+<div class="p-xl border-b border-outline-variant relative">
+<div class="absolute top-0 right-0 p-lg">
+<div class="w-32 h-32 opacity-10 pointer-events-none">
+<svg fill="none" viewbox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+<path d="M50 10 C 20 10, 10 40, 50 90 C 90 40, 80 10, 50 10 Z" stroke="currentColor" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+<div class="flex items-start justify-between mb-lg">
+<div>
+<div class="flex items-center gap-md mb-sm">
+<h2 class="font-display-lg text-display-lg text-on-surface">林悦</h2>
+<span class="px-sm py-xs rounded bg-primary-container/20 text-primary font-label-caps text-label-caps border border-primary/30 flex items-center gap-xs">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+                                    已就绪
+                                </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-[400px]">专业温和的女声，适用于品牌宣传与知识分享。</p>
+</div>
+<div class="w-16 h-16 rounded-full bg-secondary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-surface text-3xl" style="font-variation-settings: 'FILL' 0;">graphic_eq</span>
+</div>
+</div>
+<!-- Player -->
+<div class="bg-surface-container rounded-xl p-md flex items-center gap-md border border-outline-variant/50">
+<button class="w-12 h-12 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0 hover:bg-primary/90 transition-colors shadow-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1; font-size: 28px;">play_arrow</span>
+</button>
+<div class="flex-1 flex flex-col gap-xs">
+<!-- Minimalist Waveform Placeholder -->
+<div class="h-8 flex items-center gap-[2px] opacity-70">
+<div class="w-1 h-3 bg-primary rounded-full"></div>
+<div class="w-1 h-5 bg-primary rounded-full"></div>
+<div class="w-1 h-8 bg-primary rounded-full"></div>
+<div class="w-1 h-4 bg-primary rounded-full"></div>
+<div class="w-1 h-6 bg-primary rounded-full"></div>
+<div class="w-1 h-2 bg-outline rounded-full"></div>
+<div class="w-1 h-4 bg-outline rounded-full"></div>
+<div class="w-1 h-3 bg-outline rounded-full"></div>
+<div class="w-1 h-7 bg-outline rounded-full"></div>
+<div class="w-1 h-5 bg-outline rounded-full"></div>
+<div class="w-1 h-3 bg-outline rounded-full"></div>
+<div class="w-1 h-6 bg-outline rounded-full"></div>
+<div class="w-1 h-4 bg-outline rounded-full"></div>
+<div class="w-1 h-8 bg-outline rounded-full"></div>
+<div class="w-1 h-5 bg-outline rounded-full"></div>
+<div class="w-1 h-3 bg-outline rounded-full"></div>
+<div class="w-1 h-2 bg-outline rounded-full"></div>
+<div class="w-1 h-4 bg-outline rounded-full"></div>
+</div>
+<div class="flex justify-between items-center font-mono-label text-mono-label text-on-surface-variant">
+<span>00:00</span>
+<span>00:30</span>
+</div>
+</div>
+<div class="flex items-center gap-sm pl-md border-l border-outline-variant">
+<span class="material-symbols-outlined text-on-surface-variant" style="font-variation-settings: 'FILL' 0; font-size: 20px;">volume_up</span>
+<div class="w-16 h-1 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="w-3/4 h-full bg-on-surface-variant"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Metadata -->
+<div class="p-xl bg-surface-container-lowest grid grid-cols-2 gap-lg">
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-xs">Source Quality</div>
+<div class="font-body-md text-body-md text-on-surface flex items-center gap-sm">
+                            High Fidelity
+                            <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 0; font-size: 16px;">verified</span>
+</div>
+</div>
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-xs">Language</div>
+<div class="font-body-md text-body-md text-on-surface">Mandarin (普通话)</div>
+</div>
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-xs">Style</div>
+<div class="font-body-md text-body-md text-on-surface">Warm / Professional</div>
+</div>
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-xs">Updated</div>
+<div class="font-body-md text-body-md text-on-surface">2024-05-20</div>
+</div>
+</div>
+<!-- Action Area -->
+<div class="p-xl border-t border-outline-variant bg-surface flex justify-end">
+<button class="px-xl py-sm rounded-lg bg-primary text-on-primary font-body-md text-body-md font-medium hover:bg-primary/90 transition-colors shadow-sm active:scale-95 flex items-center gap-sm">
+                        确认声音并继续
+                        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0; font-size: 20px;">arrow_forward</span>
+</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="h-16 fixed bottom-0 right-0 left-[72px] bg-surface-container-high border-t border-outline-variant flex items-center justify-between px-xl z-20"><div class="flex-1"></div><div class="flex items-center gap-md"><button class="border border-outline text-on-surface-variant rounded-xl px-lg py-sm font-label-caps text-label-caps hover:bg-surface-container hover:text-on-surface transition-colors active:scale-95">上一步</button><button class="border border-outline text-on-surface-variant rounded-xl px-lg py-sm font-label-caps text-label-caps hover:bg-surface-container hover:text-on-surface transition-colors active:scale-95">保存草稿</button><button class="bg-surface-variant text-on-surface-variant opacity-50 cursor-not-allowed rounded-xl px-lg py-sm font-label-caps text-label-caps border border-outline-variant" disabled="">下一步</button></div></footer>
+</body></html>
