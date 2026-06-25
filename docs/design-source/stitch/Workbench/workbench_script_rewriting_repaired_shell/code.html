@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh-CN" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mirax AI - Workbench: Script Rewriting</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "on-background": "#dae2fd",
+                "on-surface": "#dae2fd",
+                "on-secondary-fixed": "#111c2d",
+                "on-error-container": "#ffdad6",
+                "surface-container-high": "#222a3d",
+                "secondary-fixed-dim": "#bcc7de",
+                "primary-container": "#3e5c76",
+                "tertiary-container": "#735328",
+                "on-tertiary-fixed-variant": "#5e4118",
+                "surface-tint": "#abcae8",
+                "inverse-on-surface": "#283044",
+                "surface-container-low": "#131b2e",
+                "surface": "#0b1326",
+                "tertiary": "#eabf8a",
+                "outline-variant": "#42474d",
+                "surface-dim": "#0b1326",
+                "secondary": "#bcc7de",
+                "secondary-fixed": "#d8e3fb",
+                "inverse-primary": "#43617c",
+                "primary-fixed": "#cce5ff",
+                "on-primary-fixed-variant": "#2b4963",
+                "surface-variant": "#2d3449",
+                "on-primary-container": "#b5d4f2",
+                "surface-container": "#171f33",
+                "on-primary": "#12334b",
+                "secondary-container": "#3e495d",
+                "on-primary-fixed": "#001d31",
+                "error": "#ffb4ab",
+                "surface-bright": "#31394d",
+                "on-secondary-fixed-variant": "#3c475a",
+                "background": "#0b1326",
+                "primary-fixed-dim": "#abcae8",
+                "on-secondary": "#263143",
+                "on-surface-variant": "#c3c7cd",
+                "surface-container-highest": "#2d3449",
+                "tertiary-fixed": "#ffddb6",
+                "primary": "#abcae8",
+                "on-tertiary": "#452b03",
+                "inverse-surface": "#dae2fd",
+                "on-secondary-container": "#aeb9d0",
+                "outline": "#8d9197",
+                "on-tertiary-fixed": "#2a1800",
+                "on-tertiary-container": "#f5c993",
+                "tertiary-fixed-dim": "#eabf8a",
+                "error-container": "#93000a",
+                "surface-container-lowest": "#060e20",
+                "on-error": "#690005"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+            },
+            "spacing": {
+                "sm": "8px",
+                "base": "8px",
+                "sidebar-width": "64px",
+                "xs": "4px",
+                "xl": "32px",
+                "control-panel-width": "320px",
+                "md": "16px",
+                "lg": "24px"
+            },
+            "fontFamily": {
+                "mono-label": ["Inter"],
+                "headline-md": ["Inter"],
+                "body-md": ["Inter"],
+                "label-caps": ["Inter"],
+                "body-sm": ["Inter"],
+                "display-lg": ["Inter"]
+            },
+            "fontSize": {
+                "mono-label": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0b1326;
+            color: #dae2fd;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 10px;
+        }
+        .diff-added {
+            background-color: rgba(34, 197, 94, 0.2);
+            color: #4ade80;
+            text-decoration: underline;
+        }
+        .diff-removed {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            text-decoration: line-through;
+        }
+    </style>
+</head>
+<body class="flex overflow-hidden h-screen">
+<!-- SideNavBar (Shared Component) -->
+<aside class="flex flex-col py-lg w-[72px] bg-surface-container border-r border-outline-variant h-screen fixed left-0 top-0 z-50"><div class="mb-xl px-lg w-full"><div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center mx-auto mb-md"><span class="material-symbols-outlined text-on-primary" data-icon="bolt">bolt</span></div></div>
+<nav class="flex flex-col gap-xs flex-1 w-full px-sm"><div class="flex flex-col items-center gap-md px-0 py-3 bg-secondary-container text-primary rounded-xl cursor-pointer transition-colors mx-1"><span class="material-symbols-outlined text-[20px]" data-icon="dashboard">dashboard</span><span class="text-[11px] font-medium">工作台</span></div><div class="flex flex-col items-center gap-md px-0 py-3 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface rounded-xl cursor-pointer transition-colors"><span class="material-symbols-outlined text-[20px]" data-icon="mic">mic</span><span class="text-[11px]">声音</span></div><div class="flex flex-col items-center gap-md px-0 py-3 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface rounded-xl cursor-pointer transition-colors"><span class="material-symbols-outlined text-[20px]" data-icon="face">face</span><span class="text-[11px]">形象</span></div><div class="flex flex-col items-center gap-md px-0 py-3 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface rounded-xl cursor-pointer transition-colors"><span class="material-symbols-outlined text-[20px]" data-icon="folder_open">folder_open</span><span class="text-[11px]">素材</span></div><div class="flex flex-col items-center gap-md px-0 py-3 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface rounded-xl cursor-pointer transition-colors"><span class="material-symbols-outlined text-[20px]" data-icon="task">task</span><span class="text-[11px]">任务</span></div><div class="flex flex-col items-center gap-md px-0 py-3 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface rounded-xl cursor-pointer transition-colors"><span class="material-symbols-outlined text-[20px]" data-icon="account_circle">account_circle</span><span class="text-[11px]">账号</span></div><div class="flex flex-col items-center gap-md px-0 py-3 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface rounded-xl cursor-pointer transition-colors"><span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span><span class="text-[11px]">设置</span></div></nav>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 ml-[72px] flex flex-col h-screen relative bg-background">
+<!-- TopAppBar (Workflow Navigator) -->
+<div class="fixed top-0 right-0 left-[72px] z-40 bg-background flex flex-col"><header class="bg-surface-container-high h-12 border-b border-outline-variant flex items-center justify-between px-lg w-full"><div class="flex items-center space-x-md"><a class="text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center w-8 h-8 rounded hover:bg-surface-variant" href="#"><span class="material-symbols-outlined text-[20px]">arrow_back</span></a><h1 class="font-headline-md text-headline-md font-semibold text-on-surface">口播视频｜夏季通勤穿搭</h1></div><div class="flex items-center space-x-lg"><div class="flex items-center space-x-xs text-on-surface-variant"><span class="material-symbols-outlined text-[16px]">cloud_done</span><span class="font-mono-label text-mono-label">Autosaved</span></div><div class="flex items-center space-x-sm border-l border-outline-variant pl-lg"><button class="text-on-surface-variant hover:text-primary transition-opacity w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-variant"><span class="material-symbols-outlined text-[20px]">notifications</span></button><button class="text-on-surface-variant hover:text-primary transition-opacity w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-variant"><span class="material-symbols-outlined text-[20px]">help_outline</span></button><div class="w-8 h-8 rounded-full bg-surface-variant border border-outline flex items-center justify-center overflow-hidden ml-sm cursor-pointer hover:border-primary transition-colors"><span class="material-symbols-outlined text-on-surface-variant text-[20px]">person</span></div></div></div></header><div class="bg-surface-container h-[48px] border-b border-outline-variant flex items-center px-lg w-full overflow-x-auto"><div class="flex items-center min-w-max space-x-0"><div class="flex items-center group cursor-pointer"><div class="flex items-center space-x-sm px-md h-full text-on-surface-variant py-xs"><div class="w-5 h-5 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-caps text-[10px]"><span class="material-symbols-outlined text-[14px]">check</span></div><span class="font-label-caps text-label-caps">素材解析</span></div></div><div class="w-md h-[1px] bg-outline-variant mx-xs"></div><div class="flex items-center group cursor-pointer"><div class="flex items-center space-x-sm px-md h-full text-primary border-b-2 border-primary py-xs"><div class="w-5 h-5 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-label-caps text-[10px]">2</div><span class="font-label-caps text-label-caps font-bold">文案改写</span></div></div><div class="w-md h-[1px] bg-outline-variant mx-xs"></div><div class="flex items-center group cursor-pointer opacity-60"><div class="flex items-center space-x-sm px-md h-full text-on-surface-variant py-xs"><div class="w-5 h-5 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-label-caps text-[10px] border border-outline-variant">3</div><span class="font-label-caps text-label-caps">声音克隆</span></div></div><div class="w-md h-[1px] bg-outline-variant mx-xs"></div><div class="flex items-center group cursor-pointer opacity-60"><div class="flex items-center space-x-sm px-md h-full text-on-surface-variant py-xs"><div class="w-5 h-5 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-label-caps text-[10px] border border-outline-variant">4</div><span class="font-label-caps text-label-caps">语音合成</span></div></div><div class="w-md h-[1px] bg-outline-variant mx-xs"></div><div class="flex items-center group cursor-pointer opacity-60"><div class="flex items-center space-x-sm px-md h-full text-on-surface-variant py-xs"><div class="w-5 h-5 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-label-caps text-[10px] border border-outline-variant">5</div><span class="font-label-caps text-label-caps">形象生成</span></div></div><div class="w-md h-[1px] bg-outline-variant mx-xs"></div><div class="flex items-center group cursor-pointer opacity-60"><div class="flex items-center space-x-sm px-md h-full text-on-surface-variant py-xs"><div class="w-5 h-5 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-label-caps text-[10px] border border-outline-variant">6</div><span class="font-label-caps text-label-caps">视频合成</span></div></div><div class="w-md h-[1px] bg-outline-variant mx-xs"></div><div class="flex items-center group cursor-pointer opacity-60"><div class="flex items-center space-x-sm px-md h-full text-on-surface-variant py-xs"><div class="w-5 h-5 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-label-caps text-[10px] border border-outline-variant">7</div><span class="font-label-caps text-label-caps">内容复核</span></div></div><div class="w-md h-[1px] bg-outline-variant mx-xs"></div><div class="flex items-center group cursor-pointer opacity-60"><div class="flex items-center space-x-sm px-md h-full text-on-surface-variant py-xs"><div class="w-5 h-5 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-label-caps text-[10px] border border-outline-variant">8</div><span class="font-label-caps text-label-caps">发布</span></div></div></div></div></div>
+<!-- Workspace Canvas (Split Layout) -->
+<div class="flex-1 mt-[96px] mb-16 flex overflow-hidden">
+<!-- LEFT SIDE: Script Configuration (60%) -->
+<section class="w-[60%] border-r border-outline-variant flex flex-col bg-surface overflow-hidden">
+<div class="flex-1 overflow-y-auto p-lg custom-scrollbar space-y-lg">
+<!-- Original Transcript Panel -->
+<div class="space-y-sm">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase">Original Transcript</label>
+<div class="bg-surface-container-low border border-outline-variant rounded-xl p-md font-body-sm text-body-sm text-on-surface-variant/80 italic leading-relaxed">
+                            "在这个火热的夏天，穿搭不再仅仅是衣服的堆砌，而是一种态度的表达。我们的新款夏日清爽系列，采用了透气的亚麻面料，让你在烈日下依然保持优雅与从容。无论是都市通勤还是海边度假，这套Look都能完美契合你的每一个精彩瞬间。"
+                        </div>
+</div>
+<!-- Rewrite Controls Grid -->
+<div class="grid grid-cols-2 gap-lg">
+<!-- Rewrite Goal -->
+<div class="space-y-sm">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase">Rewrite Goal</label>
+<div class="flex bg-surface-container-high p-xs rounded-xl border border-outline-variant">
+<button class="flex-1 py-1.5 font-label-caps text-label-caps bg-primary text-on-primary rounded-lg shadow-sm">保持原意</button>
+<button class="flex-1 py-1.5 font-label-caps text-label-caps text-on-surface-variant hover:text-on-surface">更口语化</button>
+<button class="flex-1 py-1.5 font-label-caps text-label-caps text-on-surface-variant hover:text-on-surface">更专业</button>
+<button class="flex-1 py-1.5 font-label-caps text-label-caps text-on-surface-variant hover:text-on-surface">自定义</button>
+</div>
+</div>
+<!-- Prompt Preset -->
+<div class="space-y-sm">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase flex justify-between">
+                                Prompt Preset
+                                <span class="material-symbols-outlined text-[16px] cursor-pointer hover:text-primary transition-colors" data-icon="edit">edit</span>
+</label>
+<div class="relative">
+<select class="w-full bg-surface-container border border-outline-variant rounded-xl px-md py-2 text-body-sm appearance-none focus:outline-none focus:border-primary">
+<option>小红书种草风格 (Emoji Enhanced)</option>
+<option>B站测评硬核风格</option>
+<option>高端奢侈品发布语调</option>
+</select>
+<span class="material-symbols-outlined absolute right-md top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant" data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
+</div>
+</div>
+</div>
+<!-- Target Length Slider -->
+<div class="space-y-sm">
+<div class="flex justify-between items-center">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase">Target Length</label>
+<span class="font-mono-label text-mono-label text-primary">Normal</span>
+</div>
+<div class="px-sm py-md">
+<input class="w-full h-1 bg-surface-container-highest rounded-full appearance-none cursor-pointer accent-primary" max="100" min="1" type="range" value="50"/>
+<div class="flex justify-between mt-sm">
+<span class="text-[10px] text-on-surface-variant/60 font-label-caps">CONCISE</span>
+<span class="text-[10px] text-on-surface-variant/60 font-label-caps">DETAILED</span>
+</div>
+</div>
+</div>
+<!-- Rewritten Script Text Area -->
+<div class="space-y-sm">
+<div class="flex justify-between items-center">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase">Rewritten Script</label>
+<span class="font-mono-label text-mono-label text-on-surface-variant">245 / 500</span>
+</div>
+<textarea class="w-full h-48 bg-surface-container-highest border border-outline-variant rounded-xl p-md font-body-md text-body-md focus:outline-none focus:border-primary transition-colors resize-none leading-relaxed" placeholder="Rewritten content will appear here...">夏日穿搭不再是简单的衣物组合，而是一场关于态度的无声独白。我们的全新“清风系列”选用顶级亚麻，在酷暑中为你锁住清凉与格调。从职场干练到度假随性，这套穿搭完美适配你的高光时刻。快来和我们一起，定义这个夏天的优雅底色。</textarea>
+</div>
+<!-- Action Buttons -->
+<div class="flex gap-md pt-md">
+<button class="flex-1 bg-primary text-on-primary font-label-caps text-label-caps py-3 rounded-xl flex items-center justify-center gap-sm active:scale-[0.98] transition-transform shadow-lg shadow-primary/10">
+<span class="material-symbols-outlined text-[18px]" data-icon="auto_awesome">auto_awesome</span>
+                            生成改写
+                        </button>
+<button class="flex-1 border border-outline text-on-surface font-label-caps text-label-caps py-3 rounded-xl flex items-center justify-center gap-sm hover:bg-surface-container-high transition-colors active:scale-[0.98]">
+<span class="material-symbols-outlined text-[18px]" data-icon="compare">compare</span>
+                            对比版本
+                        </button>
+</div>
+</div>
+</section>
+<!-- RIGHT SIDE: History & Comparison (40%) -->
+<section class="w-[40%] flex flex-col bg-surface-container-low overflow-hidden">
+<!-- Version History -->
+<div class="p-lg border-b border-outline-variant h-1/3 flex flex-col">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-md">Version History</label>
+<div class="flex-1 overflow-y-auto custom-scrollbar space-y-sm">
+<!-- v2.1 Latest (Active) -->
+<div class="flex items-center justify-between p-md bg-secondary-container text-on-secondary-container rounded-xl border border-primary/20">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-primary" data-icon="history">history</span>
+<div>
+<p class="font-body-sm font-semibold">v2.1 Latest</p>
+<p class="text-[10px] opacity-70">2 mins ago • AI Generated</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-[18px]" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<!-- v2.0 -->
+<div class="flex items-center justify-between p-md hover:bg-surface-container-high rounded-xl border border-transparent transition-colors cursor-pointer group">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-on-surface" data-icon="history">history</span>
+<div>
+<p class="font-body-sm font-on-surface">v2.0</p>
+<p class="text-[10px] text-on-surface-variant">15 mins ago • Manual Edit</p>
+</div>
+</div>
+</div>
+<!-- v1.0 -->
+<div class="flex items-center justify-between p-md hover:bg-surface-container-high rounded-xl border border-transparent transition-colors cursor-pointer group">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-on-surface" data-icon="history">history</span>
+<div>
+<p class="font-body-sm font-on-surface">v1.0</p>
+<p class="text-[10px] text-on-surface-variant">1 hour ago • Initial Rewrite</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Change Comparison Area -->
+<div class="flex-1 p-lg flex flex-col overflow-hidden">
+<div class="flex items-center justify-between mb-md">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase">Change Comparison</label>
+<div class="flex items-center gap-sm">
+<div class="flex items-center gap-xs text-[10px] text-on-surface-variant"><span class="w-2 h-2 rounded-full bg-green-500/40 border border-green-500"></span> Additions</div>
+<div class="flex items-center gap-xs text-[10px] text-on-surface-variant ml-sm"><span class="w-2 h-2 rounded-full bg-red-500/40 border border-red-500"></span> Deletions</div>
+</div>
+</div>
+<div class="flex-1 bg-surface-container-lowest border border-outline-variant rounded-xl p-md font-mono-label text-mono-label leading-relaxed overflow-y-auto custom-scrollbar">
+                        在这个<span class="diff-removed">火热</span><span class="diff-added">炎热</span>的夏天，穿搭不再仅仅是衣服的<span class="diff-removed">堆砌</span><span class="diff-added">简单组合</span>，而是一种<span class="diff-added">关于</span>态度的<span class="diff-added">无声</span>表达。我们的新款<span class="diff-removed">夏日清爽</span><span class="diff-added">“清风”</span>系列，采用了<span class="diff-removed">透气</span><span class="diff-added">顶级</span>的亚麻面料，让你在烈日下依然保持优雅与从容。<span class="diff-removed">无论是都市通勤还是海边度假，这套Look都能完美契合你的每一个精彩瞬间。</span><span class="diff-added">从职场干练到度假随性，这套穿搭完美适配你的高光时刻。</span>
+</div>
+<!-- Metadata Footer -->
+<div class="mt-lg pt-md border-t border-outline-variant flex items-center justify-between">
+<div class="flex gap-lg">
+<div class="space-y-xs">
+<p class="text-[10px] text-on-surface-variant uppercase font-label-caps">Model</p>
+<p class="text-body-sm font-semibold">Mirax-Pro v4.2</p>
+</div>
+<div class="space-y-xs">
+<p class="text-[10px] text-on-surface-variant uppercase font-label-caps">Latency</p>
+<p class="text-body-sm font-semibold">1.4s</p>
+</div>
+<div class="space-y-xs">
+<p class="text-[10px] text-on-surface-variant uppercase font-label-caps">Tokens</p>
+<p class="text-body-sm font-semibold">842</p>
+</div>
+</div>
+<div class="bg-primary/10 text-primary px-sm py-xs rounded flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]" data-icon="bolt">bolt</span>
+<span class="text-[10px] font-bold">Optimized</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Footer (Shared Component) -->
+<footer class="h-16 fixed bottom-0 right-0 left-[72px] bg-surface-container-high border-t border-outline-variant flex items-center justify-between px-xl z-40"><div class="text-on-surface-variant font-mono-label text-mono-label opacity-70">Mirax AI Desktop v1.0.4</div><div class="flex items-center space-x-md"><button class="font-body-md text-body-md text-on-surface-variant bg-transparent border border-outline-variant px-lg py-sm rounded-lg flex items-center space-x-xs hover:bg-surface-variant transition-colors"><span class="material-symbols-outlined text-[18px]">chevron_left</span><span>上一步</span></button><button class="font-body-md text-body-md text-on-surface bg-surface hover:bg-surface-variant border border-outline-variant px-lg py-sm rounded-lg transition-colors flex items-center space-x-xs"><span class="material-symbols-outlined text-[18px]">save</span><span>保存草稿</span></button><button class="font-body-md text-body-md bg-primary text-on-primary px-lg py-sm rounded-lg flex items-center space-x-xs shadow-sm hover:bg-primary-container transition-all"><span>下一步</span><span class="material-symbols-outlined text-[18px]">chevron_right</span></button></div></footer>
+</main>
+<!-- Background Shader Overlay (Atmospheric) -->
+<div class="fixed inset-0 pointer-events-none opacity-20 z-[-1]">
+</div>
+<script>
+        // Micro-interactions for button states
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.classList.add('scale-95');
+                setTimeout(() => this.classList.remove('scale-95'), 100);
+            });
+        });
+
+        // Simple tab switching logic for Rewrite Goal
+        const goalButtons = document.querySelectorAll('.bg-surface-container-high button');
+        goalButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                goalButtons.forEach(b => {
+                    b.classList.remove('bg-primary', 'text-on-primary', 'shadow-sm', 'rounded-lg');
+                    b.classList.add('text-on-surface-variant');
+                });
+                button.classList.remove('text-on-surface-variant');
+                button.classList.add('bg-primary', 'text-on-primary', 'shadow-sm', 'rounded-lg');
+            });
+        });
+    </script>
+</body></html>

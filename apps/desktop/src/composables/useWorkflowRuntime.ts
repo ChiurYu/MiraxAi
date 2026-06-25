@@ -1,0 +1,239 @@
+import { computed, ref } from "vue";
+import {
+  createDefaultWorkflow,
+  getNextStage,
+  getStageProgress,
+  updateStageStatus,
+  WORKFLOW_STAGES,
+  type Workflow,
+  type WorkflowStage,
+  type WorkflowStageId,
+  type WorkflowStageStatus,
+} from "@mirax/core";
+
+export interface WorkflowLogEntry {
+  id: number;
+  stage: string;
+  message: string;
+}
+
+export interface UseWorkflowRuntimeOptions {
+  projectId: string;
+  executor: (stageId: WorkflowStageId, title: string) => Promise<string>;
+}
+
+export function useWorkflowRuntime(options: UseWorkflowRuntimeOptions) {
+  const workflow = ref<Workflow>(createDefaultWorkflow(options.projectId));
+  const activeStageId = ref<WorkflowStageId>("transcribe");
+  const running = ref(false);
+  const runningMode = ref<"single" | "all" | null>(null);
+  const logs = ref<WorkflowLogEntry[]>([]);
+
+  const progress = computed(() => getStageProgress(workflow.value));
+  const nextStage = computed(() => getNextStage(workflow.value));
+  const activeStage = computed(() => workflow.value.stages.find((stage) => stage.id === activeStageId.value));
+  const stageStatus = computed(
+    () => Object.fromEntries(workflow.value.stages.map((stage) => [stage.id, stage.status])) as Record<WorkflowStageId, WorkflowStageStatus>,
+  );
+
+  function addLog(stage: string, message: string) {
+    logs.value.unshift({ id: Date.now() + logs.value.length, stage, message });
+  }
+
+  function resetFailedStage(stageId: WorkflowStageId) {
+    if (stageStatus.value[stageId] === "failed") {
+      workflow.value = updateStageStatus(workflow.value, stageId, "pending");
+    }
+  }
+
+  function stageIndex(stageId: WorkflowStageId): number {
+    return WORKFLOW_STAGES.indexOf(stageId);
+  }
+
+  function areDependenciesCompleted(stageId: WorkflowStageId): boolean {
+    const targetIndex = stageIndex(stageId);
+    const previousRequired = workflow.value.stages.filter((s) => {
+      const index = stageIndex(s.id);
+      return index < targetIndex && s.required && s.id !== "review";
+    });
+    return previousRequired.every((s) => s.status === "completed" || s.status === "skipped");
+  }
+
+  function canGoToStage(stageId: WorkflowStageId): boolean {
+    if (running.value) return false;
+    const target = workflow.value.stages.find((s) => s.id === stageId);
+    if (!target) return false;
+    if (stageId === activeStageId.value) return true;
+    if (target.status === "completed" || target.status === "skipped") return true;
+    return areDependenciesCompleted(stageId);
+  }
+
+  function goToStage(stageId: WorkflowStageId) {
+    if (!canGoToStage(stageId)) return;
+    activeStageId.value = stageId;
+  }
+
+  function goToNextStage() {
+    const currentIndex = stageIndex(activeStageId.value);
+    const nextId = WORKFLOW_STAGES[currentIndex + 1];
+    if (nextId) {
+      goToStage(nextId);
+    }
+  }
+
+  function goToPreviousStage() {
+    const currentIndex = stageIndex(activeStageId.value);
+    const prevId = WORKFLOW_STAGES[currentIndex - 1];
+    if (prevId) {
+      goToStage(prevId);
+    }
+  }
+
+  function markStageDirty(stageId: WorkflowStageId) {
+    const targetIndex = stageIndex(stageId);
+    let nextWorkflow = workflow.value;
+    for (let i = targetIndex; i < WORKFLOW_STAGES.length; i++) {
+      const id = WORKFLOW_STAGES[i];
+      const stage = nextWorkflow.stages.find((s) => s.id === id);
+      if (stage && (stage.status === "completed" || stage.status === "skipped" || stage.status === "failed")) {
+        nextWorkflow = updateStageStatus(nextWorkflow, id, "pending");
+      }
+    }
+    workflow.value = nextWorkflow;
+  }
+
+  async function processStage(stageId: WorkflowStageId, title: string): Promise<string> {
+    resetFailedStage(stageId);
+    activeStageId.value = stageId;
+    workflow.value = updateStageStatus(workflow.value, stageId, "running");
+    addLog(title, "开始执行");
+
+    try {
+      const message = await options.executor(stageId, title);
+      workflow.value = updateStageStatus(workflow.value, stageId, "completed");
+      addLog(title, message);
+      return message;
+    } catch (error) {
+      if (error instanceof Error && error.message === "PUBLISH_CANCELLED") {
+        workflow.value = updateStageStatus(workflow.value, stageId, "pending");
+        addLog(title, "已取消发布");
+        throw error;
+      }
+
+      const message = error instanceof Error ? error.message : "执行失败";
+      workflow.value = updateStageStatus(workflow.value, stageId, "failed");
+      addLog(title, message);
+      throw error;
+    }
+  }
+
+  async function runNextStage() {
+    const stage = nextStage.value;
+    if (!stage || running.value) {
+      return;
+    }
+
+    running.value = true;
+    runningMode.value = "single";
+
+    try {
+      await processStage(stage.id, stage.title);
+    } catch (error) {
+      if (error instanceof Error && error.message === "PUBLISH_CANCELLED") {
+        throw error;
+      }
+      // 普通失败已由 processStage 标记为 failed 并写入日志，不再向外抛。
+    } finally {
+      running.value = false;
+      runningMode.value = null;
+    }
+  }
+
+  async function runAllStages() {
+    if (running.value) {
+      return;
+    }
+
+    running.value = true;
+    runningMode.value = "all";
+
+    try {
+      let stage = getNextStage(workflow.value);
+      while (stage) {
+        try {
+          await processStage(stage.id, stage.title);
+        } catch {
+          break;
+        }
+
+        if (stageStatus.value[stage.id] !== "completed") {
+          break;
+        }
+
+        stage = getNextStage(workflow.value);
+      }
+    } finally {
+      running.value = false;
+      runningMode.value = null;
+    }
+  }
+
+  async function runStage(stageId: WorkflowStageId) {
+    if (running.value) {
+      return;
+    }
+
+    const status = stageStatus.value[stageId];
+    if (status === "completed" || status === "running") {
+      return;
+    }
+
+    const stage = workflow.value.stages.find((s) => s.id === stageId);
+    if (!stage) {
+      return;
+    }
+
+    running.value = true;
+    runningMode.value = "single";
+
+    try {
+      await processStage(stageId, stage.title);
+    } catch (error) {
+      if (error instanceof Error && error.message === "PUBLISH_CANCELLED") {
+        throw error;
+      }
+      // processStage 已更新状态与日志；普通错误在此处吞掉，保持卡片级 UX。
+    } finally {
+      running.value = false;
+      runningMode.value = null;
+    }
+  }
+
+  function resetWorkflow() {
+    workflow.value = createDefaultWorkflow(options.projectId);
+    activeStageId.value = "transcribe";
+    logs.value = [];
+  }
+
+  return {
+    workflow,
+    activeStageId,
+    running,
+    runningMode,
+    logs,
+    progress,
+    nextStage,
+    activeStage,
+    stageStatus,
+    runNextStage,
+    runAllStages,
+    runStage,
+    resetWorkflow,
+    addLog,
+    canGoToStage,
+    goToStage,
+    goToNextStage,
+    goToPreviousStage,
+    markStageDirty,
+  };
+}

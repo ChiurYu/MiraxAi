@@ -13,6 +13,8 @@ video-frames/
 # OS/editor noise
 .DS_Store
 Thumbs.db
+.codegraph/
+.cursor/
 
 # Node/Rust build outputs for the future app
 node_modules/

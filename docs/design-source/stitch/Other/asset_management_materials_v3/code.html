@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Asset Management: Materials v3</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#3e5c76",
+                        "on-primary-fixed-variant": "#2b4963",
+                        "surface": "#0b1326",
+                        "on-surface-variant": "#c3c7cd",
+                        "on-secondary": "#263143",
+                        "primary-fixed-dim": "#abcae8",
+                        "on-primary": "#12334b",
+                        "on-surface": "#dae2fd",
+                        "background": "#0b1326",
+                        "on-primary-container": "#b5d4f2",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "surface-container-high": "#222a3d",
+                        "on-secondary-container": "#aeb9d0",
+                        "on-tertiary": "#452b03",
+                        "tertiary": "#eabf8a",
+                        "surface-container-highest": "#2d3449",
+                        "tertiary-fixed": "#ffddb6",
+                        "surface-dim": "#0b1326",
+                        "primary": "#abcae8",
+                        "inverse-primary": "#43617c",
+                        "surface-variant": "#2d3449",
+                        "error-container": "#93000a",
+                        "surface-container-low": "#131b2e",
+                        "primary-fixed": "#cce5ff",
+                        "surface-tint": "#abcae8",
+                        "outline-variant": "#42474d",
+                        "tertiary-container": "#735328",
+                        "outline": "#8d9197",
+                        "on-tertiary-fixed-variant": "#5e4118",
+                        "inverse-surface": "#dae2fd",
+                        "secondary-container": "#3e495d",
+                        "surface-container": "#171f33",
+                        "tertiary-fixed-dim": "#eabf8a",
+                        "secondary": "#bcc7de",
+                        "surface-bright": "#31394d",
+                        "on-tertiary-fixed": "#2a1800",
+                        "surface-container-lowest": "#060e20",
+                        "secondary-fixed": "#d8e3fb",
+                        "on-secondary-fixed": "#111c2d",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "on-error": "#690005",
+                        "inverse-on-surface": "#283044",
+                        "on-primary-fixed": "#001d31",
+                        "on-tertiary-container": "#f5c993",
+                        "error": "#ffb4ab",
+                        "on-background": "#dae2fd",
+                        "on-error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "lg": "24px",
+                        "control-panel-width": "320px",
+                        "base": "8px",
+                        "xs": "4px",
+                        "sidebar-width": "72px",
+                        "md": "16px",
+                        "xl": "32px",
+                        "sm": "8px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "mono-label": ["Inter"],
+                        "display-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "mono-label": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                        "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #2d3449;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #42474d;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface h-screen w-screen overflow-hidden flex font-body-md selection:bg-primary-container selection:text-on-primary-container">
+<!-- Left Navigation (SideNavBar JSON Hybrid) -->
+<nav class="bg-surface-container border-r border-outline-variant flex flex-col items-center py-md space-y-md w-sidebar-width h-full flex-shrink-0 z-40">
+<div class="mb-lg">
+<div class="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center text-on-primary-container font-headline-md shadow-sm">
+                M
+            </div>
+</div>
+<div class="flex-1 flex flex-col space-y-2 w-full px-2">
+<!-- 工作台 -->
+<button class="w-full flex flex-col items-center justify-center py-3 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg group">
+<span class="material-symbols-outlined text-[24px] mb-1 group-hover:text-on-surface transition-colors" data-icon="desktop_windows">desktop_windows</span>
+<span class="text-[10px] font-medium group-hover:text-on-surface transition-colors">工作台</span>
+</button>
+<!-- 声音 -->
+<button class="w-full flex flex-col items-center justify-center py-3 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg group">
+<span class="material-symbols-outlined text-[24px] mb-1 group-hover:text-on-surface transition-colors" data-icon="mic">mic</span>
+<span class="text-[10px] font-medium group-hover:text-on-surface transition-colors">声音</span>
+</button>
+<!-- 形象 -->
+<button class="w-full flex flex-col items-center justify-center py-3 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg group">
+<span class="material-symbols-outlined text-[24px] mb-1 group-hover:text-on-surface transition-colors" data-icon="person_play">person_play</span>
+<span class="text-[10px] font-medium group-hover:text-on-surface transition-colors">形象</span>
+</button>
+<!-- 素材 (Active) -->
+<button class="w-full flex flex-col items-center justify-center py-3 bg-secondary-container text-on-secondary-container rounded-lg scale-95 duration-200">
+<span class="material-symbols-outlined text-[24px] mb-1" data-icon="image" style="font-variation-settings: 'FILL' 1;">image</span>
+<span class="text-[10px] font-medium">素材</span>
+</button>
+<!-- 任务 -->
+<button class="w-full flex flex-col items-center justify-center py-3 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg group">
+<span class="material-symbols-outlined text-[24px] mb-1 group-hover:text-on-surface transition-colors" data-icon="task_alt">task_alt</span>
+<span class="text-[10px] font-medium group-hover:text-on-surface transition-colors">任务</span>
+</button>
+</div>
+<div class="flex flex-col space-y-2 w-full px-2 mt-auto">
+<!-- 账号 -->
+<button class="w-full flex flex-col items-center justify-center py-3 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg group">
+<span class="material-symbols-outlined text-[24px] mb-1 group-hover:text-on-surface transition-colors" data-icon="account_circle">account_circle</span>
+<span class="text-[10px] font-medium group-hover:text-on-surface transition-colors">账号</span>
+</button>
+<!-- 设置 -->
+<button class="w-full flex flex-col items-center justify-center py-3 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-lg group">
+<span class="material-symbols-outlined text-[24px] mb-1 group-hover:text-on-surface transition-colors" data-icon="settings">settings</span>
+<span class="text-[10px] font-medium group-hover:text-on-surface transition-colors">设置</span>
+</button>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-background">
+<!-- Top App Bar (TopAppBar JSON Hybrid) -->
+<header class="bg-surface border-b border-outline-variant flex justify-between items-center w-full px-md h-12 sticky top-0 z-50 flex-shrink-0">
+<div class="flex items-center space-x-2">
+<span class="text-body-md font-body-md text-on-surface-variant">工作区</span>
+<span class="material-symbols-outlined text-[16px] text-outline" data-icon="chevron_right">chevron_right</span>
+<span class="text-body-md font-body-md text-on-surface font-medium">素材</span>
+</div>
+<div class="flex items-center space-x-1">
+<button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-full">
+<span class="material-symbols-outlined text-[20px]" data-icon="search">search</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-full">
+<span class="material-symbols-outlined text-[20px]" data-icon="notifications">notifications</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-full">
+<span class="material-symbols-outlined text-[20px]" data-icon="help">help</span>
+</button>
+<div class="w-px h-4 bg-outline-variant mx-2"></div>
+<button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-full overflow-hidden ml-1">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a user in a dimly lit studio environment. Soft rim lighting highlights their features against a dark, slate-grey background. The aesthetic is clean, modern, and corporate." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-FDIIDVHOHU-yxHBMif-WVV2AFdV69ir_lDgMov7eYbaFV0VCpqDLySZ8evR96RaJM_2PcrsvbK3q9HX8fd2zHwiukQFLWZjU8rNXE5S16j_jRV5g-bwL3M7C4pKdfsgZXpUd24KoyZm3HUhfGclViHR32lpsJH_Nd03J0yp3tQoucNeSCPnGU8fERi068BYtCgd2_yQnKFXr_gYxZMdGlsDRS9hz34vD3vfRZoh3vExH9ALuu3RvC6eGWbWUl0oHFRjU2EW67ds"/>
+</button>
+</div>
+</header>
+<!-- Page Header -->
+<div class="px-lg py-md border-b border-outline-variant bg-surface flex-shrink-0">
+<div class="flex items-start justify-between mb-4">
+<div>
+<h1 class="text-headline-md font-headline-md text-on-surface mb-1">素材库</h1>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-2xl">管理本地视频、图片、音频、封面和背景音乐，为内容创作与视频合成提供可复用素材。</p>
+</div>
+<div class="flex items-center space-x-2">
+<button class="h-8 px-3 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors rounded border border-outline-variant">
+<span class="material-symbols-outlined text-[18px] mr-1" data-icon="grid_view">grid_view</span>
+<span class="material-symbols-outlined text-[18px]" data-icon="list">list</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors rounded border border-outline-variant">
+<span class="material-symbols-outlined text-[18px]" data-icon="refresh">refresh</span>
+</button>
+<button class="h-8 px-4 flex items-center justify-center text-on-surface hover:bg-surface-container-high transition-colors rounded border border-outline-variant font-medium text-body-sm">
+                        新建分类
+                    </button>
+<button class="h-8 px-4 flex items-center justify-center bg-primary text-on-primary hover:bg-primary-fixed transition-colors rounded font-medium text-body-sm">
+<span class="material-symbols-outlined text-[18px] mr-1" data-icon="add">add</span>
+                        导入素材
+                    </button>
+</div>
+</div>
+<!-- Filters -->
+<div class="flex items-center justify-between text-body-sm">
+<div class="flex items-center space-x-2">
+<div class="flex items-center bg-surface-container-lowest border border-outline-variant rounded p-1">
+<button class="px-3 py-1 bg-surface-variant text-on-surface rounded shadow-sm">全部</button>
+<button class="px-3 py-1 text-on-surface-variant hover:text-on-surface">视频</button>
+<button class="px-3 py-1 text-on-surface-variant hover:text-on-surface">图片</button>
+<button class="px-3 py-1 text-on-surface-variant hover:text-on-surface">音频</button>
+</div>
+<button class="h-7 px-3 flex items-center text-on-surface-variant border border-outline-variant rounded hover:bg-surface-container-high">
+                        使用状态 <span class="material-symbols-outlined text-[16px] ml-1" data-icon="arrow_drop_down">arrow_drop_down</span>
+</button>
+<button class="h-7 px-3 flex items-center text-on-surface-variant border border-outline-variant rounded hover:bg-surface-container-high">
+                        添加时间 <span class="material-symbols-outlined text-[16px] ml-1" data-icon="arrow_drop_down">arrow_drop_down</span>
+</button>
+</div>
+<button class="flex items-center text-on-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined text-[16px] mr-1" data-icon="sort">sort</span> 最近添加
+                </button>
+</div>
+</div>
+<!-- Three-Column Workspace -->
+<div class="flex-1 flex min-h-0 overflow-hidden">
+<!-- Left: Category Panel -->
+<div class="w-64 border-r border-outline-variant bg-surface flex flex-col overflow-y-auto custom-scrollbar flex-shrink-0">
+<div class="p-sm">
+<ul class="space-y-1 text-body-sm">
+<li>
+<button class="w-full flex items-center justify-between px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high group transition-colors">
+<div class="flex items-center">
+<span class="material-symbols-outlined text-[18px] mr-2 text-outline" data-icon="folder">folder</span>
+<span>全部素材</span>
+</div>
+<span class="text-xs text-outline font-mono">28</span>
+</button>
+</li>
+<div class="h-px bg-outline-variant my-2 mx-2"></div>
+<li>
+<button class="w-full flex items-center justify-between px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high group transition-colors">
+<div class="flex items-center">
+<span class="material-symbols-outlined text-[18px] mr-2 text-outline" data-icon="movie">movie</span>
+<span>视频</span>
+</div>
+<span class="text-xs text-outline font-mono">12</span>
+</button>
+</li>
+<li>
+<button class="w-full flex items-center justify-between px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high group transition-colors">
+<div class="flex items-center">
+<span class="material-symbols-outlined text-[18px] mr-2 text-outline" data-icon="image">image</span>
+<span>图片</span>
+</div>
+<span class="text-xs text-outline font-mono">8</span>
+</button>
+</li>
+<li>
+<button class="w-full flex items-center justify-between px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high group transition-colors">
+<div class="flex items-center">
+<span class="material-symbols-outlined text-[18px] mr-2 text-outline" data-icon="audiotrack">audiotrack</span>
+<span>音频</span>
+</div>
+<span class="text-xs text-outline font-mono">5</span>
+</button>
+</li>
+<div class="h-px bg-outline-variant my-2 mx-2"></div>
+<li class="px-3 py-1 mt-2 mb-1">
+<span class="text-label-caps text-outline font-label-caps">自定义分类</span>
+</li>
+<li>
+<button class="w-full flex items-center justify-between px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high group transition-colors">
+<div class="flex items-center">
+<span class="material-symbols-outlined text-[18px] mr-2 text-outline" data-icon="video_file">video_file</span>
+<span>视频封面</span>
+</div>
+<span class="text-xs text-outline font-mono">3</span>
+</button>
+</li>
+<li>
+<button class="w-full flex items-center justify-between px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high group transition-colors">
+<div class="flex items-center">
+<span class="material-symbols-outlined text-[18px] mr-2 text-outline" data-icon="queue_music">queue_music</span>
+<span>背景音乐</span>
+</div>
+<span class="text-xs text-outline font-mono">4</span>
+</button>
+</li>
+<li>
+<button class="w-full flex items-center justify-between px-3 py-2 rounded bg-surface-container-highest text-on-surface group transition-colors">
+<div class="flex items-center">
+<span class="material-symbols-outlined text-[18px] mr-2 text-primary" data-icon="bookmark">bookmark</span>
+<span class="font-medium">对标素材</span>
+</div>
+<span class="text-xs text-on-surface-variant font-mono">6</span>
+</button>
+</li>
+<li>
+<button class="w-full flex items-center justify-between px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high group transition-colors">
+<div class="flex items-center">
+<span class="material-symbols-outlined text-[18px] mr-2 text-outline" data-icon="folder_special">folder_special</span>
+<span>通勤穿搭项目</span>
+</div>
+<span class="text-xs text-outline font-mono">7</span>
+</button>
+</li>
+</ul>
+</div>
+</div>
+<!-- Center: Materials Grid (The Canvas) -->
+<div class="flex-1 bg-[#020617] p-md overflow-y-auto custom-scrollbar relative">
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+<!-- Item 1: Selected Video -->
+<div class="group relative bg-surface border-2 border-primary rounded-lg overflow-hidden flex flex-col cursor-pointer transition-all shadow-[0_0_0_2px_rgba(171,202,232,0.2)]">
+<div class="aspect-video relative bg-black overflow-hidden">
+<div class="bg-cover bg-center w-full h-full opacity-80" data-alt="A high-fidelity cinematic still of an Asian woman in smart casual summer commute attire, standing on a bright city street corner. The aesthetic is clean, professional, and slightly desaturated, suitable for a corporate lookbook reference." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA70xLm5yIX54eYvDVWMsBO0pGhcMr2aiTOnyecj9WavvYoc0JB13siMesUNIOk4mLUmIuAY6jUhVqnPqtODGyUvKJHHKEZEGbIq785qDY8UTcbX9L4LuTWR0l4x2h_amsI5wYiokQc_tGpoXJ1VZT89zXYmAc3wrIaw2CCuRi0n2PzTTNEwPkau5Y0wrR-1OTPsq8UZUImRJ51an1ZV9bzquCn2rj2jyjg1z0JSahuW4lCaXLvBO7CBCp81eWQeOuIFWgutBABPOM')"></div>
+<div class="absolute bottom-2 right-2 bg-black/70 px-1.5 py-0.5 rounded text-[10px] text-white font-mono">01:45</div>
+<div class="absolute top-2 left-2 bg-surface-container-highest/80 backdrop-blur-sm px-1.5 py-0.5 rounded text-[10px] text-on-surface flex items-center">
+<span class="material-symbols-outlined text-[12px] mr-1" data-icon="movie">movie</span> 视频
+                            </div>
+</div>
+<div class="p-3 bg-surface border-t border-outline-variant">
+<h3 class="text-body-sm font-medium text-on-surface truncate mb-1">夏季通勤参考视频.mp4</h3>
+<div class="flex justify-between items-center text-[10px] text-on-surface-variant font-mono">
+<span>1080x1920</span>
+<span>对标素材</span>
+</div>
+</div>
+</div>
+<!-- Item 2: Presenter Video -->
+<div class="group relative bg-surface border border-outline-variant hover:border-outline rounded-lg overflow-hidden flex flex-col cursor-pointer transition-all">
+<div class="aspect-video relative bg-black overflow-hidden">
+<div class="bg-cover bg-center w-full h-full opacity-80 group-hover:opacity-100 transition-opacity duration-300" data-alt="A photorealistic rendering of a professional East Asian female presenter (Qinghe) in a dark, high-end studio setting. She wears a tailored charcoal blazer. The lighting is dramatic but soft, highlighting her facial features against a deep slate background." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBvUMCDCeY8nN4bOjlls_0ntbOuCwz8uZTURqXFjCO31NekvTa2wNk4HsufB31f5yrM-mfH4pzaVgkcWpAbB6_-qFK6rda04nMa2tvGWpM55LfzqHKzCdiI_snklyQEmitnSu8DG-qwdccN3bsQnyA4PRwcEqB77SvMDyLjMcEdRX5kWFhw_asfmvA4kFZXFXTqjkXCQDM_s_eNvgYYnaVTXU2kQkdTcTtKb1LQ5NUit2Y7weqpZ-RSw-8hgo7e_dPKK2RKghJe5IM')"></div>
+<div class="absolute bottom-2 right-2 bg-black/70 px-1.5 py-0.5 rounded text-[10px] text-white font-mono">01:12</div>
+<div class="absolute top-2 left-2 bg-surface-container-highest/80 backdrop-blur-sm px-1.5 py-0.5 rounded text-[10px] text-on-surface flex items-center">
+<span class="material-symbols-outlined text-[12px] mr-1" data-icon="movie">movie</span> 视频
+                            </div>
+</div>
+<div class="p-3 bg-surface border-t border-outline-variant group-hover:bg-surface-container-low transition-colors">
+<h3 class="text-body-sm font-medium text-on-surface truncate mb-1">清禾演播室源视频.mp4</h3>
+<div class="flex justify-between items-center text-[10px] text-on-surface-variant font-mono">
+<span>3840x2160</span>
+<span>源文件</span>
+</div>
+</div>
+</div>
+<!-- Item 3: Image -->
+<div class="group relative bg-surface border border-outline-variant hover:border-outline rounded-lg overflow-hidden flex flex-col cursor-pointer transition-all">
+<div class="aspect-video relative bg-surface-container-highest overflow-hidden">
+<div class="bg-cover bg-center w-full h-full opacity-80 group-hover:opacity-100 transition-opacity duration-300" data-alt="A clean, minimalist flat lay photograph of stylish summer commute essentials: a sleek leather tote bag, sunglasses, and a neutral-toned lightweight scarf on a concrete-textured surface. Studio lighting, high resolution." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCP5-FjiqTk3MjTTacLplT0T31WuvnNggOR2bXwpPwCHU2Qs3BIdiPxVWeKSoYacMmO36SEm8F5PBh1Pb-qIBqb_geQdi8UnRTdmquVuzRmhgPRPLE9jErAplcfyXrSajkFVZA71_Rg6VEKcUohmNF4-ijcKUIZiVUjNka3f8QUXegR3Jo4G2JqRhZiu-1stNZ2CBdHe8Dp5wRxGGsXkviyXuIE3pTSLNIeXm5fhbQkX4QJUEr3VcAFoawdVWR9n2ZTFf0w-AoYSh8')"></div>
+<div class="absolute top-2 left-2 bg-surface-container-highest/80 backdrop-blur-sm px-1.5 py-0.5 rounded text-[10px] text-on-surface flex items-center">
+<span class="material-symbols-outlined text-[12px] mr-1" data-icon="image">image</span> 图片
+                            </div>
+</div>
+<div class="p-3 bg-surface border-t border-outline-variant group-hover:bg-surface-container-low transition-colors">
+<h3 class="text-body-sm font-medium text-on-surface truncate mb-1">夏季穿搭封面候选01.jpg</h3>
+<div class="flex justify-between items-center text-[10px] text-on-surface-variant font-mono">
+<span>2160x3840</span>
+<span>视频封面</span>
+</div>
+</div>
+</div>
+<!-- Item 4: B-Roll Video -->
+<div class="group relative bg-surface border border-outline-variant hover:border-outline rounded-lg overflow-hidden flex flex-col cursor-pointer transition-all">
+<div class="aspect-video relative bg-black overflow-hidden">
+<div class="bg-cover bg-center w-full h-full opacity-80 group-hover:opacity-100 transition-opacity duration-300" data-alt="A cinematic, slightly blurred urban street scene at twilight, showing sleek glass buildings and subtle car light trails. The color grading is cool-toned and professional, suitable for a corporate video transition." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDK1z4hRoKfqxY2TNNIe_kT1KgD5jejj2bAP6qcQNAIMPJp-0mfxKeK8lISWFNS6RlHw8xMh1jYeGIlwswEf-UXROJZEklQrEuPwlUiHhbAhhuXwLTIcq7QY9jdJMiILhZkiCC4ES2nN5NTKcCPfcWnbiuPw2TM5HejB4vZG3N4sa_L-i9DPrcewF8mbD1rDNTC36yToxkOcJ7FSxzeRBJqDhvK1Ca7B5TqL3XUaQdewDjUAVnVrc-IyprLjByZVfSNGWltgubKsfs')"></div>
+<div class="absolute bottom-2 right-2 bg-black/70 px-1.5 py-0.5 rounded text-[10px] text-white font-mono">00:15</div>
+<div class="absolute top-2 left-2 bg-surface-container-highest/80 backdrop-blur-sm px-1.5 py-0.5 rounded text-[10px] text-on-surface flex items-center">
+<span class="material-symbols-outlined text-[12px] mr-1" data-icon="movie">movie</span> 视频
+                            </div>
+</div>
+<div class="p-3 bg-surface border-t border-outline-variant group-hover:bg-surface-container-low transition-colors">
+<h3 class="text-body-sm font-medium text-on-surface truncate mb-1">城市街景转场.mp4</h3>
+<div class="flex justify-between items-center text-[10px] text-on-surface-variant font-mono">
+<span>1920x1080</span>
+<span>未分类</span>
+</div>
+</div>
+</div>
+<!-- Item 5: Audio -->
+<div class="group relative bg-surface border border-outline-variant hover:border-outline rounded-lg overflow-hidden flex flex-col cursor-pointer transition-all">
+<div class="aspect-video relative bg-surface-container-lowest overflow-hidden flex items-center justify-center p-4">
+<!-- Abstract Waveform Visualization -->
+<div class="w-full h-12 flex items-center justify-between space-x-0.5 opacity-50 group-hover:opacity-100 transition-opacity">
+<div class="w-1 bg-primary rounded-full h-2"></div><div class="w-1 bg-primary rounded-full h-4"></div><div class="w-1 bg-primary rounded-full h-8"></div><div class="w-1 bg-primary rounded-full h-6"></div><div class="w-1 bg-primary rounded-full h-10"></div><div class="w-1 bg-primary rounded-full h-5"></div><div class="w-1 bg-primary rounded-full h-3"></div><div class="w-1 bg-primary rounded-full h-7"></div><div class="w-1 bg-primary rounded-full h-12"></div><div class="w-1 bg-primary rounded-full h-9"></div><div class="w-1 bg-primary rounded-full h-4"></div><div class="w-1 bg-primary rounded-full h-2"></div><div class="w-1 bg-primary rounded-full h-5"></div><div class="w-1 bg-primary rounded-full h-8"></div><div class="w-1 bg-primary rounded-full h-3"></div><div class="w-1 bg-primary rounded-full h-6"></div>
+</div>
+<div class="absolute bottom-2 right-2 bg-black/70 px-1.5 py-0.5 rounded text-[10px] text-white font-mono">02:30</div>
+<div class="absolute top-2 left-2 bg-surface-container-highest/80 backdrop-blur-sm px-1.5 py-0.5 rounded text-[10px] text-on-surface flex items-center">
+<span class="material-symbols-outlined text-[12px] mr-1" data-icon="audiotrack">audiotrack</span> 音频
+                            </div>
+</div>
+<div class="p-3 bg-surface border-t border-outline-variant group-hover:bg-surface-container-low transition-colors">
+<h3 class="text-body-sm font-medium text-on-surface truncate mb-1">城市漫步_轻快.wav</h3>
+<div class="flex justify-between items-center text-[10px] text-on-surface-variant font-mono">
+<span>44.1kHz</span>
+<span>背景音乐</span>
+</div>
+</div>
+</div>
+<!-- Item 6: Audio -->
+<div class="group relative bg-surface border border-outline-variant hover:border-outline rounded-lg overflow-hidden flex flex-col cursor-pointer transition-all">
+<div class="aspect-video relative bg-surface-container-lowest overflow-hidden flex items-center justify-center p-4">
+<!-- Abstract Waveform Visualization -->
+<div class="w-full h-12 flex items-center justify-between space-x-0.5 opacity-30 group-hover:opacity-60 transition-opacity">
+<div class="w-1 bg-outline rounded-full h-1"></div><div class="w-1 bg-outline rounded-full h-2"></div><div class="w-1 bg-outline rounded-full h-3"></div><div class="w-1 bg-outline rounded-full h-2"></div><div class="w-1 bg-outline rounded-full h-4"></div><div class="w-1 bg-outline rounded-full h-3"></div><div class="w-1 bg-outline rounded-full h-2"></div><div class="w-1 bg-outline rounded-full h-5"></div><div class="w-1 bg-outline rounded-full h-3"></div><div class="w-1 bg-outline rounded-full h-2"></div><div class="w-1 bg-outline rounded-full h-1"></div><div class="w-1 bg-outline rounded-full h-2"></div><div class="w-1 bg-outline rounded-full h-3"></div><div class="w-1 bg-outline rounded-full h-2"></div><div class="w-1 bg-outline rounded-full h-1"></div><div class="w-1 bg-outline rounded-full h-2"></div>
+</div>
+<div class="absolute bottom-2 right-2 bg-black/70 px-1.5 py-0.5 rounded text-[10px] text-white font-mono">01:05</div>
+<div class="absolute top-2 left-2 bg-surface-container-highest/80 backdrop-blur-sm px-1.5 py-0.5 rounded text-[10px] text-on-surface flex items-center">
+<span class="material-symbols-outlined text-[12px] mr-1" data-icon="audiotrack">audiotrack</span> 音频
+                            </div>
+</div>
+<div class="p-3 bg-surface border-t border-outline-variant group-hover:bg-surface-container-low transition-colors">
+<h3 class="text-body-sm font-medium text-on-surface truncate mb-1">办公室环境音.wav</h3>
+<div class="flex justify-between items-center text-[10px] text-on-surface-variant font-mono">
+<span>48kHz</span>
+<span>未分类</span>
+</div>
+</div>
+</div>
+<!-- Item 7: Image -->
+<div class="group relative bg-surface border border-outline-variant hover:border-outline rounded-lg overflow-hidden flex flex-col cursor-pointer transition-all">
+<div class="aspect-video relative bg-surface-container-highest overflow-hidden">
+<div class="bg-cover bg-center w-full h-full opacity-80 group-hover:opacity-100 transition-opacity duration-300" data-alt="A close-up, high-fashion macro shot of the fabric texture of a tailored summer suit jacket. The lighting is crisp and editorial, highlighting the weave of the grey material against a dark background." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBiEMDIb1BDbuc0EehQi9xx7303IZrIsF2p52LgKMUmtCfnESwcyPXi5t8ZPyQteNlA5XuWsCCoKKrdqsgGDOVGgoVaXi3eCKDPUtRsrHz_oeS2jGgf0PazC0aYiGD19L_BslVD-kGASvv09QvWL_bXpM_w3NkJWTHKQ02UBY3ZxERi0aEq5PgNfgxaecGFCI8mC-enB9IZRN6J5SDgMElCKzoLG5jm_za_PEMz0tirGl5m1g2XSLMlgeQSARiD6oox1nfS7dLe070')"></div>
+<div class="absolute top-2 left-2 bg-surface-container-highest/80 backdrop-blur-sm px-1.5 py-0.5 rounded text-[10px] text-on-surface flex items-center">
+<span class="material-symbols-outlined text-[12px] mr-1" data-icon="image">image</span> 图片
+                            </div>
+</div>
+<div class="p-3 bg-surface border-t border-outline-variant group-hover:bg-surface-container-low transition-colors">
+<h3 class="text-body-sm font-medium text-on-surface truncate mb-1">通勤穿搭细节图.jpg</h3>
+<div class="flex justify-between items-center text-[10px] text-on-surface-variant font-mono">
+<span>4000x6000</span>
+<span>对标素材</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right: Detail Panel -->
+<div class="w-[360px] border-l border-outline-variant bg-surface flex flex-col overflow-y-auto custom-scrollbar flex-shrink-0">
+<!-- Video Preview Box -->
+<div class="bg-[#020617] aspect-[9/16] max-h-[320px] w-full flex items-center justify-center relative border-b border-outline-variant group">
+<div class="bg-cover bg-center h-full aspect-[9/16] opacity-90" data-alt="A high-fidelity cinematic still of an Asian woman in smart casual summer commute attire, standing on a bright city street corner. The aesthetic is clean, professional, and slightly desaturated, suitable for a corporate lookbook reference." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBK6aYKCMTfwZwuUBelTQFgXEN8a-jatKTfYTTr5Ba-CbgZttTYrq1vJtMw5YyLZSs0aRh0jZ-m6C4YZdvJyYJb49-DmFcU-An3hTF-jQ03SOnPHZpCHknhmu603JdD7EU7DRECZ6XfMW5zxTdbGym86nf1EpJ3k568YDFPdZsvhCyKA0Xle_TWQ4O8F2nEk8vgK5230BTp8lr5Eb1dC_zG5bMtszPdHoMjT82ZOpzud0hL7Z7GrVmgqHNqjSLrD1mp2Q8C8Zd5E1Y')"></div>
+<!-- Player Controls Overlay -->
+<div class="absolute inset-0 flex flex-col justify-end p-4 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+<!-- Play/Pause Big Button (Center) -->
+<button class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors">
+<span class="material-symbols-outlined text-[28px]" data-icon="play_arrow">play_arrow</span>
+</button>
+<!-- Timeline -->
+<div class="w-full flex items-center space-x-2 mb-2">
+<span class="text-[10px] font-mono text-white/80">00:42</span>
+<div class="flex-1 h-1 bg-white/20 rounded-full overflow-hidden relative cursor-pointer">
+<div class="absolute top-0 left-0 h-full bg-primary w-[40%]"></div>
+<div class="absolute top-1/2 left-[40%] w-2 h-2 bg-white rounded-full transform -translate-x-1/2 -translate-y-1/2 shadow"></div>
+</div>
+<span class="text-[10px] font-mono text-white/80">01:45</span>
+</div>
+<!-- Bottom Controls -->
+<div class="flex items-center justify-between text-white">
+<div class="flex space-x-2">
+<button class="hover:text-primary transition-colors"><span class="material-symbols-outlined text-[18px]" data-icon="volume_up">volume_up</span></button>
+</div>
+<div class="flex space-x-2">
+<button class="hover:text-primary transition-colors"><span class="material-symbols-outlined text-[18px]" data-icon="fullscreen">fullscreen</span></button>
+</div>
+</div>
+</div>
+</div>
+<!-- Detail Content -->
+<div class="p-lg flex-1 flex flex-col">
+<div class="mb-6">
+<h2 class="text-headline-md font-headline-md text-on-surface mb-2 break-words">夏季通勤参考视频.mp4</h2>
+<div class="flex items-center space-x-2 mb-4">
+<span class="px-2 py-0.5 bg-surface-container-highest text-on-surface-variant text-[11px] rounded font-medium border border-outline-variant">对标素材</span>
+<span class="flex items-center text-[11px] text-primary"><span class="w-1.5 h-1.5 rounded-full bg-primary mr-1"></span>本地文件</span>
+</div>
+</div>
+<!-- Metadata List -->
+<div class="space-y-3 mb-6 border-b border-outline-variant pb-6">
+<div class="flex justify-between text-body-sm">
+<span class="text-on-surface-variant">类型</span>
+<span class="text-on-surface font-medium flex items-center"><span class="material-symbols-outlined text-[14px] mr-1" data-icon="movie">movie</span> 视频</span>
+</div>
+<div class="flex justify-between text-body-sm">
+<span class="text-on-surface-variant">分辨率</span>
+<span class="text-on-surface font-mono">1080x1920</span>
+</div>
+<div class="flex justify-between text-body-sm">
+<span class="text-on-surface-variant">大小</span>
+<span class="text-on-surface font-mono">42.8 MB</span>
+</div>
+<div class="flex justify-between text-body-sm">
+<span class="text-on-surface-variant">时长</span>
+<span class="text-on-surface font-mono">01:45</span>
+</div>
+<div class="flex flex-col space-y-1 text-body-sm">
+<span class="text-on-surface-variant">文件路径</span>
+<div class="bg-surface-container-low p-2 rounded border border-outline-variant flex justify-between items-center group">
+<span class="text-on-surface font-mono text-[11px] truncate mr-2 opacity-80" title="/local/materials/reference/summer_commute_ref.mp4">/local/materials/reference/summ...</span>
+<button class="text-on-surface-variant hover:text-on-surface opacity-0 group-hover:opacity-100 transition-opacity"><span class="material-symbols-outlined text-[14px]" data-icon="content_copy">content_copy</span></button>
+</div>
+</div>
+</div>
+<!-- Description -->
+<div class="mb-6">
+<h3 class="text-label-caps font-label-caps text-on-surface-variant mb-2">描述</h3>
+<p class="text-body-sm text-on-surface bg-surface-container-low p-3 rounded border border-outline-variant leading-relaxed">
+                            夏季通勤穿搭参考视频，用于文案提取、构图参考与内容复核。
+                        </p>
+</div>
+<!-- Actions -->
+<div class="mt-auto pt-4 flex flex-col space-y-2">
+<button class="w-full h-9 bg-primary text-on-primary hover:bg-primary-fixed transition-colors rounded font-medium text-body-sm flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[18px] mr-2" data-icon="add_to_queue">add_to_queue</span> 在工作台中使用
+                        </button>
+<div class="grid grid-cols-2 gap-2">
+<button class="h-8 border border-outline-variant hover:bg-surface-container-high transition-colors rounded text-body-sm text-on-surface flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px] mr-1" data-icon="open_in_new">open_in_new</span> 打开源文件
+                            </button>
+<button class="h-8 border border-outline-variant hover:bg-surface-container-high transition-colors rounded text-body-sm text-on-surface flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px] mr-1" data-icon="folder_open">folder_open</span> 在文件夹中显示
+                            </button>
+</div>
+<div class="h-px bg-outline-variant my-2"></div>
+<div class="flex justify-between items-center">
+<button class="text-body-sm text-on-surface-variant hover:text-on-surface transition-colors flex items-center">
+<span class="material-symbols-outlined text-[16px] mr-1" data-icon="edit">edit</span> 重命名
+                            </button>
+<button class="text-body-sm text-on-surface-variant hover:text-on-surface transition-colors flex items-center">
+<span class="material-symbols-outlined text-[16px] mr-1" data-icon="find_replace">find_replace</span> 替换文件
+                            </button>
+<button class="text-body-sm text-error hover:text-on-error-container transition-colors flex items-center">
+<span class="material-symbols-outlined text-[16px] mr-1" data-icon="delete">delete</span> 删除
+                            </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body></html>

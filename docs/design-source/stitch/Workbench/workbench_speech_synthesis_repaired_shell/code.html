@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mirax AI - Workbench: Speech Synthesis</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#0b1326",
+                        "tertiary-fixed": "#ffddb6",
+                        "primary-container": "#3e5c76",
+                        "secondary": "#bcc7de",
+                        "on-tertiary-fixed-variant": "#5e4118",
+                        "on-primary-fixed-variant": "#2b4963",
+                        "on-primary-container": "#b5d4f2",
+                        "surface-dim": "#0b1326",
+                        "on-secondary": "#263143",
+                        "on-background": "#dae2fd",
+                        "tertiary-container": "#735328",
+                        "outline-variant": "#42474d",
+                        "surface-container": "#171f33",
+                        "surface-bright": "#31394d",
+                        "secondary-fixed": "#d8e3fb",
+                        "on-error": "#690005",
+                        "inverse-surface": "#dae2fd",
+                        "surface-container-highest": "#2d3449",
+                        "on-surface": "#dae2fd",
+                        "inverse-on-surface": "#283044",
+                        "surface-tint": "#abcae8",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "on-surface-variant": "#c3c7cd",
+                        "tertiary": "#eabf8a",
+                        "error": "#ffb4ab",
+                        "surface-variant": "#2d3449",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-container": "#aeb9d0",
+                        "background": "#0b1326",
+                        "on-tertiary-fixed": "#2a1800",
+                        "primary": "#abcae8",
+                        "surface-container-low": "#131b2e",
+                        "on-primary-fixed": "#001d31",
+                        "primary-fixed-dim": "#abcae8",
+                        "on-tertiary-container": "#f5c993",
+                        "inverse-primary": "#43617c",
+                        "on-primary": "#12334b",
+                        "surface-container-lowest": "#060e20",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "on-tertiary": "#452b03",
+                        "outline": "#8d9197",
+                        "on-secondary-fixed": "#111c2d",
+                        "tertiary-fixed-dim": "#eabf8a",
+                        "error-container": "#93000a",
+                        "surface-container-high": "#222a3d",
+                        "secondary-container": "#3e495d",
+                        "primary-fixed": "#cce5ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "xl": "32px",
+                        "control-panel-width": "320px",
+                        "sidebar-width": "64px",
+                        "md": "16px",
+                        "base": "8px",
+                        "sm": "8px",
+                        "lg": "24px",
+                        "xs": "4px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "mono-label": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "mono-label": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+                        "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .slider-thumb::-webkit-slider-thumb {
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #abcae8; /* primary */
+            cursor: pointer;
+        }
+        .slider-track {
+            background: linear-gradient(to right, #abcae8 50%, #42474d 50%); /* primary to outline-variant */
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface h-screen w-screen overflow-hidden flex font-body-md text-body-md">
+<!-- SideNavBar -->
+<nav class="w-[72px] h-screen fixed left-0 top-0 bg-surface-container border-r border-outline-variant flex flex-col items-center py-lg z-50"><div class="mb-8 mt-4"><div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary">play_circle</span></div></div><div class="flex flex-col gap-2 w-full px-2"><button class="flex flex-col items-center justify-center py-3 text-primary bg-secondary-container rounded-lg cursor-pointer transition-colors"><span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">dashboard</span><span class="text-[11px] mt-1">工作台</span></button><button class="flex flex-col items-center justify-center py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg cursor-pointer"><span class="material-symbols-outlined text-[20px]">mic</span><span class="text-[11px] mt-1">声音</span></button><button class="flex flex-col items-center justify-center py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg cursor-pointer"><span class="material-symbols-outlined text-[20px]">face</span><span class="text-[11px] mt-1">形象</span></button><button class="flex flex-col items-center justify-center py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg cursor-pointer"><span class="material-symbols-outlined text-[20px]">folder_open</span><span class="text-[11px] mt-1">素材</span></button><button class="flex flex-col items-center justify-center py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg cursor-pointer"><span class="material-symbols-outlined text-[20px]">task</span><span class="text-[11px] mt-1">任务</span></button><button class="flex flex-col items-center justify-center py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg cursor-pointer"><span class="material-symbols-outlined text-[20px]">account_circle</span><span class="text-[11px] mt-1">账号</span></button><button class="flex flex-col items-center justify-center py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-lg cursor-pointer"><span class="material-symbols-outlined text-[20px]">settings</span><span class="text-[11px] mt-1">设置</span></button></div></nav>
+<!-- Main Content Area -->
+<div class="flex-1 ml-[72px] flex flex-col h-screen">
+<!-- TopAppBar Context & Workflow -->
+<header class="w-full flex flex-col border-b border-outline-variant bg-surface shrink-0 z-40">
+<!-- Row 1: Context Bar -->
+<div class="h-[54px] flex items-center justify-between px-6 border-b border-outline-variant bg-surface"><div class="flex items-center gap-4"><button class="text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer flex items-center"><span class="material-symbols-outlined">arrow_back</span></button><span class="font-medium text-on-surface text-body-md">口播视频 | 夏季通勤穿搭</span><div class="flex items-center gap-1 text-on-surface-variant text-xs ml-4"><span class="material-symbols-outlined text-sm">cloud_done</span><span>Autosaved</span></div></div><div class="flex items-center gap-5"><button class="text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer"><span class="material-symbols-outlined">notifications</span></button><button class="text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer"><span class="material-symbols-outlined">help</span></button><button class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined">person</span></button></div></div>
+<!-- Row 2: Workflow Navigator -->
+<div class="h-[52px] flex items-center px-6 bg-surface border-b border-outline-variant"><div class="flex items-center w-full justify-center gap-0 text-[11px] font-medium text-on-surface-variant"><div class="flex items-center gap-2"><div class="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px]">1</div><span>素材解析</span></div><div class="w-8 h-px bg-outline-variant mx-2"></div><div class="flex items-center gap-2"><div class="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px]">2</div><span>文案改写</span></div><div class="w-8 h-px bg-outline-variant mx-2"></div><div class="flex items-center gap-2"><div class="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px]">3</div><span>声音克隆</span></div><div class="w-8 h-px bg-outline-variant mx-2"></div><div class="flex items-center gap-2 text-primary relative"><div class="w-5 h-5 rounded-full bg-primary text-on-primary flex items-center justify-center text-[10px]">4</div><span>语音合成</span><div class="absolute -bottom-[17px] left-0 right-0 h-0.5 bg-primary"></div></div><div class="w-8 h-px bg-outline-variant mx-2"></div><div class="flex items-center gap-2"><div class="w-5 h-5 rounded-full border border-outline-variant flex items-center justify-center text-[10px]">5</div><span>形象生成</span></div><div class="w-8 h-px bg-outline-variant mx-2"></div><div class="flex items-center gap-2"><div class="w-5 h-5 rounded-full border border-outline-variant flex items-center justify-center text-[10px]">6</div><span>视频合成</span></div><div class="w-8 h-px bg-outline-variant mx-2"></div><div class="flex items-center gap-2"><div class="w-5 h-5 rounded-full border border-outline-variant flex items-center justify-center text-[10px]">7</div><span>内容复核</span></div><div class="w-8 h-px bg-outline-variant mx-2"></div><div class="flex items-center gap-2"><div class="w-5 h-5 rounded-full border border-outline-variant flex items-center justify-center text-[10px]">8</div><span>发布</span></div></div></div>
+</header>
+<!-- Workspace Layout -->
+<main class="flex-1 flex overflow-hidden bg-surface-container-low p-6 gap-6 mb-16">
+<!-- Left Side: Controls (55%) -->
+<div class="flex-[55%] flex flex-col gap-6 overflow-y-auto pr-2">
+<!-- 输入摘要 Panel -->
+<section class="bg-surface rounded-xl border border-outline-variant p-6">
+<div class="flex items-center justify-between mb-4">
+<h2 class="font-headline-md text-headline-md text-on-surface">输入摘要</h2>
+<span class="font-label-caps text-label-caps bg-secondary-container text-on-secondary-container px-2 py-1 rounded">已就绪</span>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="flex flex-col gap-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant">文案标题</span>
+<span class="font-body-md text-body-md text-on-surface truncate">夏季通勤穿搭口播文案</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant">字数统计</span>
+<span class="font-body-md text-body-md text-on-surface">245 字</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant">选择声音</span>
+<span class="font-body-md text-body-md text-on-surface flex items-center gap-2">
+                                林悦 <span class="material-symbols-outlined text-sm text-on-surface-variant">volume_up</span>
+</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-label-caps text-label-caps text-on-surface-variant">当前风格</span>
+<span class="font-body-md text-body-md text-on-surface">专业温和</span>
+</div>
+</div>
+<div class="flex gap-4">
+<button class="px-4 py-2 rounded-lg border border-outline-variant text-on-surface hover:bg-surface-container-high transition-colors font-body-sm text-body-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">edit</span>
+                            编辑文案
+                        </button>
+<button class="px-4 py-2 rounded-lg border border-outline-variant text-on-surface hover:bg-surface-container-high transition-colors font-body-sm text-body-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">record_voice_over</span>
+                            更换声音
+                        </button>
+</div>
+</section>
+<!-- 合成设置 Panel -->
+<section class="bg-surface rounded-xl border border-outline-variant p-6 flex-1 flex flex-col">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-6">合成设置</h2>
+<div class="flex flex-col gap-6 flex-1">
+<!-- Speed Slider -->
+<div class="flex flex-col gap-2">
+<div class="flex justify-between items-center">
+<label class="font-label-caps text-label-caps text-on-surface-variant">语速调节</label>
+<span class="font-mono-label text-mono-label text-primary">1.0x</span>
+</div>
+<div class="relative w-full h-1 slider-track rounded-full mt-2 mb-2">
+<input class="absolute w-full h-full opacity-0 cursor-pointer z-10" max="2.0" min="0.5" step="0.1" type="range" value="1.0"/>
+<div class="absolute w-3 h-3 rounded-full bg-primary top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 pointer-events-none shadow-sm"></div>
+</div>
+<div class="flex justify-between font-mono-label text-mono-label text-on-surface-variant">
+<span>0.5x</span>
+<span>2.0x</span>
+</div>
+</div>
+<!-- Emotion Chips -->
+<div class="flex flex-col gap-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant">情绪/语气</label>
+<div class="flex flex-wrap gap-2">
+<button class="px-3 py-1.5 rounded-full border border-outline-variant text-on-surface-variant font-body-sm text-body-sm hover:bg-surface-container-high">自然</button>
+<button class="px-3 py-1.5 rounded-full bg-primary-container text-on-primary-container font-body-sm text-body-sm border border-transparent">专业</button>
+<button class="px-3 py-1.5 rounded-full border border-outline-variant text-on-surface-variant font-body-sm text-body-sm hover:bg-surface-container-high">轻快</button>
+<button class="px-3 py-1.5 rounded-full border border-outline-variant text-on-surface-variant font-body-sm text-body-sm hover:bg-surface-container-high">沉稳</button>
+</div>
+</div>
+<!-- Estimate Text -->
+<div class="bg-surface-container rounded-lg p-3 flex items-start gap-2 mt-2">
+<span class="material-symbols-outlined text-on-surface-variant text-sm mt-0.5">info</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">预计合成音频时长约为 01:45。时长受所选语速及标点停顿影响。</span>
+</div>
+<!-- Advanced Settings Collapsible -->
+<div class="mt-2 border-t border-outline-variant pt-4">
+<button class="flex items-center gap-2 text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm w-full group">
+<span class="material-symbols-outlined text-sm group-hover:text-primary transition-colors">expand_more</span>
+                                高级设置
+                            </button>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex justify-end gap-4 mt-6 pt-6 border-t border-outline-variant">
+<button class="px-6 py-2 rounded-lg border border-outline-variant text-on-surface hover:bg-surface-container-high transition-colors font-body-sm text-body-sm">
+                            恢复默认设置
+                        </button>
+<button class="px-6 py-2 rounded-lg bg-primary text-on-primary hover:bg-surface-tint transition-colors font-body-sm text-body-sm font-medium flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-sm">play_arrow</span>
+                            开始合成
+                        </button>
+</div>
+</section>
+</div>
+<!-- Right Side: Results (45%) -->
+<div class="flex-[45%] flex flex-col gap-6">
+<section class="bg-surface rounded-xl border border-outline-variant p-6 flex flex-col h-full relative overflow-hidden">
+<!-- Subtle inset shadow effect for 'light box' feel on canvas -->
+<div class="absolute inset-0 bg-inset opacity-5 pointer-events-none"></div>
+<div class="flex items-center justify-between mb-6 relative z-10">
+<h2 class="font-headline-md text-headline-md text-on-surface">合成结果</h2>
+<span class="font-label-caps text-label-caps bg-[#10b98120] text-[#10b981] px-2 py-1 rounded flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">check</span>
+                            已完成
+                        </span>
+</div>
+<!-- File Details -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 mb-6 relative z-10">
+<div class="flex items-center gap-3 mb-2">
+<span class="material-symbols-outlined text-primary text-xl">audio_file</span>
+<span class="font-body-md text-body-md font-medium text-on-surface">夏季通勤穿搭_林悦_v1.wav</span>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant font-mono-label text-mono-label">
+<span>01:42</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span>WAV</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span>48 kHz</span>
+</div>
+</div>
+<!-- Audio Player Mockup -->
+<div class="bg-surface-container-low border border-outline-variant rounded-xl p-6 flex-1 flex flex-col justify-center relative z-10">
+<!-- Waveform Placeholder -->
+<div class="h-24 w-full bg-surface-container rounded-lg mb-6 flex items-center justify-center relative overflow-hidden">
+<!-- Simulated waveform pattern -->
+<div class="absolute inset-0 flex items-end justify-between px-2 opacity-40">
+<div class="w-1 bg-primary h-[30%] rounded-t-sm"></div>
+<div class="w-1 bg-primary h-[50%] rounded-t-sm"></div>
+<div class="w-1 bg-primary h-[80%] rounded-t-sm"></div>
+<div class="w-1 bg-primary h-[40%] rounded-t-sm"></div>
+<div class="w-1 bg-primary h-[90%] rounded-t-sm"></div>
+<div class="w-1 bg-primary h-[60%] rounded-t-sm"></div>
+<div class="w-1 bg-primary h-[70%] rounded-t-sm"></div>
+<div class="w-1 bg-primary h-[20%] rounded-t-sm"></div>
+<div class="w-1 bg-primary h-[50%] rounded-t-sm"></div>
+<div class="w-1 bg-primary h-[80%] rounded-t-sm"></div>
+<div class="w-1 bg-primary h-[30%] rounded-t-sm"></div>
+<div class="w-1 bg-primary h-[60%] rounded-t-sm"></div>
+</div>
+<!-- Seek bar overlay -->
+<div class="absolute left-0 top-0 bottom-0 w-1/3 bg-primary/10 border-r border-primary z-10"></div>
+</div>
+<!-- Player Controls -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center hover:bg-surface-tint transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+<div class="font-mono-label text-mono-label text-on-surface">
+                                    00:34 <span class="text-on-surface-variant">/ 01:42</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="text-on-surface-variant hover:text-on-surface transition-colors p-1" title="Volume">
+<span class="material-symbols-outlined text-sm">volume_up</span>
+</button>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors p-1" title="Playback Speed">
+<span class="material-symbols-outlined text-sm">speed</span>
+</button>
+<div class="w-px h-4 bg-outline-variant mx-1"></div>
+<button class="text-on-surface-variant hover:text-primary transition-colors p-1" title="Download">
+<span class="material-symbols-outlined text-sm">download</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Right Side Actions & Note -->
+<div class="mt-6 flex flex-col gap-4 relative z-10">
+<div class="flex gap-3">
+<button class="flex-1 py-2 rounded-lg bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface font-body-sm text-body-sm transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">refresh</span>
+                                重新合成
+                            </button>
+<button class="flex-1 py-2 rounded-lg bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface font-body-sm text-body-sm transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">folder</span>
+                                在文件夹中显示
+                            </button>
+<button class="py-2 px-4 rounded-lg bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface font-body-sm text-body-sm transition-colors flex items-center justify-center" title="查看合成任务">
+<span class="material-symbols-outlined text-sm">list_alt</span>
+</button>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant text-center bg-surface-container-low py-2 rounded-md border border-outline-variant border-dashed">
+                            修改文案、声音、语速或语气后，需重新合成音频
+                        </p>
+</div>
+</section>
+</div>
+</main>
+<!-- Footer Action Bar -->
+<footer class="h-16 fixed bottom-0 right-0 left-[72px] bg-surface-container-high border-t border-outline-variant flex items-center justify-between px-xl z-50"><div class="flex items-center justify-end w-full gap-4"><button class="border border-outline-variant text-on-surface px-6 py-2 rounded-lg hover:bg-surface-container transition-colors text-sm">上一步</button><button class="border border-outline-variant text-on-surface px-6 py-2 rounded-lg hover:bg-surface-container transition-colors text-sm flex items-center gap-2"><span class="material-symbols-outlined text-sm">save</span>保存草稿</button><button class="bg-primary text-on-primary px-8 py-2 rounded-lg hover:bg-surface-tint transition-colors text-sm font-medium flex items-center gap-2">下一步<span class="material-symbols-outlined text-sm">chevron_right</span></button></div></footer>
+</div>
+</body></html>

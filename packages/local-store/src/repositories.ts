@@ -59,3 +59,42 @@ export type ContentDraftRepository = Repository<ContentDraftRecord>;
 export type VideoProjectRepository = Repository<VideoProjectRecord>;
 export type PublishAccountRepository = Repository<PublishAccountRecord>;
 export type WorkflowTaskRepository = Repository<WorkflowTaskRecord>;
+
+export interface AppSettingsRecord {
+  id: string;
+  theme: string;
+  outputPathsJson: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SidecarConfigRecord {
+  id: string;
+  ffmpegPath?: string;
+  pythonServiceUrl?: string;
+  cosyVoiceServiceUrl?: string;
+  heygemServiceUrl?: string;
+  hasPlaywrightBrowser: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type AppSettingsRepository = Repository<AppSettingsRecord>;
+export type SidecarConfigRepository = Repository<SidecarConfigRecord>;
+
+export interface PublishTaskRecord {
+  id: string;
+  projectId: string;
+  platformId: string;
+  accountId: string;
+  status: string;
+  videoPath: string;
+  title: string;
+  description: string;
+  tagsJson: string;
+  mode: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type PublishTaskRepository = Repository<PublishTaskRecord>;

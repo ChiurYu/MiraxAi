@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Settings: Local Dependencies v3 - Studio Pro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#abcae8",
+                        "on-primary": "#12334b",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "surface-variant": "#2d3449",
+                        "on-tertiary": "#452b03",
+                        "on-tertiary-fixed-variant": "#5e4118",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-lowest": "#060e20",
+                        "surface-container-high": "#222a3d",
+                        "error": "#ffb4ab",
+                        "on-primary-container": "#b5d4f2",
+                        "inverse-on-surface": "#283044",
+                        "on-secondary-container": "#aeb9d0",
+                        "on-error": "#690005",
+                        "background": "#0b1326",
+                        "primary-fixed": "#cce5ff",
+                        "surface-bright": "#31394d",
+                        "inverse-surface": "#dae2fd",
+                        "inverse-primary": "#43617c",
+                        "outline": "#8d9197",
+                        "tertiary": "#eabf8a",
+                        "surface-tint": "#abcae8",
+                        "surface-container": "#171f33",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "secondary-fixed": "#d8e3fb",
+                        "on-surface-variant": "#c3c7cd",
+                        "on-primary-fixed-variant": "#2b4963",
+                        "surface": "#0b1326",
+                        "on-primary-fixed": "#001d31",
+                        "tertiary-fixed-dim": "#eabf8a",
+                        "on-background": "#dae2fd",
+                        "tertiary-fixed": "#ffddb6",
+                        "tertiary-container": "#735328",
+                        "secondary": "#bcc7de",
+                        "outline-variant": "#42474d",
+                        "on-surface": "#dae2fd",
+                        "surface-dim": "#0b1326",
+                        "on-secondary": "#263143",
+                        "primary-container": "#3e5c76",
+                        "primary-fixed-dim": "#abcae8",
+                        "on-tertiary-container": "#f5c993",
+                        "secondary-container": "#3e495d",
+                        "on-tertiary-fixed": "#2a1800",
+                        "surface-container-low": "#131b2e",
+                        "surface-container-highest": "#2d3449",
+                        "on-secondary-fixed": "#111c2d",
+                        "error-container": "#93000a",
+                        "status-success": "#81b5a1",
+                        "status-warning": "#d4a373",
+                        "status-error": "#e56b6f"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "sm": "8px",
+                        "lg": "24px",
+                        "xl": "32px",
+                        "sidebar-width": "64px",
+                        "base": "8px",
+                        "xs": "4px",
+                        "settings-sidebar": "200px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "mono-label": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "mono-label": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Hide scrollbar for clean UI */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2d3449;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #42474d;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface h-screen w-full flex overflow-hidden font-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- Global Side Navigation (Application Shell) -->
+<nav class="w-sidebar-width h-full fixed left-0 top-0 bg-surface-container border-r border-outline-variant flex flex-col items-center py-lg gap-md z-50">
+<div class="mb-lg font-headline-md text-primary flex flex-col items-center gap-1">
+<span class="material-symbols-outlined fill text-2xl">lens</span>
+</div>
+<div class="flex flex-col gap-sm w-full px-sm">
+<a class="w-full aspect-square flex flex-col items-center justify-center gap-1 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">dashboard</span>
+<span class="text-[10px] opacity-80 font-medium">工作台</span>
+</a>
+<a class="w-full aspect-square flex flex-col items-center justify-center gap-1 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">mic</span>
+<span class="text-[10px] opacity-80 font-medium">声音</span>
+</a>
+<a class="w-full aspect-square flex flex-col items-center justify-center gap-1 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">person_add</span>
+<span class="text-[10px] opacity-80 font-medium">形象</span>
+</a>
+<a class="w-full aspect-square flex flex-col items-center justify-center gap-1 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">folder_open</span>
+<span class="text-[10px] opacity-80 font-medium">素材</span>
+</a>
+<a class="w-full aspect-square flex flex-col items-center justify-center gap-1 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">assignment</span>
+<span class="text-[10px] opacity-80 font-medium">任务</span>
+</a>
+<a class="w-full aspect-square flex flex-col items-center justify-center gap-1 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant transition-colors rounded-lg group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">account_circle</span>
+<span class="text-[10px] opacity-80 font-medium">账号</span>
+</a>
+<a class="w-full aspect-square flex flex-col items-center justify-center gap-1 bg-secondary-container text-on-secondary-container rounded-xl scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined fill">settings</span>
+<span class="text-[10px] font-medium">设置</span>
+</a>
+</div>
+</nav>
+<!-- Main Application Area -->
+<div class="ml-sidebar-width flex-1 flex flex-col h-full overflow-hidden">
+<!-- Global Top Bar -->
+<header class="h-12 w-full sticky top-0 z-40 bg-surface border-b border-outline-variant flex justify-between items-center px-lg">
+<div class="flex items-center gap-sm text-body-sm text-on-surface-variant">
+<span class="font-medium hover:text-on-surface cursor-pointer transition-colors">Mirax AI</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-on-surface">设置</span>
+</div>
+<div class="flex items-center gap-md">
+<button class="text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[20px]">help_outline</span>
+</button>
+</div>
+</header>
+<!-- Settings Layout -->
+<div class="flex-1 flex overflow-hidden">
+<!-- Settings Category Sidebar -->
+<aside class="w-settings-sidebar h-full bg-surface-container-low border-r border-outline-variant flex flex-col flex-shrink-0">
+<div class="p-md pb-sm border-b border-outline-variant/50">
+<h2 class="font-headline-md text-on-surface text-[16px]">设置</h2>
+</div>
+<nav class="flex-1 overflow-y-auto py-sm px-sm flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-body-sm text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+                        通用
+                    </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-body-sm text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">cloud</span>
+                        AI 服务
+                    </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-surface-variant text-on-surface font-medium border-l-2 border-primary" href="#">
+<span class="material-symbols-outlined text-[18px] text-primary">dns</span>
+                        本地依赖
+                    </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-body-sm text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">database</span>
+                        输出与存储
+                    </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-body-sm text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">edit_note</span>
+                        提示词
+                    </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-body-sm text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">analytics</span>
+                        数据
+                    </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-body-sm text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">support_agent</span>
+                        更新与支持
+                    </a>
+</nav>
+<div class="p-md mt-auto bg-surface-container-lowest border-t border-outline-variant/50">
+<div class="flex items-start gap-2 text-on-surface-variant text-body-sm">
+<span class="material-symbols-outlined text-[16px] mt-0.5 text-primary opacity-80">security</span>
+<p class="text-[11px] leading-relaxed">设置保存在本机。<br/>敏感信息不会显示在页面中。</p>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 h-full overflow-y-auto bg-background relative">
+<div class="max-w-4xl mx-auto p-xl">
+<!-- Page Header -->
+<div class="flex items-start justify-between mb-xl">
+<div class="flex-1 pr-xl">
+<h1 class="font-headline-md text-on-surface text-[24px] mb-2">本地依赖</h1>
+<p class="text-on-surface-variant text-body-sm leading-relaxed max-w-2xl">
+                                检查和配置视频处理、声音克隆、数字人生成及平台授权所需的本地工具与服务。
+                            </p>
+</div>
+<div class="flex items-center gap-3 shrink-0">
+<div class="text-[11px] text-on-surface-variant/70 mr-2 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">history</span>
+                                最近检查：刚刚
+                            </div>
+<button class="h-8 px-3 flex items-center justify-center gap-2 rounded border border-outline-variant text-on-surface text-body-sm hover:bg-surface-variant hover:border-outline transition-all">
+<span class="material-symbols-outlined text-[16px]">folder_open</span>
+                                配置目录
+                            </button>
+<button class="h-8 w-8 flex items-center justify-center rounded border border-outline-variant text-on-surface hover:bg-surface-variant hover:border-outline transition-all" title="刷新状态">
+<span class="material-symbols-outlined text-[16px]">refresh</span>
+</button>
+<button class="h-8 px-4 flex items-center justify-center gap-2 bg-primary text-on-primary rounded font-medium text-body-sm hover:bg-primary-fixed transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[16px]">fact_check</span>
+                                检查全部依赖
+                            </button>
+</div>
+</div>
+<!-- Filter Tabs & Disclaimer -->
+<div class="flex items-center justify-between border-b border-outline-variant mb-lg pb-0">
+<div class="flex items-center gap-1">
+<button class="px-4 py-2 text-primary font-medium text-body-sm border-b-2 border-primary">
+                                全部 (5)
+                            </button>
+<button class="px-4 py-2 text-on-surface-variant hover:text-on-surface text-body-sm border-b-2 border-transparent transition-colors">
+                                正常 (3)
+                            </button>
+<button class="px-4 py-2 text-on-surface-variant hover:text-on-surface text-body-sm border-b-2 border-transparent transition-colors flex items-center gap-1.5">
+                                需配置
+                                <span class="bg-status-warning/20 text-status-warning text-[10px] px-1.5 py-0.5 rounded-sm font-mono-label">1</span>
+</button>
+<button class="px-4 py-2 text-on-surface-variant hover:text-on-surface text-body-sm border-b-2 border-transparent transition-colors flex items-center gap-1.5">
+                                不可用
+                                <span class="bg-status-error/20 text-status-error text-[10px] px-1.5 py-0.5 rounded-sm font-mono-label">1</span>
+</button>
+</div>
+</div>
+<div class="bg-surface-container-low border border-outline-variant/50 rounded-lg p-3 mb-md flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-[18px] mt-0.5">info</span>
+<p class="text-body-sm text-on-surface-variant leading-relaxed">
+                            依赖检查只读取本机工具、路径和服务状态。安装、启动或修改配置前将明确请求用户操作。
+                        </p>
+</div>
+<!-- Dependency List -->
+<div class="flex flex-col gap-2">
+<!-- Item 1: FFmpeg (Normal) -->
+<div class="bg-surface border border-outline-variant rounded-lg p-4 flex flex-col gap-3 hover:border-outline transition-colors">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center border border-outline-variant/50">
+<span class="material-symbols-outlined text-on-surface text-[18px]">movie</span>
+</div>
+<div>
+<h3 class="font-medium text-on-surface text-body-sm flex items-center gap-2">
+                                            FFmpeg
+                                            <span class="flex items-center gap-1 text-status-success text-[11px] bg-status-success/10 px-1.5 py-0.5 rounded">
+<span class="material-symbols-outlined text-[12px]">check_circle</span>
+                                                正常
+                                            </span>
+</h3>
+<p class="text-[11px] text-on-surface-variant mt-0.5 font-mono-label">版本: 7.1 (需 6.0+) • 路径: /opt/homebrew/bin/ffmpeg</p>
+</div>
+</div>
+</div>
+<div class="text-[12px] text-on-surface-variant border-t border-outline-variant/30 pt-3 flex items-start gap-2">
+<span class="material-symbols-outlined text-[14px] mt-0.5 opacity-70">data_object</span>
+                                用途: 视频转码、音频提取、成片与封面处理.
+                            </div>
+</div>
+<!-- Item 2: Python (Normal) -->
+<div class="bg-surface border border-outline-variant rounded-lg p-4 flex flex-col gap-3 hover:border-outline transition-colors">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center border border-outline-variant/50">
+<span class="material-symbols-outlined text-on-surface text-[18px]">terminal</span>
+</div>
+<div>
+<h3 class="font-medium text-on-surface text-body-sm flex items-center gap-2">
+                                            Python
+                                            <span class="flex items-center gap-1 text-status-success text-[11px] bg-status-success/10 px-1.5 py-0.5 rounded">
+<span class="material-symbols-outlined text-[12px]">check_circle</span>
+                                                正常
+                                            </span>
+</h3>
+<p class="text-[11px] text-on-surface-variant mt-0.5 font-mono-label">版本: 3.12.4 (需 3.10+) • 路径: /opt/homebrew/bin/python3</p>
+</div>
+</div>
+</div>
+<div class="text-[12px] text-on-surface-variant border-t border-outline-variant/30 pt-3 flex items-start gap-2">
+<span class="material-symbols-outlined text-[14px] mt-0.5 opacity-70">data_object</span>
+                                用途: 本地模型服务和长任务运行环境.
+                            </div>
+</div>
+<!-- Item 3: CosyVoice (Needs Config) -->
+<div class="bg-surface border border-status-warning/40 rounded-lg p-4 flex flex-col gap-3 hover:border-status-warning/60 transition-colors">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center border border-status-warning/30">
+<span class="material-symbols-outlined text-status-warning text-[18px]">record_voice_over</span>
+</div>
+<div>
+<h3 class="font-medium text-on-surface text-body-sm flex items-center gap-2">
+                                            CosyVoice
+                                            <span class="flex items-center gap-1 text-status-warning text-[11px] bg-status-warning/10 px-1.5 py-0.5 rounded">
+<span class="material-symbols-outlined text-[12px]">warning</span>
+                                                需配置
+                                            </span>
+</h3>
+<p class="text-[11px] text-on-surface-variant mt-0.5 font-mono-label">版本: 未检测 • 地址: 未设置</p>
+</div>
+</div>
+<button class="h-7 px-3 flex items-center justify-center bg-surface-variant text-on-surface text-[12px] rounded border border-outline-variant hover:bg-outline-variant transition-colors">
+                                    完成配置
+                                </button>
+</div>
+<div class="text-[12px] text-on-surface-variant border-t border-outline-variant/30 pt-3 flex items-start gap-2">
+<span class="material-symbols-outlined text-[14px] mt-0.5 opacity-70">data_object</span>
+                                用途: 声音克隆与语音合成.
+                            </div>
+</div>
+<!-- Item 4: HeyGem (Unavailable / Expanded) -->
+<div class="bg-surface border border-status-error/50 rounded-lg overflow-hidden ring-1 ring-status-error/20 shadow-[0_0_15px_rgba(229,107,111,0.05)]">
+<!-- Header -->
+<div class="p-4 bg-surface-container-lowest flex items-center justify-between border-b border-outline-variant/30">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-status-error/10 flex items-center justify-center border border-status-error/30">
+<span class="material-symbols-outlined text-status-error text-[18px]">smart_toy</span>
+</div>
+<div>
+<h3 class="font-medium text-on-surface text-body-sm flex items-center gap-2">
+                                            HeyGem
+                                            <span class="flex items-center gap-1 text-status-error text-[11px] bg-status-error/10 px-1.5 py-0.5 rounded">
+<span class="material-symbols-outlined text-[12px]">error</span>
+                                                不可用
+                                            </span>
+</h3>
+<div class="flex items-center gap-3 mt-0.5">
+<span class="text-[11px] text-on-surface-variant font-mono-label">版本: V2</span>
+<span class="text-[11px] text-on-surface-variant font-mono-label">地址: http://127.0.0.1:8383</span>
+<span class="text-[11px] text-status-error font-mono-label">状态: 未启动</span>
+</div>
+</div>
+</div>
+<button class="h-6 w-6 flex items-center justify-center rounded-full hover:bg-surface-variant text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[18px]">expand_less</span>
+</button>
+</div>
+<!-- Expanded Detail Body -->
+<div class="p-4 bg-surface flex flex-col gap-4">
+<!-- Diagnosis -->
+<div class="bg-surface-container-low border border-status-error/20 rounded p-3 flex items-start gap-2">
+<span class="material-symbols-outlined text-status-error text-[16px] mt-0.5">medical_information</span>
+<p class="text-body-sm text-on-surface leading-relaxed">
+                                        诊断: 配置地址有效，但 HeyGem 服务没有响应。请确认本地服务已经启动，并检查端口是否被其他应用占用。
+                                    </p>
+</div>
+<!-- Health Checks -->
+<div class="grid grid-cols-3 gap-2">
+<div class="border border-outline-variant/50 rounded p-2 flex flex-col gap-1 bg-surface-container-lowest">
+<span class="text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">Address Validation</span>
+<div class="flex items-center gap-1.5 text-status-success text-[12px]">
+<span class="material-symbols-outlined text-[14px]">check</span> Passed
+                                        </div>
+</div>
+<div class="border border-status-error/30 rounded p-2 flex flex-col gap-1 bg-status-error/5">
+<span class="text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">Process Availability</span>
+<div class="flex items-center gap-1.5 text-status-error text-[12px]">
+<span class="material-symbols-outlined text-[14px]">close</span> Failed
+                                        </div>
+</div>
+<div class="border border-status-error/30 rounded p-2 flex flex-col gap-1 bg-status-error/5">
+<span class="text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">Service Response</span>
+<div class="flex items-center gap-1.5 text-status-error text-[12px]">
+<span class="material-symbols-outlined text-[14px]">close</span> Failed
+                                        </div>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex items-center gap-2 pt-2 border-t border-outline-variant/30">
+<button class="h-8 px-4 flex items-center justify-center gap-1.5 bg-primary-container text-on-primary-container text-body-sm font-medium rounded hover:bg-primary-container/80 transition-colors">
+<span class="material-symbols-outlined text-[16px]">play_arrow</span>
+                                        启动服务
+                                    </button>
+<button class="h-8 px-3 flex items-center justify-center gap-1.5 bg-surface-variant text-on-surface text-body-sm rounded hover:bg-outline-variant transition-colors">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+                                        编辑服务地址
+                                    </button>
+<button class="h-8 px-3 flex items-center justify-center gap-1.5 bg-surface-variant text-on-surface text-body-sm rounded hover:bg-outline-variant transition-colors">
+<span class="material-symbols-outlined text-[16px]">sync</span>
+                                        重新检查
+                                    </button>
+<div class="flex-1"></div>
+<button class="h-8 px-3 flex items-center justify-center gap-1.5 text-on-surface-variant text-body-sm rounded hover:bg-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[16px]">receipt_long</span>
+                                        查看日志
+                                    </button>
+</div>
+</div>
+</div>
+<!-- Item 5: Browser Automation (Normal) -->
+<div class="bg-surface border border-outline-variant rounded-lg p-4 flex flex-col gap-3 hover:border-outline transition-colors">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center border border-outline-variant/50">
+<span class="material-symbols-outlined text-on-surface text-[18px]">public</span>
+</div>
+<div>
+<h3 class="font-medium text-on-surface text-body-sm flex items-center gap-2">
+                                            浏览器自动化
+                                            <span class="flex items-center gap-1 text-status-success text-[11px] bg-status-success/10 px-1.5 py-0.5 rounded">
+<span class="material-symbols-outlined text-[12px]">check_circle</span>
+                                                正常
+                                            </span>
+</h3>
+<p class="text-[11px] text-on-surface-variant mt-0.5 font-mono-label">引擎: Playwright • 浏览器: Chromium 126.0</p>
+</div>
+</div>
+</div>
+<div class="text-[12px] text-on-surface-variant border-t border-outline-variant/30 pt-3 flex items-start gap-2">
+<span class="material-symbols-outlined text-[14px] mt-0.5 opacity-70">data_object</span>
+                                用途: 平台官方登录、账号授权及后续发布流程.
+                            </div>
+</div>
+</div>
+<!-- Bottom spacing -->
+<div class="h-xl"></div>
+</div>
+</main>
+</div>
+</div>
+</body></html>

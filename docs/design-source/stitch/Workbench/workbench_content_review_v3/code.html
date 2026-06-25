@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Workbench: Content Review v3 - Mirax AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-tertiary-fixed-variant": "#5e4118",
+                      "secondary-fixed-dim": "#bcc7de",
+                      "primary-fixed": "#cce5ff",
+                      "surface-container-lowest": "#060e20",
+                      "secondary-fixed": "#d8e3fb",
+                      "inverse-surface": "#dae2fd",
+                      "on-tertiary": "#452b03",
+                      "on-surface": "#dae2fd",
+                      "surface-tint": "#abcae8",
+                      "tertiary": "#eabf8a",
+                      "surface-bright": "#31394d",
+                      "error": "#ffb4ab",
+                      "secondary": "#bcc7de",
+                      "primary": "#abcae8",
+                      "on-background": "#dae2fd",
+                      "tertiary-container": "#735328",
+                      "on-primary-container": "#b5d4f2",
+                      "on-primary-fixed": "#001d31",
+                      "background": "#0b1326",
+                      "tertiary-fixed-dim": "#eabf8a",
+                      "tertiary-fixed": "#ffddb6",
+                      "outline-variant": "#42474d",
+                      "surface-variant": "#2d3449",
+                      "on-secondary-container": "#aeb9d0",
+                      "surface-dim": "#0b1326",
+                      "on-tertiary-fixed": "#2a1800",
+                      "inverse-on-surface": "#283044",
+                      "surface": "#0b1326",
+                      "on-secondary-fixed-variant": "#3c475a",
+                      "on-surface-variant": "#c3c7cd",
+                      "surface-container-highest": "#2d3449",
+                      "secondary-container": "#3e495d",
+                      "outline": "#8d9197",
+                      "on-tertiary-container": "#f5c993",
+                      "surface-container-high": "#222a3d",
+                      "primary-container": "#3e5c76",
+                      "on-error": "#690005",
+                      "error-container": "#93000a",
+                      "on-primary": "#12334b",
+                      "on-primary-fixed-variant": "#2b4963",
+                      "on-secondary": "#263143",
+                      "on-error-container": "#ffdad6",
+                      "surface-container": "#171f33",
+                      "primary-fixed-dim": "#abcae8",
+                      "on-secondary-fixed": "#111c2d",
+                      "surface-container-low": "#131b2e",
+                      "inverse-primary": "#43617c"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "sm": "8px",
+                      "md": "16px",
+                      "control-panel-width": "320px",
+                      "xl": "32px",
+                      "lg": "24px",
+                      "xs": "4px",
+                      "sidebar-width": "64px",
+                      "base": "8px"
+              },
+              "fontFamily": {
+                      "mono-label": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "body-sm": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "mono-label": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "display-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-sm": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #42474d; /* outline-variant */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #8d9197; /* outline */
+        }
+        
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+        }
+      </style>
+</head>
+<body class="bg-background text-on-surface font-body-sm h-screen w-screen overflow-hidden flex flex-col antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- Application Shell -->
+<div class="flex flex-1 h-full overflow-hidden">
+<!-- Left Sidebar (SideNavBar) -->
+<nav class="bg-surface-container w-sidebar-width h-screen fixed left-0 top-0 border-r border-outline-variant flex flex-col items-center py-lg z-50 justify-between">
+<div class="flex flex-col items-center w-full gap-lg">
+<!-- Brand Logo / Avatar Placeholder -->
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center mb-sm text-on-primary-container font-headline-md font-bold cursor-pointer" title="Mirax AI">
+                    M
+                </div>
+<!-- Primary Navigation Tabs -->
+<div class="flex flex-col w-full gap-sm px-xs">
+<div class="group flex flex-col items-center justify-center py-sm cursor-pointer active:scale-95 text-primary bg-secondary-container rounded-xl w-full">
+<span class="material-symbols-outlined text-[24px] mb-xs" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-label-caps text-label-caps">工作台</span>
+</div>
+<div class="group flex flex-col items-center justify-center py-sm cursor-pointer active:scale-95 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-xl w-full">
+<span class="material-symbols-outlined text-[24px] mb-xs">mic</span>
+<span class="font-label-caps text-label-caps">声音</span>
+</div>
+<div class="group flex flex-col items-center justify-center py-sm cursor-pointer active:scale-95 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-xl w-full">
+<span class="material-symbols-outlined text-[24px] mb-xs">face</span>
+<span class="font-label-caps text-label-caps">形象</span>
+</div>
+<div class="group flex flex-col items-center justify-center py-sm cursor-pointer active:scale-95 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-xl w-full">
+<span class="material-symbols-outlined text-[24px] mb-xs">folder_open</span>
+<span class="font-label-caps text-label-caps">素材</span>
+</div>
+<div class="group flex flex-col items-center justify-center py-sm cursor-pointer active:scale-95 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-xl w-full">
+<span class="material-symbols-outlined text-[24px] mb-xs">task</span>
+<span class="font-label-caps text-label-caps">任务</span>
+</div>
+</div>
+</div>
+<!-- Footer Navigation Tabs -->
+<div class="flex flex-col w-full gap-sm px-xs">
+<div class="group flex flex-col items-center justify-center py-sm cursor-pointer active:scale-95 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-xl w-full">
+<span class="material-symbols-outlined text-[24px] mb-xs">account_circle</span>
+<span class="font-label-caps text-label-caps">账号</span>
+</div>
+<div class="group flex flex-col items-center justify-center py-sm cursor-pointer active:scale-95 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-xl w-full">
+<span class="material-symbols-outlined text-[24px] mb-xs">settings</span>
+<span class="font-label-caps text-label-caps">设置</span>
+</div>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 ml-sidebar-width flex flex-col h-full bg-background relative mb-16"> <!-- mb-16 for Footer -->
+<!-- TopAppBar Wrapper (Includes Row 1 & Row 2) -->
+<header class="bg-surface w-full flex flex-col border-b border-outline-variant z-40 shrink-0">
+<!-- Top Bar Row 1: Global Actions & Project Title -->
+<div class="h-12 flex items-center justify-between px-lg border-b border-outline-variant/50">
+<div class="flex items-center gap-md">
+<button class="text-on-surface-variant hover:text-on-surface transition-colors w-8 h-8 flex items-center justify-center rounded hover:bg-surface-container-high cursor-pointer">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-semibold text-on-surface">口播视频｜夏季通勤穿搭</h1>
+<div class="flex items-center gap-xs ml-lg px-sm py-xs bg-surface-container rounded border border-outline-variant text-on-surface-variant cursor-default">
+<span class="material-symbols-outlined text-[14px]">cloud_done</span>
+<span class="font-mono-label text-mono-label">已自动保存 (10:42 AM)</span>
+</div>
+</div>
+<div class="flex items-center gap-sm">
+<button class="text-on-surface-variant hover:text-on-surface transition-colors w-8 h-8 flex items-center justify-center rounded hover:bg-surface-container-high cursor-pointer relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full border border-surface"></span>
+</button>
+<button class="text-on-surface-variant hover:text-on-surface transition-colors w-8 h-8 flex items-center justify-center rounded hover:bg-surface-container-high cursor-pointer">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-tertiary-container border border-outline-variant overflow-hidden ml-sm cursor-pointer hover:border-primary transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined text-on-tertiary-container text-[20px]">person</span>
+</div>
+</div>
+</div>
+<!-- Top Bar Row 2: Workflow Navigator -->
+<div class="h-12 flex items-center px-lg overflow-x-auto no-scrollbar">
+<nav class="flex items-center gap-xs w-full">
+<!-- Stage 1 -->
+<div class="flex items-center gap-sm text-primary group cursor-pointer shrink-0">
+<span class="material-symbols-outlined text-[16px] text-[#4ade80]">check_circle</span> <!-- Using a specific green for completed states inline as instructed to avoid generic classes if possible, but adhering to named colors is better. Let's use text-primary for now to stay strict to config, or an icon color. Actually, 'completed' isn't explicitly defined in config, using text-secondary-fixed-dim for finished or primary. Let's use primary. -->
+<span class="font-label-caps text-label-caps">素材解析</span>
+</div>
+<div class="w-8 h-px bg-outline-variant mx-xs shrink-0"></div>
+<!-- Stage 2 -->
+<div class="flex items-center gap-sm text-primary group cursor-pointer shrink-0">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span class="font-label-caps text-label-caps">文案改写</span>
+</div>
+<div class="w-8 h-px bg-outline-variant mx-xs shrink-0"></div>
+<!-- Stage 3 -->
+<div class="flex items-center gap-sm text-primary group cursor-pointer shrink-0">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span class="font-label-caps text-label-caps">声音克隆</span>
+</div>
+<div class="w-8 h-px bg-outline-variant mx-xs shrink-0"></div>
+<!-- Stage 4 -->
+<div class="flex items-center gap-sm text-primary group cursor-pointer shrink-0">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span class="font-label-caps text-label-caps">语音合成</span>
+</div>
+<div class="w-8 h-px bg-outline-variant mx-xs shrink-0"></div>
+<!-- Stage 5 -->
+<div class="flex items-center gap-sm text-primary group cursor-pointer shrink-0">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span class="font-label-caps text-label-caps">形象生成</span>
+</div>
+<div class="w-8 h-px bg-outline-variant mx-xs shrink-0"></div>
+<!-- Stage 6 -->
+<div class="flex items-center gap-sm text-primary group cursor-pointer shrink-0">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span class="font-label-caps text-label-caps">视频合成</span>
+</div>
+<div class="w-8 h-px bg-primary mx-xs shrink-0"></div>
+<!-- Stage 7 (ACTIVE) -->
+<div class="flex items-center gap-sm text-primary border-b-2 border-primary pb-1 mt-1 shrink-0 px-xs">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">rate_review</span>
+<span class="font-label-caps text-label-caps">内容复核</span>
+</div>
+<div class="w-8 h-px bg-outline-variant mx-xs shrink-0"></div>
+<!-- Stage 8 -->
+<div class="flex items-center gap-sm text-on-surface-variant group cursor-pointer shrink-0">
+<span class="material-symbols-outlined text-[16px]">publish</span>
+<span class="font-label-caps text-label-caps">发布</span>
+</div>
+</nav>
+</div>
+</header>
+<!-- Workspace: 55/45 Split -->
+<main class="flex-1 flex overflow-hidden">
+<!-- Left Pane: Controls & Properties (55%) -->
+<div class="w-[55%] h-full flex flex-col border-r border-outline-variant bg-surface overflow-y-auto">
+<div class="p-lg flex flex-col gap-xl">
+<!-- Section: 发布文案 -->
+<section class="flex flex-col gap-md">
+<div class="flex items-center gap-sm border-b border-outline-variant/50 pb-sm">
+<span class="material-symbols-outlined text-primary text-[18px]">edit_document</span>
+<h2 class="font-headline-md text-body-md font-semibold text-on-surface">发布文案</h2>
+</div>
+<!-- Title Input -->
+<div class="flex flex-col gap-xs">
+<div class="flex justify-between items-end">
+<label class="font-mono-label text-mono-label text-on-surface-variant">标题</label>
+<span class="font-mono-label text-mono-label text-on-surface-variant">22/30</span>
+</div>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded px-sm py-2 text-on-surface font-body-sm focus:border-primary focus:ring-0 focus:outline-none transition-colors" type="text" value="夏季通勤穿搭：清爽、专业又不失松弛感"/>
+</div>
+<!-- Description Textarea -->
+<div class="flex flex-col gap-xs">
+<div class="flex justify-between items-end">
+<label class="font-mono-label text-mono-label text-on-surface-variant">正文描述</label>
+</div>
+<textarea class="w-full bg-surface-container-low border border-outline-variant rounded px-sm py-2 text-on-surface font-body-sm focus:border-primary focus:ring-0 focus:outline-none transition-colors resize-none" rows="4">夏天通勤怎么穿？教你三套万能穿搭公式，清爽显白更有气质。
+
+快来试试吧！
+#职场穿搭 #夏季穿搭</textarea>
+</div>
+<!-- Topics/Tags -->
+<div class="flex flex-col gap-sm">
+<label class="font-mono-label text-mono-label text-on-surface-variant">话题标签</label>
+<div class="flex flex-wrap gap-sm">
+<div class="flex items-center gap-xs px-sm py-1 bg-surface-container-high border border-outline-variant rounded-full text-on-surface-variant font-body-sm hover:border-primary cursor-pointer transition-colors group">
+<span>#夏季穿搭</span>
+<span class="material-symbols-outlined text-[14px] opacity-0 group-hover:opacity-100 transition-opacity">close</span>
+</div>
+<div class="flex items-center gap-xs px-sm py-1 bg-surface-container-high border border-outline-variant rounded-full text-on-surface-variant font-body-sm hover:border-primary cursor-pointer transition-colors group">
+<span>#通勤穿搭</span>
+<span class="material-symbols-outlined text-[14px] opacity-0 group-hover:opacity-100 transition-opacity">close</span>
+</div>
+<div class="flex items-center gap-xs px-sm py-1 bg-surface-container-high border border-outline-variant rounded-full text-on-surface-variant font-body-sm hover:border-primary cursor-pointer transition-colors group">
+<span>#职场穿搭</span>
+<span class="material-symbols-outlined text-[14px] opacity-0 group-hover:opacity-100 transition-opacity">close</span>
+</div>
+<div class="flex items-center gap-xs px-sm py-1 bg-surface-container-high border border-outline-variant rounded-full text-on-surface-variant font-body-sm hover:border-primary cursor-pointer transition-colors group">
+<span>#清爽搭配</span>
+<span class="material-symbols-outlined text-[14px] opacity-0 group-hover:opacity-100 transition-opacity">close</span>
+</div>
+<button class="flex items-center gap-xs px-sm py-1 border border-dashed border-outline-variant rounded-full text-on-surface-variant font-body-sm hover:text-primary hover:border-primary cursor-pointer transition-colors">
+<span class="material-symbols-outlined text-[14px]">add</span>
+<span>添加标签</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Section: 视频封面 -->
+<section class="flex flex-col gap-md">
+<div class="flex items-center justify-between border-b border-outline-variant/50 pb-sm">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-[18px]">image</span>
+<h2 class="font-headline-md text-body-md font-semibold text-on-surface">视频封面</h2>
+</div>
+<div class="flex gap-sm">
+<button class="font-label-caps text-label-caps text-primary hover:text-primary-fixed transition-colors flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]">upload</span> 上传封面
+                                    </button>
+</div>
+</div>
+<!-- Thumbnail Grid (9:16) -->
+<div class="grid grid-cols-3 gap-md">
+<!-- Thumb 1 (Active) -->
+<div class="relative group cursor-pointer aspect-[9/16] rounded overflow-hidden border-2 border-primary">
+<img class="w-full h-full object-cover" data-alt="A medium shot of an elegant Asian female professional presenter standing in a bright, modern studio. She is wearing a stylish light grey blazer over a crisp white blouse with dark tailored trousers. She has a warm, confident smile, facing directly forward. The lighting is soft, even, and high-key, creating a clean corporate aesthetic with a white background. Photorealistic style, highly detailed." src="https://lh3.googleusercontent.com/aida/AP1WRLv6aK-rXcDKgNtmuoOTxY_J2OtZbw-lqFJ9THbob6cXb0IMc0MwJHHJdyEpzTmUPQH5lNYXJeJaOioQ5PoYy3WFX6_7L1_tV71J7J4SFTazdf-kEkeOdqvVAvMZlcj_hlscSYG0mi1aPJYDifMwE9hbq7dpHu8bI2_n2bD1ergvp-Xat93hf1QiYHM0yXAaYqNM9OipKjuWbXcbD5qH6bbIts07awRCOWl972l89Q2o9P2fnwAKkP30RA"/>
+<div class="absolute inset-0 bg-surface/20"></div>
+<div class="absolute top-sm right-sm bg-primary text-on-primary rounded-full w-5 h-5 flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">check</span>
+</div>
+</div>
+<!-- Thumb 2 -->
+<div class="relative group cursor-pointer aspect-[9/16] rounded overflow-hidden border border-outline-variant hover:border-primary transition-colors opacity-70 hover:opacity-100">
+<img class="w-full h-full object-cover" data-alt="A medium shot of an elegant Asian female professional presenter standing in a bright, modern studio, similar setup but slightly different pose, looking professional and calm." src="https://lh3.googleusercontent.com/aida/AP1WRLv6aK-rXcDKgNtmuoOTxY_J2OtZbw-lqFJ9THbob6cXb0IMc0MwJHHJdyEpzTmUPQH5lNYXJeJaOioQ5PoYy3WFX6_7L1_tV71J7J4SFTazdf-kEkeOdqvVAvMZlcj_hlscSYG0mi1aPJYDifMwE9hbq7dpHu8bI2_n2bD1ergvp-Xat93hf1QiYHM0yXAaYqNM9OipKjuWbXcbD5qH6bbIts07awRCOWl972l89Q2o9P2fnwAKkP30RA"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-sm">
+<span class="font-mono-label text-mono-label text-on-surface">00:04</span>
+</div>
+</div>
+<!-- Thumb 3 -->
+<div class="relative group cursor-pointer aspect-[9/16] rounded overflow-hidden border border-outline-variant hover:border-primary transition-colors opacity-70 hover:opacity-100">
+<img class="w-full h-full object-cover" data-alt="A medium shot of an elegant Asian female professional presenter standing in a bright, modern studio, mid-speech gesture, professional lighting and white background." src="https://lh3.googleusercontent.com/aida/AP1WRLv6aK-rXcDKgNtmuoOTxY_J2OtZbw-lqFJ9THbob6cXb0IMc0MwJHHJdyEpzTmUPQH5lNYXJeJaOioQ5PoYy3WFX6_7L1_tV71J7J4SFTazdf-kEkeOdqvVAvMZlcj_hlscSYG0mi1aPJYDifMwE9hbq7dpHu8bI2_n2bD1ergvp-Xat93hf1QiYHM0yXAaYqNM9OipKjuWbXcbD5qH6bbIts07awRCOWl972l89Q2o9P2fnwAKkP30RA"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-sm">
+<span class="font-mono-label text-mono-label text-on-surface">00:12</span>
+</div>
+</div>
+</div>
+<div class="flex gap-sm">
+<button class="flex-1 flex items-center justify-center gap-xs px-md py-sm bg-surface-container-high border border-outline-variant hover:bg-surface-container-highest transition-colors rounded text-on-surface font-body-sm">
+<span class="material-symbols-outlined text-[16px]">flip_camera_ios</span>
+                                    更换画面
+                                </button>
+<button class="flex-1 flex items-center justify-center gap-xs px-md py-sm bg-surface-container-high border border-outline-variant hover:bg-surface-container-highest transition-colors rounded text-on-surface font-body-sm">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+                                    编辑封面
+                                </button>
+</div>
+</section>
+<!-- Section: 内容检查 -->
+<section class="flex flex-col gap-md">
+<div class="flex items-center gap-sm border-b border-outline-variant/50 pb-sm">
+<span class="material-symbols-outlined text-primary text-[18px]">fact_check</span>
+<h2 class="font-headline-md text-body-md font-semibold text-on-surface">内容检查</h2>
+</div>
+<div class="grid grid-cols-2 gap-y-sm gap-x-md bg-surface-container-low p-md rounded border border-outline-variant/30">
+<div class="flex items-center gap-xs text-primary font-body-sm">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span>视频文件 (已就绪)</span>
+</div>
+<div class="flex items-center gap-xs text-primary font-body-sm">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span>人声音轨 (已就绪)</span>
+</div>
+<div class="flex items-center gap-xs text-primary font-body-sm">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span>字幕 (已确认)</span>
+</div>
+<div class="flex items-center gap-xs text-primary font-body-sm">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span>背景音乐 (已确认)</span>
+</div>
+<div class="flex items-center gap-xs text-primary font-body-sm">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span>标题 (已填写)</span>
+</div>
+<div class="flex items-center gap-xs text-primary font-body-sm">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span>描述 (已填写)</span>
+</div>
+<div class="flex items-center gap-xs text-primary font-body-sm">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span>话题标签 (已填写)</span>
+</div>
+<div class="flex items-center gap-xs text-primary font-body-sm">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span>视频封面 (已选择)</span>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- Right Pane: Global Preview (45%) -->
+<div class="w-[45%] h-full bg-surface-dim flex flex-col relative">
+<!-- Title Bar for Preview -->
+<div class="h-12 border-b border-outline-variant flex items-center justify-between px-lg bg-surface/50 backdrop-blur shrink-0 z-10">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">preview</span>
+<h2 class="font-headline-md text-body-md font-semibold text-on-surface">最终预览</h2>
+<span class="px-2 py-0.5 bg-tertiary-container/30 text-tertiary border border-tertiary-container rounded font-mono-label text-[10px] ml-sm">待确认</span>
+</div>
+<div class="flex gap-md font-mono-label text-mono-label text-on-surface-variant">
+<span>01:40</span>
+<span>1080x1920</span>
+</div>
+</div>
+<!-- Video Preview Container -->
+<div class="flex-1 flex flex-col items-center justify-center p-lg overflow-y-auto">
+<!-- 9:16 Video Player Mockup -->
+<div class="relative aspect-[9/16] w-full max-w-[320px] bg-black rounded-lg overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.5)] border border-outline-variant/50 group">
+<!-- Video Poster/Frame -->
+<img class="w-full h-full object-cover opacity-90" data-alt="A medium shot of an elegant Asian female professional presenter standing in a bright, modern studio. She is wearing a stylish light grey blazer over a crisp white blouse with dark tailored trousers. She has a warm, confident smile, facing directly forward. The lighting is soft, even, and high-key, creating a clean corporate aesthetic with a white background. Photorealistic style, highly detailed." src="https://lh3.googleusercontent.com/aida/AP1WRLv6aK-rXcDKgNtmuoOTxY_J2OtZbw-lqFJ9THbob6cXb0IMc0MwJHHJdyEpzTmUPQH5lNYXJeJaOioQ5PoYy3WFX6_7L1_tV71J7J4SFTazdf-kEkeOdqvVAvMZlcj_hlscSYG0mi1aPJYDifMwE9hbq7dpHu8bI2_n2bD1ergvp-Xat93hf1QiYHM0yXAaYqNM9OipKjuWbXcbD5qH6bbIts07awRCOWl972l89Q2o9P2fnwAKkP30RA"/>
+<!-- Play Button Overlay -->
+<div class="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors cursor-pointer">
+<div class="w-16 h-16 rounded-full bg-surface/80 backdrop-blur border border-outline-variant flex items-center justify-center hover:bg-primary transition-colors hover:border-primary group/play">
+<span class="material-symbols-outlined text-[32px] text-on-surface group-hover/play:text-on-primary ml-1" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</div>
+</div>
+<!-- Subtitles Overlay -->
+<div class="absolute bottom-16 left-0 right-0 px-md text-center">
+<span class="bg-black/60 px-sm py-1 rounded text-white font-body-md text-sm font-semibold tracking-wide drop-shadow-md">
+                                    夏天通勤怎么穿？教你三套万能穿搭公式
+                                </span>
+</div>
+<!-- Video Controls Overlay (Bottom) -->
+<div class="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/80 to-transparent flex items-center px-sm gap-sm opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white text-[20px] cursor-pointer">play_arrow</span>
+<div class="flex-1 h-1 bg-surface-variant rounded-full relative cursor-pointer">
+<div class="absolute left-0 top-0 bottom-0 w-1/3 bg-primary rounded-full"></div>
+<div class="absolute left-1/3 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow"></div>
+</div>
+<span class="font-mono-label text-[10px] text-white">00:00 / 01:40</span>
+<span class="material-symbols-outlined text-white text-[18px] cursor-pointer">volume_up</span>
+<span class="material-symbols-outlined text-white text-[18px] cursor-pointer">fullscreen</span>
+</div>
+</div>
+<!-- Publishing Summary Card -->
+<div class="mt-lg w-full max-w-[320px] bg-surface border border-outline-variant rounded-lg p-md flex flex-col gap-sm">
+<h3 class="font-body-md font-semibold text-on-surface line-clamp-1">夏季通勤穿搭：清爽、专业又不失松弛感</h3>
+<p class="font-body-sm text-on-surface-variant line-clamp-2">夏天通勤怎么穿？教你三套万能穿搭公式，清爽显白更有气质。快来试试吧！</p>
+<div class="flex gap-xs text-primary font-mono-label text-[10px]">
+<span>#夏季穿搭</span>
+<span>#通勤穿搭</span>
+<span>#职场穿搭</span>
+<span>#清爽搭配</span>
+</div>
+</div>
+<!-- Actions for Right Pane -->
+<div class="mt-lg w-full max-w-[320px] flex flex-col gap-sm">
+<button class="w-full py-sm bg-primary text-on-primary rounded font-body-md font-semibold hover:bg-primary-fixed-dim transition-colors flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+                                确认内容
+                            </button>
+<div class="flex gap-sm">
+<button class="flex-1 py-sm bg-surface-container border border-outline-variant text-on-surface-variant rounded font-body-sm hover:bg-surface-container-high transition-colors flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">open_in_new</span>
+                                    打开视频
+                                </button>
+<button class="flex-1 py-sm bg-surface-container border border-outline-variant text-on-surface-variant rounded font-body-sm hover:bg-surface-container-high transition-colors flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">history</span>
+                                    返回重新合成
+                                </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+<!-- Footer (BottomNavBar) -->
+<footer class="bg-surface-container-high w-full h-16 fixed bottom-0 right-0 left-sidebar-width border-t border-outline-variant flex items-center justify-between px-xl z-50">
+<div class="font-mono-label text-mono-label text-on-surface-variant">
+            © 2024 Mirax AI Desktop
+        </div>
+<div class="flex items-center gap-md">
+<button class="border border-outline text-on-surface-variant rounded-xl px-lg py-sm font-label-caps text-label-caps hover:bg-primary-container hover:text-on-primary-container active:scale-98 transition-transform cursor-pointer">
+                上一步
+            </button>
+<button class="border border-outline text-on-surface-variant rounded-xl px-lg py-sm font-label-caps text-label-caps hover:bg-primary-container hover:text-on-primary-container active:scale-98 transition-transform cursor-pointer">
+                保存草稿
+            </button>
+<button class="bg-primary text-on-primary rounded-xl px-lg py-sm font-label-caps text-label-caps hover:bg-primary-fixed-dim active:scale-98 transition-transform cursor-pointer">
+                下一步
+            </button>
+</div>
+</footer>
+</body></html>

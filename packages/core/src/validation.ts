@@ -1,4 +1,4 @@
-import type { ApiKeyProviderConfig, ProjectDraft } from "./types.js";
+import type { ApiKeyProviderConfig, AppSettings, AppTheme, ProjectDraft, PublishMetadata, PublishPlatform } from "./types.js";
 
 export function createApiKeyProviderConfig(config: Omit<ApiKeyProviderConfig, "enabled"> & { enabled?: boolean }): ApiKeyProviderConfig {
   return {
@@ -53,4 +53,71 @@ function isHttpUrl(value: string): boolean {
   } catch {
     return false;
   }
+}
+
+const APP_THEMES: AppTheme[] = ["light", "dark", "system"];
+
+export function createDefaultAppSettings(id = "default"): AppSettings {
+  return {
+    id,
+    theme: "system",
+    outputPaths: {
+      baseOutput: "/Users/Shared/MiraxAI",
+      audioOutput: "/Users/Shared/MiraxAI/audio",
+      videoOutput: "/Users/Shared/MiraxAI/video",
+      draftOutput: "/Users/Shared/MiraxAI/drafts",
+      exportOutput: "/Users/Shared/MiraxAI/export",
+      thumbsOutput: "/Users/Shared/MiraxAI/thumbs",
+    },
+  };
+}
+
+export function validateAppSettings(settings: AppSettings): string[] {
+  const errors: string[] = [];
+
+  if (!settings.id.trim()) {
+    errors.push("设置 ID 不能为空");
+  }
+
+  if (!APP_THEMES.includes(settings.theme)) {
+    errors.push("主题值无效");
+  }
+
+  const paths = settings.outputPaths;
+  if (!paths.baseOutput.trim()) {
+    errors.push("基础输出目录不能为空");
+  }
+
+  return errors;
+}
+
+export function createDefaultPublishMetadata(): PublishMetadata {
+  return {
+    title: "",
+    description: "",
+    tags: [],
+    mode: "draft",
+  };
+}
+
+export function validatePublishMetadata(metadata: PublishMetadata, platforms: PublishPlatform[]): string[] {
+  const errors: string[] = [];
+
+  if (!metadata.title.trim()) {
+    errors.push("请填写标题");
+  }
+
+  if (!metadata.description.trim()) {
+    errors.push("请填写描述");
+  }
+
+  if (platforms.length === 0) {
+    errors.push("至少选择一个发布平台");
+  }
+
+  if (metadata.mode !== "direct" && metadata.mode !== "draft") {
+    errors.push("发布方式无效");
+  }
+
+  return errors;
 }

@@ -2,12 +2,16 @@
 import { AlertCircle, CheckCircle2, FolderOpen, Loader2 } from "lucide-vue-next";
 import { computed, ref } from "vue";
 
-const props = defineProps<{
-  label: string;
-  modelValue?: string;
-  filters?: { name: string; extensions: string[] }[];
-  placeholder?: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    label: string;
+    modelValue?: string;
+    filters?: { name: string; extensions: string[] }[];
+    placeholder?: string;
+    disabled?: boolean;
+  }>(),
+  { disabled: false },
+);
 
 const emit = defineEmits<{
   "update:modelValue": [value: string];
@@ -47,6 +51,8 @@ function onInputChange(event: Event) {
 }
 
 async function pickPath() {
+  if (props.disabled) return;
+
   status.value = "selecting";
   errorMessage.value = "";
 
@@ -97,11 +103,12 @@ async function pickPath() {
       <input
         :value="modelValue"
         :placeholder="placeholder ?? '请输入路径或点击右侧选择文件'"
-        @change="onInputChange"
+        :disabled="disabled"
+        @input="onInputChange"
       />
       <button
         type="button"
-        :disabled="status === 'selecting'"
+        :disabled="disabled || status === 'selecting'"
         :aria-label="label"
         @click="pickPath"
       >

@@ -1,852 +1,757 @@
 <script setup lang="ts">
-import {
-  CheckCircle2,
-  Circle,
-  CloudUpload,
-  ClipboardCheck,
-  FileVideo,
-  FileText,
-  FolderOpen,
-  Image,
-  KeyRound,
-  Link2,
-  Loader2,
-  Moon,
-  Music2,
-  Play,
-  PlayCircle,
-  RefreshCw,
-  Settings2,
-  ShieldCheck,
-  Sun,
-  Upload,
-  UserRound,
-  Volume2,
-  WandSparkles,
-} from "lucide-vue-next";
-import { computed, reactive, ref, watch } from "vue";
-import {
-  createDefaultWorkflow,
-  getNextStage,
-  getStageProgress,
-  updateStageStatus,
-  validateProjectDraft,
-  validateProviderConfig,
-  type ApiKeyProviderConfig,
-  type ProjectDraft,
-  type PublishPlatform,
-  type WorkflowStageId,
-} from "@mirax/core";
+import { Plus, Upload } from "lucide-vue-next";
+import { computed, onMounted, onUnmounted, reactive, ref } from "vue";
+import { type ProjectDraft, type PublishPlatform, type WorkflowStageId } from "@mirax/core";
 import { createMockMediaRenderer } from "@mirax/media-pipeline";
-import { createMockAiProvider, testAiProviderConnection } from "@mirax/provider-ai";
+import { createMockAiProvider } from "@mirax/provider-ai";
 import { SUPPORTED_PLATFORM_PROFILES, createMockPublisher, type PublishAccount } from "@mirax/provider-publish";
 import {
-  DESKTOP_DRAFT_STORAGE_KEY,
-  createDefaultDesktopDraft,
-  restoreDesktopDraft,
-  sanitizeDesktopDraftForStorage,
-  type PersistedDesktopDraft,
-} from "./runtime/desktopDraft.js";
+  createNavigationState,
+  navigateTo,
+  openSettingsSection,
+  returnToWorkbench,
+  type AppView,
+  type SettingsSection,
+} from "./app/navigation.js";
+import AppShell from "./components/app/AppShell.vue";
+import AppDialog from "./components/ui/AppDialog.vue";
+import WorkbenchView from "./components/workbench/WorkbenchView.vue";
+import WorkbenchPreviewPlaceholder from "./components/workbench/WorkbenchPreviewPlaceholder.vue";
+import AvatarGenerationStage from "./components/workbench/stages/AvatarGenerationStage.vue";
+import ContentReviewStage from "./components/workbench/stages/ContentReviewStage.vue";
+import MaterialParsingPreview from "./components/workbench/stages/MaterialParsingPreview.vue";
+import MaterialParsingStage from "./components/workbench/stages/MaterialParsingStage.vue";
+import PublishStage from "./components/workbench/stages/PublishStage.vue";
+import ScriptRewritingStage from "./components/workbench/stages/ScriptRewritingStage.vue";
+import SpeechSynthesisStage from "./components/workbench/stages/SpeechSynthesisStage.vue";
+import VideoCompositionStage from "./components/workbench/stages/VideoCompositionStage.vue";
+import VoiceCloningStage from "./components/workbench/stages/VoiceCloningStage.vue";
+import WorkbenchStagePlaceholder from "./components/workbench/stages/WorkbenchStagePlaceholder.vue";
+import { usePublishPreparation } from "./composables/usePublishPreparation.js";
+import { useAppSettings } from "./composables/useAppSettings.js";
+import { useWorkbenchDraft } from "./composables/useWorkbenchDraft.js";
+import { useWorkflowRuntime } from "./composables/useWorkflowRuntime.js";
+import type { AssetListItem } from "./features/assets/assetModels.js";
+import { mockAccounts } from "./features/accounts/mockAccounts.js";
+import AccountManagementView from "./views/AccountManagementView.vue";
+import SettingsView from "./views/SettingsView.vue";
+import TaskCenterView from "./views/TaskCenterView.vue";
+import VoiceLibraryView from "./views/VoiceLibraryView.vue";
+import AvatarLibraryView from "./views/AvatarLibraryView.vue";
+import MaterialLibraryView from "./views/MaterialLibraryView.vue";
+import { appendPublishTasks } from "./features/task-center/publishTaskStore.js";
 import {
   appendPublishHistoryItem,
   createPublishHistoryItem,
-  listLatestHistoryItems,
-  loadTaskHistory,
-  type PublishHistoryItem,
 } from "./features/task-center/taskHistory.js";
-import DependencyChecklist from "./components/DependencyChecklist.vue";
-import PathPickerButton from "./components/PathPickerButton.vue";
-import StatusBadge from "./components/StatusBadge.vue";
-
-type LogEntry = {
-  id: number;
-  stage: string;
-  message: string;
-};
 
 const aiProvider = createMockAiProvider({ artifactRoot: "/Users/Shared/MiraxAI" });
 const mediaRenderer = createMockMediaRenderer({ artifactRoot: "/Users/Shared/MiraxAI" });
 const publisher = createMockPublisher();
-const workflow = ref(createDefaultWorkflow("demo-project"));
-const activeStageId = ref<WorkflowStageId>("transcribe");
-const running = ref(false);
-const runningMode = ref<"single" | "all" | null>(null);
-const logs = ref<LogEntry[]>([]);
-const publishAccounts = ref<PublishAccount[]>([]);
+
+const { draft, persist } = useWorkbenchDraft();
+const { appSettings } = useAppSettings();
+
 const generatedVideoPath = ref("");
 const generatedCoverPath = ref("");
 const generatedAudioPath = ref("");
+const generatedAudioDuration = ref(0);
 const generatedAvatarPath = ref("");
-const publishTitle = ref("");
-const publishDescription = ref("");
-const publishTags = ref("通勤包, 大容量, 质感");
-const publishMode = ref<"direct" | "draft">("draft");
-const taskHistory = ref<PublishHistoryItem[]>(loadTaskHistory());
-const theme = ref<"light" | "dark">("dark");
+const generatedAvatarDuration = ref(0);
 
-const defaultDraft = createDefaultDesktopDraft();
+// WB-08 内容复核的封面候选使用本地 Stitch 示例媒体，避免依赖外部热链。
+const stitchCoverCandidates = [
+  new URL("./assets/stitch/avatars/qinghe-studio-v2.jpg", import.meta.url).href,
+  new URL("./assets/stitch/avatars/xialan-greenscreen.jpg", import.meta.url).href,
+  new URL("./assets/stitch/avatars/chenyu-office.jpg", import.meta.url).href,
+];
 
-const project = reactive<ProjectDraft>(defaultDraft.project);
+// 形象选择为 session-only 状态，不进入持久化 draft。
+const selectedAvatarId = ref("presenter-a");
+// 转写文案为 session-only 真实数据：transcribe 成功时写入，rewrite 以它为输入。
+const transcriptText = ref("");
+// 声音选择：voiceId 与 voiceName 必须来自真实的 voice-clone executor 结果或样本文件名。
+const selectedVoiceId = ref("");
+const selectedVoiceName = ref("");
+const systemTheme = ref<"light" | "dark">("dark");
+const navigation = reactive(createNavigationState());
+const publishAccounts = ref<PublishAccount[]>([]);
+const selectedPublishAccountId = ref("");
+const showPublishDialog = ref(false);
+const assetLimitedAction = ref<{ view: "voices" | "avatars" | "materials"; action: "import" | "create" } | null>(null);
 
-const providerConfig = reactive<ApiKeyProviderConfig>(defaultDraft.providerConfig);
-const saveStatus = ref("未保存");
-const connectionMessage = ref("未测试");
-
-restoreDraft();
-
-const progress = computed(() => getStageProgress(workflow.value));
-const nextStage = computed(() => getNextStage(workflow.value));
-const activeStage = computed(() => workflow.value.stages.find((stage) => stage.id === activeStageId.value));
-const projectErrors = computed(() => validateProjectDraft(project));
-const providerErrors = computed(() => validateProviderConfig(providerConfig));
-const canRunNext = computed(() => !running.value && projectErrors.value.length === 0 && Boolean(nextStage.value));
-const canRunAll = computed(() => !running.value && projectErrors.value.length === 0 && Boolean(nextStage.value));
 const platformLabels = computed<Record<PublishPlatform, string>>(() =>
   Object.fromEntries(SUPPORTED_PLATFORM_PROFILES.map((profile) => [profile.id, profile.label])) as Record<
     PublishPlatform,
     string
   >,
 );
-const stageStatus = computed(() =>
-  Object.fromEntries(workflow.value.stages.map((stage) => [stage.id, stage.status])),
-);
-const latestHistoryItems = computed(() => listLatestHistoryItems(taskHistory.value).slice(0, 5));
-const selectedAccountText = computed(() => {
-  if (publishAccounts.value.length === 0) {
-    return "选择账号";
-  }
 
-  return project.targetPlatforms
-    .map((platformId) => publishAccounts.value.find((account) => account.platformId === platformId)?.displayName)
-    .filter(Boolean)
-    .join("、");
+const selectedPublishAccount = computed(() =>
+  publishAccounts.value.find((a) => a.id === selectedPublishAccountId.value),
+);
+
+const allAccounts = computed(() => mockAccounts);
+const topbarAssetView = computed(() =>
+  navigation.view === "voices" || navigation.view === "avatars" || navigation.view === "materials"
+    ? navigation.view
+    : null,
+);
+const theme = computed<"light" | "dark">(() =>
+  appSettings.theme === "system" ? systemTheme.value : appSettings.theme,
+);
+let systemThemeQuery: MediaQueryList | undefined;
+
+function syncSystemTheme() {
+  systemTheme.value = systemThemeQuery?.matches ? "dark" : "light";
+}
+
+const publishModeText = computed(() => (prep.metadata.value.mode === "direct" ? "直接发布" : "存为草稿"));
+
+const publishSummary = computed(() => {
+  const metadata = prep.metadata.value;
+  const platforms = project.value.targetPlatforms;
+  return {
+    title: metadata.title || "未填写",
+    description: metadata.description.slice(0, 80) || "未填写",
+    descriptionLong: metadata.description.length > 80,
+    coverText: metadata.coverPath ? "已生成" : "未设置",
+    platformText: platforms.map((platform) => platformLabels.value[platform]).join("、") || "未选择",
+    accountText: selectedPublishAccount.value?.displayName || "未选择账号",
+    modeText: publishModeText.value,
+    videoFile: generatedVideoPath.value ? fileName(generatedVideoPath.value) : "视频尚未生成",
+  };
+});
+const assetLimitedActionTitle = computed(() => {
+  const value = assetLimitedAction.value;
+  if (!value) return "能力暂未接入";
+  if (value.action === "create") return value.view === "voices" ? "新建声音暂未接入" : "新建形象暂未接入";
+  if (value.view === "voices") return "导入声音暂未接入";
+  if (value.view === "avatars") return "导入形象暂未接入";
+  return "导入素材暂未接入";
 });
 
-watch(
-  [project, providerConfig],
-  () => {
-    persistDraft();
+// 这些阶段在 preview 全宽栏内自带左右分栏，frame 的窄 controls 栏由 styles.css 隐藏。
+const fullWidthStages: WorkflowStageId[] = ["rewrite", "voice-clone", "speech", "avatar", "compose", "review", "publish"];
+
+function handleNavigate(view: AppView) {
+  const assetViews: AppView[] = ["voices", "avatars", "materials"];
+  if (assetViews.includes(view) && navigation.view === "workbench") {
+    navigateTo(navigation, view, runtime.activeStage.value?.id);
+  } else if (view === "workbench") {
+    returnToWorkbench(navigation);
+  } else {
+    navigateTo(navigation, view);
+  }
+}
+
+function openAssetLimitedAction(action: "import" | "create") {
+  if (!topbarAssetView.value) return;
+  assetLimitedAction.value = { view: topbarAssetView.value, action };
+}
+
+const project = computed({
+  get: (): ProjectDraft => draft.project,
+  set: (value: ProjectDraft) => {
+    Object.assign(draft.project, value);
   },
-  { deep: true },
-);
+});
 
-async function runNextStage() {
-  const stage = nextStage.value;
-  if (!stage || running.value) {
-    return;
+const prep = usePublishPreparation({
+  projectId: "demo-project",
+  projectName: project.value.name,
+  targetPlatforms: () => project.value.targetPlatforms,
+  publisher,
+});
+
+const runtime = useWorkflowRuntime({
+  projectId: "demo-project",
+  executor: executeStage,
+});
+
+onMounted(async () => {
+  systemThemeQuery = window.matchMedia?.("(prefers-color-scheme: dark)");
+  syncSystemTheme();
+  systemThemeQuery?.addEventListener("change", syncSystemTheme);
+
+  publishAccounts.value = await publisher.listAccounts();
+  if (!selectedPublishAccountId.value && publishAccounts.value.length > 0) {
+    selectedPublishAccountId.value = publishAccounts.value[0].id;
   }
 
-  running.value = true;
-  runningMode.value = "single";
-
-  try {
-    await processStage(stage.id, stage.title);
-  } finally {
-    running.value = false;
-    runningMode.value = null;
+  if (import.meta.env.DEV) {
+    (window as unknown as Record<string, unknown>).__miraxQA = {
+      runtime,
+      navigation,
+      theme,
+      draft,
+      prep,
+      generatedVideoPath,
+      generatedCoverPath,
+      generatedAudioPath,
+      generatedAvatarPath,
+      transcriptText,
+      selectedVoiceId,
+      selectedVoiceName,
+      selectedAvatarId,
+      selectedPublishAccountId,
+      setStage: (stageId: WorkflowStageId) => runtime.goToStage(stageId),
+      setTheme: (value: "light" | "dark") => {
+        appSettings.theme = value;
+      },
+      setView: (view: AppView) => {
+        navigateTo(navigation, view);
+      },
+      setSettingsSection: (section: SettingsSection) => {
+        openSettingsSection(navigation, section);
+      },
+      setDraftProject: (patch: Partial<ProjectDraft>) => {
+        Object.assign(draft.project, patch);
+      },
+      setGeneratedPaths: (paths: {
+        video?: string;
+        cover?: string;
+        audio?: string;
+        avatar?: string;
+      }) => {
+        if (paths.video !== undefined) generatedVideoPath.value = paths.video;
+        if (paths.cover !== undefined) generatedCoverPath.value = paths.cover;
+        if (paths.audio !== undefined) generatedAudioPath.value = paths.audio;
+        if (paths.avatar !== undefined) generatedAvatarPath.value = paths.avatar;
+      },
+    };
   }
-}
+});
 
-async function runAllStages() {
-  if (running.value || projectErrors.value.length > 0) {
-    return;
-  }
+onUnmounted(() => systemThemeQuery?.removeEventListener("change", syncSystemTheme));
 
-  running.value = true;
-  runningMode.value = "all";
+const platformProfiles = computed(() => SUPPORTED_PLATFORM_PROFILES);
 
-  try {
-    let stage = getNextStage(workflow.value);
-    while (stage) {
-      try {
-        await processStage(stage.id, stage.title);
-      } catch {
-        break;
-      }
-
-      if (stageStatus.value[stage.id] !== "completed") {
-        break;
-      }
-
-      stage = getNextStage(workflow.value);
-    }
-  } finally {
-    running.value = false;
-    runningMode.value = null;
-  }
-}
-
-async function runStage(stageId: WorkflowStageId) {
-  if (running.value) {
-    return;
-  }
-
-  const status = stageStatus.value[stageId];
-  if (status === "completed" || status === "running") {
-    return;
-  }
-
-  const stage = workflow.value.stages.find((s) => s.id === stageId);
-  if (!stage) {
-    return;
-  }
-
-  running.value = true;
-  runningMode.value = "single";
-
-  try {
-    await processStage(stageId, stage.title);
-  } catch {
-    // processStage already updates status and logs; swallow here to keep UX on card.
-  } finally {
-    running.value = false;
-    runningMode.value = null;
-  }
-}
-
-function resetWorkflow() {
-  workflow.value = createDefaultWorkflow("demo-project");
-  activeStageId.value = "transcribe";
-  logs.value = [];
-  generatedVideoPath.value = "";
-  generatedCoverPath.value = "";
-  generatedAudioPath.value = "";
-  generatedAvatarPath.value = "";
-  publishAccounts.value = [];
-  publishTitle.value = "";
-  publishDescription.value = "";
-}
-
-async function processStage(stageId: WorkflowStageId, title: string) {
-  resetFailedStage(stageId);
-  activeStageId.value = stageId;
-  workflow.value = updateStageStatus(workflow.value, stageId, "running");
-  addLog(title, "开始执行");
-
-  try {
-    const message = await executeStage(stageId);
-    workflow.value = updateStageStatus(workflow.value, stageId, "completed");
-    addLog(title, message);
-  } catch (error) {
-    if (error instanceof Error && error.message === "PUBLISH_CANCELLED") {
-      workflow.value = updateStageStatus(workflow.value, stageId, "pending");
-      addLog(title, "已取消发布");
-      return;
-    }
-
-    workflow.value = updateStageStatus(workflow.value, stageId, "failed");
-    addLog(title, error instanceof Error ? error.message : "执行失败");
-    throw error;
-  }
-}
-
-function resetFailedStage(stageId: WorkflowStageId) {
-  if (stageStatus.value[stageId] === "failed") {
-    workflow.value = updateStageStatus(workflow.value, stageId, "pending");
-  }
-}
-
-async function executeStage(stageId: WorkflowStageId): Promise<string> {
+async function executeStage(stageId: WorkflowStageId, title: string): Promise<string> {
   switch (stageId) {
     case "transcribe": {
+      await new Promise((resolve) => setTimeout(resolve, 1200));
       const result = await aiProvider.transcribe({
-        sourceVideoPath: project.sourceVideoPath ?? "",
+        sourceVideoPath: project.value.sourceVideoPath ?? "",
         language: "zh-CN",
       });
+      transcriptText.value = result.text;
       return `已提取 ${result.segments.length} 段文案`;
     }
     case "rewrite": {
+      if (!transcriptText.value.trim()) {
+        throw new Error("请先完成素材解析，获取原始文案");
+      }
       const result = await aiProvider.rewriteScript({
-        transcript: "模拟对标视频文案",
-        productName: project.name,
+        transcript: transcriptText.value,
+        productName: project.value.name,
         sellingPoints: ["通勤", "大容量", "质感"],
       });
-      publishTitle.value = result.titleSuggestions[0] ?? project.name;
-      publishDescription.value = result.script.slice(0, 100);
+      project.value = { ...project.value, notes: result.script };
+      prep.updateMetadata({
+        title: result.titleSuggestions[0] ?? project.value.name,
+        description: result.script.slice(0, 100),
+      });
       return `生成 ${result.titleSuggestions.length} 个标题方向`;
     }
     case "voice-clone": {
+      const samplePath = project.value.voiceSamplePath ?? "";
+      if (!samplePath.trim()) {
+        throw new Error("请先选择声音样本文件");
+      }
       const result = await aiProvider.cloneVoice({
-        voiceSamplePath: project.voiceSamplePath ?? "",
-        projectId: workflow.value.projectId,
+        voiceSamplePath: samplePath,
+        projectId: runtime.workflow.value.projectId,
       });
+      selectedVoiceId.value = result.voiceId;
+      selectedVoiceName.value = fileName(result.samplePath || samplePath);
       return `声音配置 ${result.voiceId} 已就绪`;
     }
     case "speech": {
       const result = await aiProvider.synthesizeSpeech({
-        voiceId: "mock-voice-demo-project",
-        script: project.notes ?? project.name,
-        projectId: workflow.value.projectId,
+        voiceId: selectedVoiceId.value || `mock-voice-${runtime.workflow.value.projectId}`,
+        script: project.value.notes ?? project.value.name,
+        projectId: runtime.workflow.value.projectId,
       });
       generatedAudioPath.value = result.audioPath;
+      generatedAudioDuration.value = result.durationSeconds;
       return `音频已生成：${result.audioPath}`;
     }
     case "avatar": {
+      if (!generatedAudioPath.value.trim()) {
+        throw new Error("请先完成语音合成，获取驱动音频");
+      }
       const result = await aiProvider.generateAvatarVideo({
-        audioPath: generatedAudioPath.value || "/Users/Shared/MiraxAI/demo-project/speech.wav",
-        avatarId: "presenter-a",
-        projectId: workflow.value.projectId,
+        audioPath: generatedAudioPath.value,
+        avatarId: selectedAvatarId.value || "presenter-a",
+        projectId: runtime.workflow.value.projectId,
       });
       generatedAvatarPath.value = result.videoPath;
+      generatedAvatarDuration.value = result.durationSeconds;
       return `数字人片段已生成：${result.videoPath}`;
     }
     case "compose": {
+      if (!generatedAvatarPath.value.trim()) {
+        throw new Error("请先完成形象生成，获取数字人视频");
+      }
+      if (!generatedAudioPath.value.trim()) {
+        throw new Error("请先完成语音合成，获取音频");
+      }
       const result = await mediaRenderer.render({
-        projectId: workflow.value.projectId,
-        avatarVideoPath: generatedAvatarPath.value || "/Users/Shared/MiraxAI/demo-project/avatar.mp4",
-        audioPath: generatedAudioPath.value || "/Users/Shared/MiraxAI/demo-project/speech.wav",
-        subtitleText: project.notes ?? project.name,
-        coverText: project.name,
+        projectId: runtime.workflow.value.projectId,
+        avatarVideoPath: generatedAvatarPath.value,
+        audioPath: generatedAudioPath.value,
+        subtitleText: project.value.notes ?? project.value.name,
+        coverText: project.value.name,
       });
       generatedVideoPath.value = result.videoPath;
       generatedCoverPath.value = result.coverPath;
       return `成片已生成：${result.videoPath}`;
     }
-    case "review":
-      return "人工复核清单已通过";
+    case "review": {
+      const videoPath = generatedVideoPath.value;
+      if (!videoPath) {
+        throw new Error("视频尚未生成，无法复核");
+      }
+      if (!prep.canPublish.value) {
+        const reasons = prep.errors.value.join("、") || "发布条件不满足";
+        throw new Error(reasons);
+      }
+      return "内容复核完成";
+    }
     case "publish": {
-      publishAccounts.value = await publisher.listAccounts();
-
-      const platformText = project.targetPlatforms.map((platform) => platformLabels.value[platform]).join("、") || "未选择";
-      const accountText = selectedAccountText.value || "选择账号";
-      const modeText = publishMode.value === "direct" ? "直接发布" : "草稿";
-      const videoPath = generatedVideoPath.value || "未生成";
-
-      const confirmed = window.confirm(
-        `确认创建 ${project.targetPlatforms.length} 个发布任务？\n\n账号：${accountText}\n平台：${platformText}\n发布模式：${modeText}\n视频路径：${videoPath}`,
-      );
-
-      if (!confirmed) {
-        throw new Error("PUBLISH_CANCELLED");
+      const videoPath = generatedVideoPath.value;
+      if (!videoPath) {
+        throw new Error("视频尚未生成，无法发布");
       }
 
-      const result = await publisher.publish({
-        projectId: workflow.value.projectId,
-        videoPath: generatedVideoPath.value,
-        title: publishTitle.value || project.name,
-        description: publishDescription.value || project.notes || "",
-        platformIds: project.targetPlatforms,
-        mode: publishMode.value,
-      });
+      if (!prep.canPublish.value) {
+        const reasons = prep.errors.value.join("、") || "发布条件不满足";
+        throw new Error(reasons);
+      }
 
-      const historyItem = createPublishHistoryItem({
-        projectId: workflow.value.projectId,
-        taskIds: result.taskIds,
-        videoPath: generatedVideoPath.value,
-        platforms: project.targetPlatforms,
-      });
-      appendPublishHistoryItem(historyItem);
-      taskHistory.value = loadTaskHistory();
+      const tasks = await prep.publish(videoPath);
+      if (tasks.length === 0) {
+        throw new Error("发布校验失败，未创建任务");
+      }
 
-      return `${result.message}：${result.taskIds.join("、")}`;
+      appendPublishTasks(tasks);
+      appendPublishHistoryItem(
+        createPublishHistoryItem({
+          projectId: runtime.workflow.value.projectId,
+          taskIds: tasks.map((task) => task.id),
+          videoPath,
+          platforms: project.value.targetPlatforms,
+        }),
+      );
+
+      return `已创建 ${tasks.length} 个发布任务`;
     }
   }
 }
 
-function getPlatformLabel(platform: PublishPlatform): string {
-  return platformLabels.value[platform];
+async function handlePublish() {
+  openPublishDialog();
 }
 
-function addLog(stage: string, message: string) {
-  logs.value.unshift({
-    id: Date.now() + logs.value.length,
-    stage,
-    message,
-  });
+function openPublishDialog() {
+  if (runtime.running.value || !prep.canPublish.value || !generatedVideoPath.value) return;
+  showPublishDialog.value = true;
 }
 
-function restoreDraft() {
-  try {
-    const raw = window.localStorage.getItem(DESKTOP_DRAFT_STORAGE_KEY);
-    if (!raw) {
-      return;
-    }
+function closePublishDialog() {
+  showPublishDialog.value = false;
+}
 
-    const saved = JSON.parse(raw) as Partial<PersistedDesktopDraft>;
-    const restored = restoreDesktopDraft(saved);
-    Object.assign(project, restored.project);
-    Object.assign(providerConfig, restored.providerConfig);
-    saveStatus.value = "已恢复草稿";
-  } catch {
-    saveStatus.value = "草稿读取失败";
+function cancelPublish() {
+  closePublishDialog();
+}
+
+async function confirmPublish() {
+  closePublishDialog();
+  await runtime.runStage("publish");
+}
+
+function handleOpenVideo() {
+  const path = generatedVideoPath.value;
+  if (path) {
+    console.log("Open video:", path);
   }
 }
 
-function persistDraft() {
-  const payload = sanitizeDesktopDraftForStorage({ project, providerConfig });
-
-  try {
-    window.localStorage.setItem(DESKTOP_DRAFT_STORAGE_KEY, JSON.stringify(payload));
-    saveStatus.value = "草稿已保存";
-  } catch {
-    saveStatus.value = "草稿保存失败";
+function handleVoiceSelect(item: AssetListItem) {
+  selectedVoiceId.value = item.id;
+  selectedVoiceName.value = item.name;
+  if (navigation.returnToStage) {
+    returnToWorkbench(navigation);
   }
 }
 
-async function testConnection() {
-  connectionMessage.value = "检测中…";
-
-  try {
-    const input =
-      providerConfig.provider === "openai"
-        ? ({
-            mode: "openai-compatible",
-            baseUrl: providerConfig.baseUrl ?? "",
-            apiKey: providerConfig.apiKey,
-            model: providerConfig.model ?? "",
-          } as const)
-        : ({ mode: "mock" } as const);
-
-    const result = await testAiProviderConnection(input);
-    connectionMessage.value = result.message;
-  } catch (error) {
-    connectionMessage.value = error instanceof Error ? error.message : "连接测试失败";
+function handleAvatarSelect(item: AssetListItem) {
+  selectedAvatarId.value = item.id;
+  if (navigation.returnToStage) {
+    returnToWorkbench(navigation);
   }
+}
+
+function handleMaterialSelect(item: AssetListItem) {
+  // 素材选择当前不直接写入 draft，仅在工作台跳转来源存在时返回。
+  void item;
+  if (navigation.returnToStage) {
+    returnToWorkbench(navigation);
+  }
+}
+
+function handleReturnToStage(stageId: WorkflowStageId) {
+  navigateTo(navigation, "workbench");
+  runtime.goToStage(stageId);
+}
+
+function fileName(filePath: string): string {
+  const trimmed = filePath.trim();
+  if (!trimmed) return "";
+  const index = Math.max(trimmed.lastIndexOf("/"), trimmed.lastIndexOf("\\"));
+  return index >= 0 ? trimmed.slice(index + 1) : trimmed;
+}
+
+function handleSaveDraft() {
+  persist();
+}
+
+function handleViewTasks() {
+  navigateTo(navigation, "tasks");
 }
 
 function toggleTheme() {
-  theme.value = theme.value === "dark" ? "light" : "dark";
+  appSettings.theme = theme.value === "dark" ? "light" : "dark";
+}
+
+function stagePreviewLabel(stageId: WorkflowStageId): string {
+  const labels: Record<WorkflowStageId, string> = {
+    transcribe: "素材解析预览",
+    rewrite: "改写结果预览",
+    "voice-clone": "声音样本预览",
+    speech: "音频预览",
+    avatar: "数字人预览",
+    compose: "成片预览",
+    review: "内容复核预览",
+    publish: "发布预览",
+  };
+  return labels[stageId];
 }
 </script>
 
 <template>
-  <main class="app-shell" :data-theme="theme">
-    <aside class="nav-rail">
-      <div class="brand">
-        <div class="brand-mark">
-          <PlayCircle :size="20" />
+  <AppShell
+    :project-name="project.name"
+    :theme="theme"
+    :active-view="navigation.view"
+    @toggle-theme="toggleTheme"
+    @navigate="handleNavigate"
+  >
+    <template #topbar-actions>
+      <template v-if="topbarAssetView">
+        <button
+          type="button"
+          class="secondary"
+          @click="openAssetLimitedAction('import')"
+        >
+          <Upload :size="16" />
+          <span v-if="topbarAssetView === 'voices'">导入声音</span>
+          <span v-else-if="topbarAssetView === 'avatars'">导入形象</span>
+          <span v-else>导入素材</span>
+        </button>
+        <button
+          v-if="topbarAssetView !== 'materials'"
+          type="button"
+          class="primary"
+          @click="openAssetLimitedAction('create')"
+        >
+          <Plus :size="16" />
+          <span v-if="topbarAssetView === 'voices'">新建声音</span>
+          <span v-else>新建形象</span>
+        </button>
+      </template>
+    </template>
+
+    <WorkbenchView
+      v-if="navigation.view === 'workbench'"
+      :stages="runtime.workflow.value.stages"
+      :active-stage-id="runtime.activeStageId.value"
+      :running="runtime.running.value"
+      @select-stage="runtime.goToStage"
+      @previous="runtime.goToPreviousStage"
+      @next="runtime.goToNextStage"
+      @save="handleSaveDraft"
+    >
+      <template #stage-controls="{ stage }">
+        <MaterialParsingStage
+          v-if="stage.id === 'transcribe'"
+          v-model="project"
+          :running="runtime.running.value"
+          @run="runtime.runStage('transcribe')"
+          @view-tasks="handleViewTasks"
+        />
+        <WorkbenchStagePlaceholder
+          v-else-if="!fullWidthStages.includes(stage.id)"
+          :stage="stage"
+        />
+      </template>
+      <template #stage-preview="{ stage }">
+        <MaterialParsingPreview
+          v-if="stage.id === 'transcribe'"
+          :running="runtime.running.value"
+          :status="stage.status"
+        />
+        <ScriptRewritingStage
+          v-else-if="stage.id === 'rewrite'"
+          v-model="project"
+          :transcript-text="transcriptText"
+          :running="runtime.running.value"
+          :status="stage.status"
+          @run="runtime.runStage('rewrite')"
+        />
+        <VoiceCloningStage
+          v-else-if="stage.id === 'voice-clone'"
+          v-model="project"
+          :script-text="project.notes ?? ''"
+          :voice-id="selectedVoiceId"
+          :voice-name="selectedVoiceName"
+          :running="runtime.running.value"
+          :status="stage.status"
+          @run="runtime.runStage('voice-clone')"
+          @create-voice="handleNavigate('voices')"
+        />
+        <SpeechSynthesisStage
+          v-else-if="stage.id === 'speech'"
+          :model-value="project"
+          :voice-name="selectedVoiceName"
+          :running="runtime.running.value"
+          :status="stage.status"
+          :audio-path="generatedAudioPath"
+          :audio-duration="generatedAudioDuration"
+          @run="runtime.runStage('speech')"
+          @edit-script="runtime.goToStage('rewrite')"
+          @change-voice="runtime.goToStage('voice-clone')"
+        />
+        <AvatarGenerationStage
+          v-else-if="stage.id === 'avatar'"
+          :model-value="project"
+          :audio-path="generatedAudioPath"
+          :audio-duration="generatedAudioDuration"
+          :voice-name="selectedVoiceName"
+          :running="runtime.running.value"
+          :status="stage.status"
+          :selected-avatar-id="selectedAvatarId"
+          :avatar-path="generatedAvatarPath"
+          :avatar-duration="generatedAvatarDuration"
+          @run="runtime.runStage('avatar')"
+          @update:selected-avatar-id="selectedAvatarId = $event"
+          @create-avatar="handleNavigate('avatars')"
+          @change-audio="runtime.goToStage('speech')"
+        />
+        <VideoCompositionStage
+          v-else-if="stage.id === 'compose'"
+          :model-value="project"
+          :avatar-path="generatedAvatarPath"
+          :audio-path="generatedAudioPath"
+          :audio-duration="generatedAudioDuration"
+          :avatar-name="selectedAvatarId"
+          :running="runtime.running.value"
+          :status="stage.status"
+          :video-path="generatedVideoPath"
+          :cover-path="generatedCoverPath"
+          @run="runtime.runStage('compose')"
+          @edit-script="runtime.goToStage('rewrite')"
+          @edit-avatar="runtime.goToStage('avatar')"
+        />
+        <ContentReviewStage
+          v-else-if="stage.id === 'review'"
+          :metadata="prep.metadata.value"
+          :video-path="generatedVideoPath"
+          :cover-path="generatedCoverPath"
+          :cover-candidates="stitchCoverCandidates"
+          :target-platforms="project.targetPlatforms"
+          :platform-profiles="platformProfiles"
+          :running="runtime.running.value"
+          :status="stage.status"
+          @update:metadata="prep.updateMetadata"
+          @confirm="runtime.runStage('review')"
+          @open-video="handleOpenVideo"
+          @return-to-compose="runtime.goToStage('compose')"
+        />
+        <PublishStage
+          v-else-if="stage.id === 'publish'"
+          :metadata="prep.metadata.value"
+          :target-platforms="project.targetPlatforms"
+          :accounts="publishAccounts"
+          :selected-account-id="selectedPublishAccountId"
+          :platform-profiles="platformProfiles"
+          :can-publish="prep.canPublish.value"
+          :running="runtime.running.value"
+          :status="stage.status"
+          :video-path="generatedVideoPath"
+          @update:selected-account-id="selectedPublishAccountId = $event"
+          @update:metadata="prep.updateMetadata"
+          @create-tasks="openPublishDialog"
+        />
+        <WorkbenchPreviewPlaceholder v-else :label="stagePreviewLabel(stage.id)" />
+      </template>
+    </WorkbenchView>
+
+    <SettingsView v-else-if="navigation.view === 'settings'" />
+    <TaskCenterView
+      v-else-if="navigation.view === 'tasks'"
+      @return-to-stage="handleReturnToStage"
+    />
+    <AccountManagementView
+      v-else-if="navigation.view === 'accounts'"
+      :accounts="allAccounts"
+      :platform-profiles="platformProfiles"
+    />
+    <VoiceLibraryView
+      v-else-if="navigation.view === 'voices'"
+      @select="handleVoiceSelect"
+    />
+    <AvatarLibraryView
+      v-else-if="navigation.view === 'avatars'"
+      @select="handleAvatarSelect"
+    />
+    <MaterialLibraryView
+      v-else-if="navigation.view === 'materials'"
+      @select="handleMaterialSelect"
+    />
+    <div v-else class="placeholder-view">
+      <h1>{{ navigation.view }}</h1>
+      <p>该页面正在实现中，将在后续 Task 中完成。</p>
+    </div>
+
+    <AppDialog
+      :open="assetLimitedAction !== null"
+      :title="assetLimitedActionTitle"
+      @close="assetLimitedAction = null"
+    >
+      <p class="limited-action-copy">
+        真实导入/创建能力暂未接入；当前不会创建资源，也不会写入资产库。后续接入上传、录音或生成能力后，会从这里继续。
+      </p>
+      <template #actions>
+        <button type="button" class="primary" @click="assetLimitedAction = null">知道了</button>
+      </template>
+    </AppDialog>
+
+    <AppDialog
+      :open="showPublishDialog"
+      title="确认创建发布任务"
+      data-testid="publish-dialog"
+      @close="cancelPublish"
+    >
+      <div class="publish-dialog-summary">
+        <div class="publish-dialog-row">
+          <span class="publish-dialog-label">标题</span>
+          <span class="publish-dialog-value">{{ publishSummary.title }}</span>
         </div>
-        <div class="brand-text">
-          <strong>Mirax AI</strong>
-          <small>短视频工作台</small>
+        <div class="publish-dialog-row">
+          <span class="publish-dialog-label">描述</span>
+          <span class="publish-dialog-value">
+            {{ publishSummary.description }}{{ publishSummary.descriptionLong ? '…' : '' }}
+          </span>
+        </div>
+        <div class="publish-dialog-row">
+          <span class="publish-dialog-label">封面</span>
+          <span class="publish-dialog-value">{{ publishSummary.coverText }}</span>
+        </div>
+        <div class="publish-dialog-row">
+          <span class="publish-dialog-label">平台</span>
+          <span class="publish-dialog-value">{{ publishSummary.platformText }}</span>
+        </div>
+        <div class="publish-dialog-row">
+          <span class="publish-dialog-label">账号</span>
+          <span class="publish-dialog-value">{{ publishSummary.accountText }}</span>
+        </div>
+        <div class="publish-dialog-row">
+          <span class="publish-dialog-label">发布模式</span>
+          <span class="publish-dialog-value">{{ publishSummary.modeText }}</span>
+        </div>
+        <div class="publish-dialog-row">
+          <span class="publish-dialog-label">视频文件</span>
+          <span class="publish-dialog-value">{{ publishSummary.videoFile }}</span>
         </div>
       </div>
-      <nav>
-        <button class="nav-item active"><WandSparkles :size="18" /> 首页</button>
-        <button class="nav-item"><Volume2 :size="18" /> 声音管理</button>
-        <button class="nav-item"><UserRound :size="18" /> 形象管理</button>
-        <button class="nav-item"><FolderOpen :size="18" /> 素材管理</button>
-        <button class="nav-item"><ClipboardCheck :size="18" /> 任务中心</button>
-        <button class="nav-item"><KeyRound :size="18" /> 账号管理</button>
-        <button class="nav-item"><Settings2 :size="18" /> 设置</button>
-      </nav>
-    </aside>
-
-    <section class="board-shell">
-      <header class="window-bar">
-        <div class="project-overview">
-          <div class="project-title">
-            <strong>{{ project.name || "Mirax AI 项目" }}</strong>
-            <span>{{ activeStage?.title || "准备开始" }}</span>
-          </div>
-        </div>
-        <div class="mode-switch">
-          <button class="selected"><Play :size="15" /> 手动</button>
-          <button><CloudUpload :size="15" /> 自动</button>
-          <button><Circle :size="15" /> 后台</button>
-        </div>
-        <div class="toolbar-actions">
-          <span class="progress-pill"><b>{{ progress.percent }}%</b> {{ progress.completed }}/{{ progress.total }}</span>
-          <button class="theme-toggle" :aria-label="theme === 'dark' ? '切换到白天' : '切换到黑夜'" @click="toggleTheme">
-            <Sun v-if="theme === 'dark'" :size="16" />
-            <Moon v-else :size="16" />
-          </button>
-          <button class="ghost-button" @click="resetWorkflow">
-            <RefreshCw :size="16" />
-            清空数据
-          </button>
-          <button class="secondary" :disabled="!canRunAll" @click="runAllStages">
-            <Loader2 v-if="runningMode === 'all'" :size="17" class="spin" />
-            <PlayCircle v-else :size="17" />
-            {{ runningMode === "all" ? "运行中" : "运行全部" }}
-          </button>
-          <button class="primary" :disabled="!canRunNext" @click="runNextStage">
-            <Loader2 v-if="runningMode === 'single'" :size="17" class="spin" />
-            <Play v-else :size="17" />
-            {{ runningMode === "single" ? "执行中" : "运行下一步" }}
-          </button>
-        </div>
-      </header>
-
-      <div class="workflow-board">
-        <section class="workflow-card learn-card">
-          <div class="card-heading">
-            <span class="card-icon"><Link2 :size="19" /></span>
-            <h2>1. 学习对标</h2>
-            <StatusBadge :status="stageStatus.transcribe" />
-            <small>{{ saveStatus }}</small>
-          </div>
-          <div class="tabs">
-            <span class="active">提取文案</span>
-            <span>IP大脑</span>
-            <span>爆款选题</span>
-            <span>营销文案</span>
-          </div>
-          <label>
-            <span>项目名称</span>
-            <input v-model="project.name" />
-          </label>
-          <label>
-            <span>视频链接</span>
-            <PathPickerButton
-              v-model="project.sourceVideoPath"
-              label="选择对标视频"
-              placeholder="请输入视频链接或本地路径"
-              :filters="[{ name: 'Video', extensions: ['mp4', 'mov', 'm4v'] }]"
-            />
-          </label>
-          <label>
-            <span>原文案 / 卖点备注</span>
-            <textarea v-model="project.notes" placeholder="提取的文案将显示在这里..." />
-          </label>
-          <div class="button-row">
-            <button
-              class="primary compact-button"
-              :disabled="running || stageStatus.transcribe === 'completed'"
-              @click="runStage('transcribe')"
-            >
-              <Link2 :size="16" /> 提取文案
-            </button>
-          </div>
-        </section>
-
-        <section class="workflow-card rewrite-card">
-          <div class="card-heading">
-            <span class="card-icon"><WandSparkles :size="19" /></span>
-            <h2>2. 改写文案</h2>
-            <StatusBadge :status="stageStatus.rewrite" />
-          </div>
-          <div class="two-columns">
-            <label>
-              <span>写作提示词</span>
-              <select>
-                <option>默认文案写作提示词</option>
-              </select>
-            </label>
-            <label>
-              <span>字数</span>
-              <select>
-                <option>300字</option>
-              </select>
-            </label>
-          </div>
-          <div class="button-row">
-            <button
-              class="primary compact-button"
-              :disabled="running || stageStatus.rewrite === 'completed'"
-              @click="runStage('rewrite')"
-            >
-              <WandSparkles :size="16" /> 改写文案
-            </button>
-            <button class="legal-button"><ShieldCheck :size="16" /> AI法务</button>
-          </div>
-          <label>
-            <span>改写内容</span>
-            <textarea v-model="publishDescription" placeholder="改写的文案将显示在这里..." />
-          </label>
-        </section>
-
-        <section class="workflow-card voice-card">
-          <div class="card-heading">
-            <span class="card-icon"><Volume2 :size="19" /></span>
-            <h2>3. 声音生成</h2>
-            <StatusBadge :status="stageStatus.speech" />
-          </div>
-          <label>
-            <span>声音样本</span>
-            <PathPickerButton
-              v-model="project.voiceSamplePath"
-              label="选择声音样本"
-              placeholder="请选择或输入声音样本路径"
-              :filters="[{ name: 'Audio', extensions: ['wav', 'mp3', 'm4a'] }]"
-            />
-          </label>
-          <label>
-            <span>选择声音</span>
-            <select>
-              <option>女-带货</option>
-              <option>男-讲解</option>
-            </select>
-          </label>
-          <div class="button-row">
-            <button
-              class="primary compact-button"
-              :disabled="running || stageStatus.speech === 'completed'"
-              @click="runStage('speech')"
-            >
-              <Volume2 :size="16" /> 生成音频
-            </button>
-          </div>
-          <div class="artifact-box">
-            <Volume2 :size="32" />
-            <strong>{{ generatedAudioPath ? "克隆结果已生成" : "克隆的音频将在这里显示" }}</strong>
-            <span>{{ generatedAudioPath || "完成克隆后可在此处播放预览" }}</span>
-          </div>
-        </section>
-
-        <section class="workflow-card avatar-card">
-          <div class="card-heading">
-            <span class="card-icon"><UserRound :size="19" /></span>
-            <h2>4. 视频生成</h2>
-            <StatusBadge :status="stageStatus.avatar" />
-            <button class="link-button">上传形象</button>
-          </div>
-          <div class="segmented">
-            <button class="selected">单形象</button>
-            <button>多镜头</button>
-          </div>
-          <label>
-            <span>选择形象</span>
-            <select>
-              <option>示例1-绿幕</option>
-            </select>
-          </label>
-          <label>
-            <span>模型版本</span>
-            <select>
-              <option>高清模型V2</option>
-            </select>
-          </label>
-          <div class="button-row">
-            <button
-              class="primary compact-button"
-              :disabled="running || stageStatus.avatar === 'completed'"
-              @click="runStage('avatar')"
-            >
-              <UserRound :size="16" /> 生成视频
-            </button>
-          </div>
-          <div class="artifact-box preview-box">
-            <UserRound :size="44" />
-            <strong>{{ generatedAvatarPath ? "视频生成完成" : "暂无预览视频" }}</strong>
-            <span>{{ generatedAvatarPath || "生成视频后将在此处显示预览" }}</span>
-          </div>
-        </section>
-
-        <section class="workflow-card compose-card">
-          <div class="card-heading">
-            <span class="card-icon"><FileVideo :size="19" /></span>
-            <h2>5. 一键成片</h2>
-            <StatusBadge :status="stageStatus.compose" />
-          </div>
-          <div class="compose-grid">
-            <div class="compose-controls">
-              <label>
-                <span>视频源</span>
-                <input :value="generatedAvatarPath || '自动使用上一步数字人视频，或手动选择'" readonly />
-              </label>
-              <div class="toggle-row"><input type="checkbox" checked /> 启用字幕 <button>字幕设置</button></div>
-              <label>
-                <span>混剪（画中画）素材</span>
-                <select><option>不混剪</option></select>
-              </label>
-              <label>
-                <span>背景音乐</span>
-                <div class="action-input">
-                  <input placeholder="选择背景音乐" />
-                  <button><Music2 :size="16" /></button>
-                </div>
-              </label>
-              <div class="slider-row">
-                <span>人声音量</span>
-                <input type="range" min="0" max="1" step="0.1" value="1" />
-                <b>1</b>
-              </div>
-              <div class="slider-row">
-                <span>BGM音量</span>
-                <input type="range" min="0" max="1" step="0.1" value="0.3" />
-                <b>0.3</b>
-              </div>
-              <button
-                class="primary wide-button"
-                :disabled="running || stageStatus.compose === 'completed'"
-                @click="runStage('compose')"
-              >
-                <FileVideo :size="16" /> 剪辑视频
-              </button>
-            </div>
-            <div class="video-preview">
-              <FileVideo :size="52" />
-              <strong>{{ generatedVideoPath ? "成片已生成" : "暂无预览视频" }}</strong>
-              <span>{{ generatedVideoPath || "生成视频后将在此处显示预览" }}</span>
-            </div>
-          </div>
-        </section>
-
-        <section class="workflow-card publish-meta-card">
-          <div class="card-heading">
-            <span class="card-icon"><FileText :size="19" /></span>
-            <h2>6. 标题封面（用于发布）</h2>
-            <StatusBadge :status="stageStatus.review" />
-          </div>
-          <label>
-            <span>标题</span>
-            <div class="action-input">
-              <input v-model="publishTitle" placeholder="输入视频标题" />
-              <button @click="publishTitle = project.name">一键生成</button>
-            </div>
-          </label>
-          <label>
-            <span>描述</span>
-            <textarea v-model="publishDescription" placeholder="输入视频描述..." />
-          </label>
-          <label>
-            <span>话题标签</span>
-            <input v-model="publishTags" placeholder="输入标签后回车，发布时自动拼接 #tag" />
-          </label>
-          <div class="cover-row">
-            <div class="cover-preview">
-              <Image :size="26" />
-              <span>{{ generatedCoverPath ? "封面已生成" : "暂无封面" }}</span>
-            </div>
-            <div class="cover-actions">
-              <button>封面设计</button>
-              <button :disabled="!generatedCoverPath">打开封面</button>
-              <button :disabled="!generatedCoverPath">导出封面</button>
-            </div>
-            <div class="button-row">
-              <button
-                class="primary compact-button"
-                :disabled="running || stageStatus.review === 'completed'"
-                @click="runStage('review')"
-              >
-                <ClipboardCheck :size="16" /> 复核通过
-              </button>
-            </div>
-          </div>
-        </section>
-
-        <section class="workflow-card publish-card">
-          <div class="card-heading">
-            <span class="card-icon"><CloudUpload :size="19" /></span>
-            <h2>7. 视频发布</h2>
-            <StatusBadge :status="stageStatus.publish" />
-          </div>
-          <label>
-            <span>视频地址</span>
-            <div class="action-input">
-              <input :value="generatedVideoPath || '自动使用上一步视频，或手动选择'" readonly />
-              <button><FolderOpen :size="16" /></button>
-            </div>
-          </label>
-          <label>
-            <span>发布账号</span>
-            <select>
-              <option>{{ selectedAccountText }}</option>
-            </select>
-          </label>
-          <div class="platforms compact-platforms">
-            <label><input v-model="project.targetPlatforms" type="checkbox" value="douyin" /> 抖音</label>
-            <label><input v-model="project.targetPlatforms" type="checkbox" value="xiaohongshu" /> 小红书</label>
-            <label><input v-model="project.targetPlatforms" type="checkbox" value="kuaishou" /> 快手</label>
-            <label><input v-model="project.targetPlatforms" type="checkbox" value="shipinhao" /> 视频号</label>
-          </div>
-          <div class="radio-row">
-            <label><input v-model="publishMode" type="radio" value="direct" name="publish-mode" /> 直接发布</label>
-            <label><input v-model="publishMode" type="radio" value="draft" name="publish-mode" /> 草稿</label>
-          </div>
-          <button
-            class="primary wide-button"
-            :disabled="running || stageStatus.publish === 'completed'"
-            @click="runStage('publish')"
-          >
-            <CloudUpload :size="16" /> 立即发布
-          </button>
-        </section>
-
-        <section class="workflow-card settings-card">
-          <div class="card-heading">
-            <span class="card-icon"><KeyRound :size="19" /></span>
-            <h2>密钥配置</h2>
-          </div>
-          <div class="two-columns">
-            <label><span>配置名称</span><input v-model="providerConfig.label" /></label>
-            <label><span>模型</span><input v-model="providerConfig.model" /></label>
-          </div>
-          <label><span>Base URL</span><input v-model="providerConfig.baseUrl" /></label>
-          <label><span>API Key</span><input v-model="providerConfig.apiKey" type="password" placeholder="用户本地填写" autocomplete="off" /></label>
-          <div class="connection-row">
-            <button class="secondary" @click="testConnection">测试连接</button>
-            <span class="connection-message">{{ connectionMessage }}</span>
-          </div>
-          <DependencyChecklist />
-          <div class="warning-list">
-            <p v-for="error in providerErrors" :key="error">{{ error }}</p>
-            <p v-for="error in projectErrors" :key="error">{{ error }}</p>
-          </div>
-        </section>
-
-        <section class="workflow-card log-card">
-          <div class="card-heading">
-            <span class="card-icon"><ClipboardCheck :size="19" /></span>
-            <h2>执行记录</h2>
-          </div>
-          <div v-if="logs.length === 0" class="empty-log">等待启动第一步流程</div>
-          <ul v-else class="log-list">
-            <li v-for="log in logs.slice(0, 8)" :key="log.id">
-              <strong>{{ log.stage }}</strong>
-              <span>{{ log.message }}</span>
-            </li>
-          </ul>
-          <div v-if="latestHistoryItems.length > 0" class="history-section">
-            <h3>最近任务历史</h3>
-            <ul class="history-list">
-              <li v-for="item in latestHistoryItems" :key="item.id">
-                <strong>{{ item.title }}</strong>
-                <span>{{ item.platforms.map((p) => getPlatformLabel(p)).join("、") }} · {{ item.createdAt }}</span>
-                <span class="history-video">视频：{{ item.videoPath }}</span>
-                <span class="history-tasks">任务：{{ item.taskIds.join("、") }}</span>
-              </li>
-            </ul>
-          </div>
-        </section>
-      </div>
-    </section>
-  </main>
+      <template #actions>
+        <button
+          type="button"
+          class="secondary"
+          data-testid="publish-dialog-cancel"
+          @click="cancelPublish"
+        >
+          取消
+        </button>
+        <button
+          type="button"
+          class="primary"
+          data-testid="publish-dialog-confirm"
+          :disabled="runtime.running.value || !prep.canPublish.value || !generatedVideoPath"
+          @click="confirmPublish"
+        >
+          确认创建任务
+        </button>
+      </template>
+    </AppDialog>
+  </AppShell>
 </template>
 
 <style scoped>
-.connection-row {
-  display: flex;
-  align-items: center;
+.placeholder-view {
+  display: grid;
+  place-items: center;
   gap: 12px;
-  margin-top: 4px;
-}
-
-.connection-message {
-  font-size: 12px;
-  color: var(--mx-text-tertiary);
-}
-
-.history-section h3 {
-  margin: 12px 0 8px;
-  font-size: 12px;
-  font-weight: 600;
+  min-height: 240px;
+  padding: 24px;
   color: var(--mx-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  text-align: center;
 }
 
-.history-list li {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.placeholder-view h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  text-transform: capitalize;
+  color: var(--mx-text-primary);
+}
+
+.placeholder-view p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.publish-dialog-summary {
+  display: grid;
+  gap: 12px;
   padding: 8px 0;
-  border-bottom: 1px solid var(--mx-border-subtle);
 }
 
-.history-list li:last-child {
-  border-bottom: none;
+.publish-dialog-row {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 12px;
+  align-items: baseline;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
-.history-video,
-.history-tasks {
-  font-size: 11px;
-  color: var(--mx-text-tertiary);
-  word-break: break-all;
+.publish-dialog-label {
+  color: var(--mx-text-secondary);
 }
 
-.history-tasks {
-  color: var(--mx-cyan);
+.publish-dialog-value {
+  color: var(--mx-text-primary);
+  word-break: break-word;
+}
+
+.limited-action-copy {
+  margin: 0;
+  color: var(--mx-text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
 }
 </style>
