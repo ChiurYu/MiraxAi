@@ -32,7 +32,11 @@ const emit = defineEmits<{
         :theme="theme"
         :active-view="activeView"
         @toggle-theme="emit('toggleTheme')"
-      />
+      >
+        <template #actions>
+          <slot name="topbar-actions" />
+        </template>
+      </TopBar>
       <div class="app-content">
         <slot />
       </div>

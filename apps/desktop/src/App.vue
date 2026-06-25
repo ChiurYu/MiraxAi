@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
+import { Plus, Upload } from "lucide-vue-next";
+import { computed, onMounted, onUnmounted, reactive, ref } from "vue";
 import { type ProjectDraft, type PublishPlatform, type WorkflowStageId } from "@mirax/core";
 import { createMockMediaRenderer } from "@mirax/media-pipeline";
 import { createMockAiProvider } from "@mirax/provider-ai";
@@ -27,6 +28,7 @@ import VideoCompositionStage from "./components/workbench/stages/VideoCompositio
 import VoiceCloningStage from "./components/workbench/stages/VoiceCloningStage.vue";
 import WorkbenchStagePlaceholder from "./components/workbench/stages/WorkbenchStagePlaceholder.vue";
 import { usePublishPreparation } from "./composables/usePublishPreparation.js";
+import { useAppSettings } from "./composables/useAppSettings.js";
 import { useWorkbenchDraft } from "./composables/useWorkbenchDraft.js";
 import { useWorkflowRuntime } from "./composables/useWorkflowRuntime.js";
 import type { AssetListItem } from "./features/assets/assetModels.js";
@@ -48,6 +50,7 @@ const mediaRenderer = createMockMediaRenderer({ artifactRoot: "/Users/Shared/Mir
 const publisher = createMockPublisher();
 
 const { draft, persist } = useWorkbenchDraft();
+const { appSettings } = useAppSettings();
 
 const generatedVideoPath = ref("");
 const generatedCoverPath = ref("");
@@ -70,11 +73,12 @@ const transcriptText = ref("");
 // 声音选择：voiceId 与 voiceName 必须来自真实的 voice-clone executor 结果或样本文件名。
 const selectedVoiceId = ref("");
 const selectedVoiceName = ref("");
-const theme = ref<"light" | "dark">("dark");
+const systemTheme = ref<"light" | "dark">("dark");
 const navigation = reactive(createNavigationState());
 const publishAccounts = ref<PublishAccount[]>([]);
 const selectedPublishAccountId = ref("");
 const showPublishDialog = ref(false);
+const assetLimitedAction = ref<{ view: "voices" | "avatars" | "materials"; action: "import" | "create" } | null>(null);
 
 const platformLabels = computed<Record<PublishPlatform, string>>(() =>
   Object.fromEntries(SUPPORTED_PLATFORM_PROFILES.map((profile) => [profile.id, profile.label])) as Record<
@@ -88,6 +92,19 @@ const selectedPublishAccount = computed(() =>
 );
 
 const allAccounts = computed(() => mockAccounts);
+const topbarAssetView = computed(() =>
+  navigation.view === "voices" || navigation.view === "avatars" || navigation.view === "materials"
+    ? navigation.view
+    : null,
+);
+const theme = computed<"light" | "dark">(() =>
+  appSettings.theme === "system" ? systemTheme.value : appSettings.theme,
+);
+let systemThemeQuery: MediaQueryList | undefined;
+
+function syncSystemTheme() {
+  systemTheme.value = systemThemeQuery?.matches ? "dark" : "light";
+}
 
 const publishModeText = computed(() => (prep.metadata.value.mode === "direct" ? "直接发布" : "存为草稿"));
 
@@ -105,6 +122,14 @@ const publishSummary = computed(() => {
     videoFile: generatedVideoPath.value ? fileName(generatedVideoPath.value) : "视频尚未生成",
   };
 });
+const assetLimitedActionTitle = computed(() => {
+  const value = assetLimitedAction.value;
+  if (!value) return "能力暂未接入";
+  if (value.action === "create") return value.view === "voices" ? "新建声音暂未接入" : "新建形象暂未接入";
+  if (value.view === "voices") return "导入声音暂未接入";
+  if (value.view === "avatars") return "导入形象暂未接入";
+  return "导入素材暂未接入";
+});
 
 // 这些阶段在 preview 全宽栏内自带左右分栏，frame 的窄 controls 栏由 styles.css 隐藏。
 const fullWidthStages: WorkflowStageId[] = ["rewrite", "voice-clone", "speech", "avatar", "compose", "review", "publish"];
@@ -118,6 +143,11 @@ function handleNavigate(view: AppView) {
   } else {
     navigateTo(navigation, view);
   }
+}
+
+function openAssetLimitedAction(action: "import" | "create") {
+  if (!topbarAssetView.value) return;
+  assetLimitedAction.value = { view: topbarAssetView.value, action };
 }
 
 const project = computed({
@@ -140,6 +170,10 @@ const runtime = useWorkflowRuntime({
 });
 
 onMounted(async () => {
+  systemThemeQuery = window.matchMedia?.("(prefers-color-scheme: dark)");
+  syncSystemTheme();
+  systemThemeQuery?.addEventListener("change", syncSystemTheme);
+
   publishAccounts.value = await publisher.listAccounts();
   if (!selectedPublishAccountId.value && publishAccounts.value.length > 0) {
     selectedPublishAccountId.value = publishAccounts.value[0].id;
@@ -163,7 +197,7 @@ onMounted(async () => {
       selectedPublishAccountId,
       setStage: (stageId: WorkflowStageId) => runtime.goToStage(stageId),
       setTheme: (value: "light" | "dark") => {
-        theme.value = value;
+        appSettings.theme = value;
       },
       setView: (view: AppView) => {
         navigateTo(navigation, view);
@@ -188,6 +222,8 @@ onMounted(async () => {
     };
   }
 });
+
+onUnmounted(() => systemThemeQuery?.removeEventListener("change", syncSystemTheme));
 
 const platformProfiles = computed(() => SUPPORTED_PLATFORM_PROFILES);
 
@@ -387,7 +423,7 @@ function handleViewTasks() {
 }
 
 function toggleTheme() {
-  theme.value = theme.value === "dark" ? "light" : "dark";
+  appSettings.theme = theme.value === "dark" ? "light" : "dark";
 }
 
 function stagePreviewLabel(stageId: WorkflowStageId): string {
@@ -413,6 +449,31 @@ function stagePreviewLabel(stageId: WorkflowStageId): string {
     @toggle-theme="toggleTheme"
     @navigate="handleNavigate"
   >
+    <template #topbar-actions>
+      <template v-if="topbarAssetView">
+        <button
+          type="button"
+          class="secondary"
+          @click="openAssetLimitedAction('import')"
+        >
+          <Upload :size="16" />
+          <span v-if="topbarAssetView === 'voices'">导入声音</span>
+          <span v-else-if="topbarAssetView === 'avatars'">导入形象</span>
+          <span v-else>导入素材</span>
+        </button>
+        <button
+          v-if="topbarAssetView !== 'materials'"
+          type="button"
+          class="primary"
+          @click="openAssetLimitedAction('create')"
+        >
+          <Plus :size="16" />
+          <span v-if="topbarAssetView === 'voices'">新建声音</span>
+          <span v-else>新建形象</span>
+        </button>
+      </template>
+    </template>
+
     <WorkbenchView
       v-if="navigation.view === 'workbench'"
       :stages="runtime.workflow.value.stages"
@@ -566,6 +627,19 @@ function stagePreviewLabel(stageId: WorkflowStageId): string {
     </div>
 
     <AppDialog
+      :open="assetLimitedAction !== null"
+      :title="assetLimitedActionTitle"
+      @close="assetLimitedAction = null"
+    >
+      <p class="limited-action-copy">
+        真实导入/创建能力暂未接入；当前不会创建资源，也不会写入资产库。后续接入上传、录音或生成能力后，会从这里继续。
+      </p>
+      <template #actions>
+        <button type="button" class="primary" @click="assetLimitedAction = null">知道了</button>
+      </template>
+    </AppDialog>
+
+    <AppDialog
       :open="showPublishDialog"
       title="确认创建发布任务"
       data-testid="publish-dialog"
@@ -672,5 +746,12 @@ function stagePreviewLabel(stageId: WorkflowStageId): string {
 .publish-dialog-value {
   color: var(--mx-text-primary);
   word-break: break-word;
+}
+
+.limited-action-copy {
+  margin: 0;
+  color: var(--mx-text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
 }
 </style>

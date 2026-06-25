@@ -25,6 +25,7 @@ function handleSelect(item: AssetListItem) {
     kind="material"
     :items="materialAssets"
     :categories="categories"
+    :header-actions="false"
     @select="handleSelect"
   />
 </template>

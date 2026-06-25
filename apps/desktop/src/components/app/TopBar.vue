@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, Bell, Cloud, HelpCircle, Moon, Sun, UserRound } from "lucide-vue-next";
+import { Cloud, Moon, Sun } from "lucide-vue-next";
 import { computed } from "vue";
 import type { AppView } from "../../app/navigation";
 
@@ -47,13 +47,6 @@ const pageTitle = computed(() => {
 <template>
   <header class="window-bar">
     <div class="project-overview">
-      <span
-        v-if="isWorkbench"
-        class="topbar-icon back-icon"
-        aria-hidden="true"
-      >
-        <ArrowLeft :size="20" />
-      </span>
       <div class="project-title" :class="{ 'workbench-title': isWorkbench }">
         <strong>{{ pageTitle }}</strong>
       </div>
@@ -65,43 +58,19 @@ const pageTitle = computed(() => {
           <Cloud :size="16" />
           <span>Autosaved</span>
         </div>
-
-        <div class="topbar-divider" />
-
-        <span
-          class="topbar-icon"
-          aria-hidden="true"
-          title="通知"
-        >
-          <Bell :size="20" />
-        </span>
-        <span
-          class="topbar-icon"
-          aria-hidden="true"
-          title="帮助"
-        >
-          <HelpCircle :size="20" />
-        </span>
-        <span
-          class="topbar-icon account-icon"
-          aria-hidden="true"
-          title="账户"
-        >
-          <UserRound :size="20" />
-        </span>
       </template>
 
-      <template v-else>
-        <button
-          class="topbar-icon"
-          type="button"
-          :aria-label="theme === 'dark' ? '切换到白天' : '切换到黑夜'"
-          @click="emit('toggleTheme')"
-        >
-          <Sun v-if="theme === 'dark'" :size="18" />
-          <Moon v-else :size="18" />
-        </button>
-      </template>
+      <slot name="actions" />
+
+      <button
+        class="topbar-icon"
+        type="button"
+        :aria-label="theme === 'dark' ? '切换到白天' : '切换到黑夜'"
+        @click="emit('toggleTheme')"
+      >
+        <Sun v-if="theme === 'dark'" :size="18" />
+        <Moon v-else :size="18" />
+      </button>
     </div>
   </header>
 </template>
@@ -123,10 +92,6 @@ const pageTitle = computed(() => {
   background: transparent;
   color: var(--mx-text-secondary);
   cursor: default;
-}
-
-.back-icon {
-  margin-right: 4px;
 }
 
 .project-title {
@@ -153,19 +118,6 @@ const pageTitle = computed(() => {
   font-size: 12px;
   font-weight: 500;
   white-space: nowrap;
-}
-
-.topbar-divider {
-  width: 1px;
-  height: 20px;
-  background: var(--mx-border-default);
-  margin: 0 6px;
-}
-
-.account-icon {
-  border: 1px solid var(--mx-border-default);
-  border-radius: 50%;
-  background: var(--mx-bg-elevated);
 }
 
 button.topbar-icon {

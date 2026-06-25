@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { Download, Play, RefreshCw, Wrench } from "lucide-vue-next";
+import { AlertCircle, CheckCircle2, Download, Play, RefreshCw, Wrench } from "lucide-vue-next";
 import { computed, ref } from "vue";
 import { createDefaultSidecarConfig, type SidecarConfig } from "@mirax/sidecar-manager";
-import DependencyChecklist from "../../components/DependencyChecklist.vue";
 import { useAppSettings } from "../../composables/useAppSettings.js";
 
 type DependencyKey = "ffmpeg" | "python" | "cosyvoice" | "heygem" | "playwright";
@@ -85,6 +84,16 @@ function setValue(key: DependencyKey, value: string | boolean) {
   (sidecarConfig as Record<string, unknown>)[configFieldFor(key)] = value;
 }
 
+function dependencyOk(key: DependencyKey): boolean {
+  const value = currentValue(key);
+  return typeof value === "boolean" ? value : value.toString().trim().length > 0;
+}
+
+function dependencyStatusLabel(key: DependencyKey): string {
+  if (dependencyOk(key)) return "已就绪";
+  return key === "playwright" ? "未就绪" : "需配置";
+}
+
 function runLimitedAction(key: DependencyKey, name: string) {
   const dep = DEPENDENCIES.find((d) => d.key === key);
   actionMessages.value[key] = `${name}：${dep?.installNote ?? "该服务尚未接入，无法执行真实操作。"}`;
@@ -94,8 +103,7 @@ const filteredDependencies = computed(() => {
   if (filter.value === "all") return DEPENDENCIES;
   // Simplified filtering: unavailable if empty/false, ok if set/true
   return DEPENDENCIES.filter((d) => {
-    const value = currentValue(d.key);
-    const isOk = typeof value === "boolean" ? value : value.toString().trim().length > 0;
+    const isOk = dependencyOk(d.key);
     if (filter.value === "ok") return isOk;
     if (filter.value === "needs-config") return !isOk && d.key !== "playwright";
     if (filter.value === "unavailable") return !isOk;
@@ -139,13 +147,11 @@ const filteredDependencies = computed(() => {
             <strong>{{ dep.label }}</strong>
             <span class="dependency-purpose">{{ dep.purpose }}</span>
           </div>
-          <DependencyChecklist
-            class="inline-checklist"
-            :config="{
-              ...defaultSidecar,
-              [configFieldFor(dep.key)]: currentValue(dep.key),
-            }"
-          />
+          <span class="dependency-status-pill" :class="{ ok: dependencyOk(dep.key) }">
+            <CheckCircle2 v-if="dependencyOk(dep.key)" :size="15" />
+            <AlertCircle v-else :size="15" />
+            {{ dependencyStatusLabel(dep.key) }}
+          </span>
         </button>
 
         <div v-if="expandedKey === dep.key" class="dependency-card-body">
@@ -308,14 +314,24 @@ const filteredDependencies = computed(() => {
   text-overflow: ellipsis;
 }
 
-.inline-checklist :deep(.dependency-list) {
-  gap: 0;
+.dependency-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  min-width: 70px;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: var(--mx-radius-pill);
+  color: var(--mx-warning);
+  background: var(--mx-warning-bg);
+  font-size: 11px;
+  font-weight: 700;
 }
 
-.inline-checklist :deep(.dependency-item) {
-  padding: 0;
-  border: none;
-  background: transparent;
+.dependency-status-pill.ok {
+  color: var(--mx-success);
+  background: var(--mx-success-bg);
 }
 
 .dependency-card-body {

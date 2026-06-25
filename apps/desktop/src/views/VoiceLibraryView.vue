@@ -18,6 +18,7 @@ function handleSelect(item: AssetListItem) {
     description="创建、试听和管理可复用的声音资产，为文案配音和视频工作流提供声音来源。"
     kind="voice"
     :items="voiceAssets"
+    :header-actions="false"
     @select="handleSelect"
   />
 </template>

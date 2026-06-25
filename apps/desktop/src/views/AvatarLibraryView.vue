@@ -18,6 +18,7 @@ function handleSelect(item: AssetListItem) {
     description="创建、预览和管理可复用的数字人形象，为口播视频生成提供人物素材。"
     kind="avatar"
     :items="avatarAssets"
+    :header-actions="false"
     @select="handleSelect"
   />
 </template>

@@ -32,17 +32,30 @@ export interface UseAppSettingsOptions {
   persistSection?: boolean;
 }
 
+function createState() {
+  return {
+    appSettings: reactive<AppSettings>(createDefaultAppSettings()),
+    sidecarConfig: reactive<SidecarConfig>(createDefaultSidecarConfig()),
+    providerConfigs: ref<ApiKeyProviderConfig[]>([]),
+    settingsSection: ref<SettingsSection>("general"),
+    saveStatus: ref("未保存"),
+    loaded: false,
+  };
+}
+
+const sharedState = createState();
+
 export function useAppSettings(options: UseAppSettingsOptions = {}) {
   const storage = options.storage ?? (typeof window !== "undefined" ? window.localStorage : undefined);
   const persistSection = options.persistSection ?? false;
+  const state = options.storage ? createState() : sharedState;
 
-  const appSettings = reactive<AppSettings>(createDefaultAppSettings());
-  const sidecarConfig = reactive<SidecarConfig>(createDefaultSidecarConfig());
-  const providerConfigs = ref<ApiKeyProviderConfig[]>([]);
-  const settingsSection = ref<SettingsSection>("general");
-  const saveStatus = ref("未保存");
+  const { appSettings, sidecarConfig, providerConfigs, settingsSection, saveStatus } = state;
 
-  load();
+  if (!state.loaded) {
+    load();
+    state.loaded = true;
+  }
 
   function resolveSectionForSnapshot(): SettingsSection {
     if (persistSection) {

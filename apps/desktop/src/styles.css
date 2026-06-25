@@ -625,6 +625,11 @@ button:active:not(:disabled) {
   transform: translateY(1px);
 }
 
+button.icon-only:active:not(:disabled),
+.asset-library-view-toggle button:active:not(:disabled) {
+  transform: none;
+}
+
 .primary,
 .secondary,
 .ghost-button,
@@ -1217,8 +1222,18 @@ textarea {
 .radio-row input,
 .platforms input {
   width: 14px;
+  height: 14px;
   min-height: 14px;
+  margin: 0;
+  flex: 0 0 14px;
   accent-color: var(--mx-accent);
+}
+
+.toggle-row input:focus-visible,
+.radio-row input:focus-visible,
+.platforms input:focus-visible {
+  outline: 2px solid var(--mx-accent);
+  outline-offset: 2px;
 }
 
 .toggle-row button {

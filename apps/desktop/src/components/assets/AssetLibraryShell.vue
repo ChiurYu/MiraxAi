@@ -18,6 +18,7 @@ import {
 } from "lucide-vue-next";
 import { computed, ref } from "vue";
 import EmptyState from "../../components/ui/EmptyState.vue";
+import AppDialog from "../../components/ui/AppDialog.vue";
 import type {
   AssetCategoryGroup,
   AssetKind,
@@ -34,6 +35,7 @@ const props = defineProps<{
   kind: AssetKind;
   items: AssetListItem[];
   categories?: AssetCategoryGroup[];
+  headerActions?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -48,12 +50,22 @@ const categoryFilter = ref<"all" | MaterialCategory>("all");
 const sortKey = ref<AssetSortKey>("updatedAt");
 const layoutMode = ref<"grid" | "list">("grid");
 const selectedId = ref<string | null>(null);
+const limitedAction = ref<"import" | "create" | null>(null);
 
 const selectedItem = computed(() =>
   props.items.find((item) => item.id === selectedId.value),
 );
 
 const isMaterial = computed(() => props.kind === "material");
+const limitedActionTitle = computed(() => {
+  if (limitedAction.value === "create") {
+    if (props.kind === "voice") return "新建声音暂未接入";
+    if (props.kind === "avatar") return "新建形象暂未接入";
+  }
+  if (props.kind === "voice") return "导入声音暂未接入";
+  if (props.kind === "avatar") return "导入形象暂未接入";
+  return "导入素材暂未接入";
+});
 const statusOptions: { value: "all" | AssetStatus; label: string }[] = [
   { value: "all", label: "状态: 全部" },
   { value: "ready", label: "已就绪" },
@@ -123,6 +135,15 @@ function handleDelete(item: AssetListItem) {
   selectedId.value = null;
   // eslint-disable-next-line no-console
   console.log("Delete requested (session-only):", item.id);
+}
+
+function openLimitedAction(action: "import" | "create") {
+  limitedAction.value = action;
+  if (action === "import") {
+    emit("import");
+  } else {
+    emit("create");
+  }
 }
 
 function formatRelativeTime(value: string): string {
@@ -197,11 +218,10 @@ function isGridLayout() {
       </div>
       <div class="asset-library-header-actions">
         <button
+          v-if="headerActions !== false"
           type="button"
           class="secondary"
-          title="暂不支持"
-          disabled
-          @click="emit('import')"
+          @click="openLimitedAction('import')"
         >
           <Upload :size="16" />
           <span v-if="kind === 'voice'">导入声音</span>
@@ -209,18 +229,17 @@ function isGridLayout() {
           <span v-else>导入素材</span>
         </button>
         <button
+          v-if="headerActions !== false"
           type="button"
           class="primary"
-          title="暂不支持"
-          disabled
-          @click="emit('create')"
+          @click="openLimitedAction('create')"
         >
           <Plus :size="16" />
           <span v-if="kind === 'voice'">新建声音</span>
           <span v-else-if="kind === 'avatar'">新建形象</span>
           <span v-else>导入素材</span>
         </button>
-        <div class="asset-library-actions-divider" />
+        <div v-if="headerActions !== false" class="asset-library-actions-divider" />
         <button
           type="button"
           class="ghost-button icon-only"
@@ -517,6 +536,19 @@ function isGridLayout() {
       @use="handleUse"
       @delete="handleDelete"
     />
+
+    <AppDialog
+      :open="limitedAction !== null"
+      :title="limitedActionTitle"
+      @close="limitedAction = null"
+    >
+      <p class="limited-action-copy">
+        真实导入/创建能力暂未接入；当前不会创建资源，也不会写入资产库。后续接入上传、录音或生成能力后，会从这里继续。
+      </p>
+      <template #actions>
+        <button type="button" class="primary" @click="limitedAction = null">知道了</button>
+      </template>
+    </AppDialog>
   </div>
 </template>
 
@@ -603,6 +635,13 @@ function isGridLayout() {
   width: 32px;
   height: 32px;
   padding: 0;
+}
+
+.limited-action-copy {
+  margin: 0;
+  color: var(--mx-text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 .asset-library-filters {

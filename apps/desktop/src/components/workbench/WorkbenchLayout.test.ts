@@ -47,10 +47,12 @@ describe("Workbench WB-01 layout contracts", () => {
     expect(topBar).not.toMatch(/components\/icons\/CloudCheck/);
   });
 
-  it("Workbench topbar renders notification, help and account icons", () => {
-    expect(topBarTemplate).toMatch(/Bell/);
-    expect(topBarTemplate).toMatch(/HelpCircle/);
-    expect(topBarTemplate).toMatch(/UserRound/);
+  it("Workbench topbar avoids non-functional chrome icons", () => {
+    expect(topBarTemplate).not.toMatch(/ArrowLeft/);
+    expect(topBarTemplate).not.toMatch(/Bell/);
+    expect(topBarTemplate).not.toMatch(/HelpCircle/);
+    expect(topBarTemplate).not.toMatch(/UserRound/);
+    expect(topBar).toMatch(/toggleTheme/);
   });
 
   it("WorkbenchStageFrame does not render duplicate stage header", () => {

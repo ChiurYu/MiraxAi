@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { X } from "lucide-vue-next";
-import { onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { useAppSettings } from "../../composables/useAppSettings.js";
 
 const props = withDefaults(
   defineProps<{
@@ -21,7 +22,18 @@ const emit = defineEmits<{
   close: [];
 }>();
 
+const { appSettings } = useAppSettings();
 const drawerRef = ref<HTMLDivElement | null>(null);
+const systemTheme = ref<"light" | "dark">("dark");
+let systemThemeQuery: MediaQueryList | undefined;
+
+const theme = computed<"light" | "dark">(() =>
+  appSettings.theme === "system" ? systemTheme.value : appSettings.theme,
+);
+
+function syncSystemTheme() {
+  systemTheme.value = systemThemeQuery?.matches ? "dark" : "light";
+}
 
 function handleOverlayClick() {
   if (props.closeOnOverlay) {
@@ -37,10 +49,14 @@ function handleKeydown(event: KeyboardEvent) {
 }
 
 onMounted(() => {
+  systemThemeQuery = window.matchMedia?.("(prefers-color-scheme: dark)");
+  syncSystemTheme();
+  systemThemeQuery?.addEventListener("change", syncSystemTheme);
   document.addEventListener("keydown", handleKeydown);
 });
 
 onUnmounted(() => {
+  systemThemeQuery?.removeEventListener("change", syncSystemTheme);
   document.removeEventListener("keydown", handleKeydown);
 });
 
@@ -60,6 +76,7 @@ watch(
       <div
         v-if="open"
         class="mx-drawer-overlay"
+        :data-theme="theme"
         role="presentation"
         aria-hidden="true"
         @click="handleOverlayClick"
@@ -70,6 +87,7 @@ watch(
         v-if="open"
         ref="drawerRef"
         class="mx-drawer"
+        :data-theme="theme"
         role="dialog"
         aria-modal="true"
         tabindex="-1"

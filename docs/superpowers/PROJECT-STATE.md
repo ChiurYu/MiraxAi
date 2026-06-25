@@ -10,6 +10,12 @@
 
 当前实施分支：`codex/stitch-ui-vue-migration`。
 
+Task 13 Review Fix（Codex 收尾修复）已实现：设置页主题模式与 App 顶层主题状态已同源；本地依赖页改为单卡单状态；checkbox 与资产库 icon-only 小方形控件点击跳动已收敛；声音/形象/素材库的导入/新建按钮已改为可点击并打开诚实的「暂未接入」弹窗，不创建资源、不写入 store、不伪造成功。自动验证 `pnpm test`、`pnpm typecheck`、`pnpm --filter @mirax/desktop build:web` 均通过；浏览器交互脚本 `/tmp/mirax-task13-review-fix-check.js` 已通过；等待人工视觉复验。
+
+Task 13 Review Fix 2 已修复浅色主题未覆盖 Teleport 抽屉/弹窗的问题：`AppDrawer.vue` 与 `AppDialog.vue` 的 overlay 和根节点已补 `data-theme`，避免脱离 `.app-shell[data-theme]` 后回退到暗色 token。验证 `pnpm --filter @mirax/desktop typecheck`、目标测试与 `/tmp/mirax-task13-review-fix-check.js` 均通过。
+
+Task 13 Review Fix 3 已收敛 TopBar 公共壳：Workbench 顶部删除无功能左箭头、通知、帮助、账户图标，保留项目名、Autosaved 与真实可用的主题按钮；`AppShell`/`TopBar` 增加 `topbar-actions` 插槽，声音库/形象库/素材库的导入/新建操作已移入公共 TopBar，页面 header 不再重复放这些主操作。验证 `pnpm test`、`pnpm typecheck` 与 `/tmp/mirax-task13-review-fix-check.js` 均通过。
+
 新规划入口：
 
 - 来源映射：`docs/product-architecture/stitch-ui-source-map.md`

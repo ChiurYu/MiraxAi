@@ -1570,6 +1570,63 @@ KNOWN LIMITS:
 
 ---
 
+## Task 13 Review Fix（Codex 收尾修复）
+
+用户手动验收发现 4 类 UI/交互收尾问题，本次由 Codex 直接修复：
+
+- 设置页「主题模式」与 App 顶层主题状态不同源；已将默认 `useAppSettings()` 改为共享状态，并让 `App.vue` 以 `appSettings.theme` 派生实际 Light/Dark 主题，`system` 通过 `prefers-color-scheme` 最小实现。
+- 本地依赖页每张卡重复展示完整依赖清单；已改为每张卡只显示自身状态 pill（已就绪 / 需配置 / 未就绪）。
+- checkbox 与资产库 icon-only 小方形按钮点击时可能出现布局跳动；已固定 checkbox 尺寸与 icon-only active 状态。
+- 资产库导入/新建按钮完全禁用，无法验收 UI；已改为可点击并打开诚实的 `AppDialog`，明确真实导入/创建能力暂未接入，不创建资源、不写入 store、不伪造成功。
+
+验证结果：
+
+- `pnpm test`：PASS（22 files / 91 tests）。
+- `pnpm typecheck`：PASS。
+- `pnpm --filter @mirax/desktop build:web`：PASS。
+- `node /tmp/mirax-task13-review-fix-check.js`：PASS（主题切换、本地依赖单卡状态、资产库暂未接入弹窗、icon-only 尺寸稳定）。
+
+状态：Task 13 Review Fix 已实现并通过自动验证与浏览器交互验收；等待人工视觉复验。
+
+---
+
+## Task 13 Review Fix 2（主题覆盖修复）
+
+用户手动验收发现浅色主题下 `Provider 配置` 抽屉仍为深色。根因：`AppDrawer` 使用 `Teleport to="body"`，脱离 `.app-shell[data-theme="light"]` 作用域，导致 CSS token 回退到 `:root` 暗色值。
+
+修复：
+
+- `AppDrawer.vue`：读取共享 `appSettings.theme`，在 overlay 与 drawer 根节点补 `data-theme`。
+- `AppDialog.vue`：同样补 `data-theme`，避免弹窗类组件出现相同主题覆盖问题。
+- `/tmp/mirax-task13-review-fix-check.js`：补充浅色主题下打开 Provider 抽屉并断言 `.mx-drawer[data-theme="light"]` 的浏览器检查。
+
+验证结果：
+
+- `pnpm --filter @mirax/desktop typecheck`：PASS。
+- `pnpm test apps/desktop/src/composables/useAppSettings.test.ts apps/desktop/src/components/workbench/WorkbenchLayout.test.ts`：PASS（17 tests）。
+- `node /tmp/mirax-task13-review-fix-check.js`：PASS。
+
+---
+
+## Task 13 Review Fix 3（TopBar 公共壳收敛）
+
+用户手动验收发现：Workbench 顶部存在无实际作用的左箭头、通知、帮助、账户图标；其它页面的真实操作按钮仍在页面 header 内，公共 TopBar 右侧只剩主题按钮，视觉上不像同一个公共壳。
+
+修复：
+
+- `TopBar.vue`：删除无功能左箭头、通知、帮助、账户图标；Workbench 顶部保留项目名、Autosaved 与真实可用的主题按钮。
+- `AppShell.vue` / `TopBar.vue`：增加 `topbar-actions` 插槽，让普通页面操作可以进入公共 TopBar。
+- 资产库页面：隐藏页面 header 内的导入/新建按钮，将声音库/形象库/素材库的导入/新建操作移入公共 TopBar；素材库只保留一个「导入素材」入口，避免两个同名按钮。
+- `WorkbenchLayout.test.ts`：更新契约测试，确保 Workbench 顶部不再要求无功能 chrome 图标。
+
+验证结果：
+
+- `pnpm test`：PASS（22 files / 91 tests）。
+- `pnpm typecheck`：PASS。
+- `node /tmp/mirax-task13-review-fix-check.js`：PASS。
+
+---
+
 ## Plan Self-Review
 
 ### Spec coverage
