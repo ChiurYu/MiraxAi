@@ -1,6 +1,7 @@
 import {
   createApiKeyProviderConfig,
   createProjectDraft,
+  sanitizeProviderConfigForStorage,
   type ApiKeyProviderConfig,
   type ProjectDraft,
   type PublishPlatform,
@@ -42,14 +43,7 @@ export function createDefaultDesktopDraft(): DesktopDraft {
 export function sanitizeDesktopDraftForStorage(draft: DesktopDraft): PersistedDesktopDraft {
   return {
     project: draft.project,
-    providerConfig: {
-      id: draft.providerConfig.id,
-      label: draft.providerConfig.label,
-      provider: draft.providerConfig.provider,
-      baseUrl: draft.providerConfig.baseUrl,
-      model: draft.providerConfig.model,
-      enabled: draft.providerConfig.enabled,
-    },
+    providerConfig: sanitizeProviderConfigForStorage(draft.providerConfig),
   };
 }
 

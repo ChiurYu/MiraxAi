@@ -74,7 +74,13 @@ gh run view <run-id>
 
 ## Task 2：梳理 Provider 配置与真实调用边界
 
-**目标：** 明确 AI Provider（`@mirax/provider-ai`）与发布 Provider（`@mirax/provider-publish`）从 mock 切换到真实调用的配置、凭证管理、调用边界与日志规范，确保 API Key 等敏感信息不进日志、不进 snapshot、不进任务 payload。
+**状态：已完成。** Provider 配置安全边界已集中收敛：
+- 新增 `sanitizeProviderConfigForStorage`，明确非敏感 metadata 只保留 `id/label/provider/baseUrl/model/enabled`；
+- `useAppSettings.createSnapshot` 与 `desktopDraft.sanitizeDesktopDraftForStorage` 统一使用该 helper，snapshot 类型不再允许 `apiKey`；
+- `provider-ai` 类型与 `OpenAiCompatibleProvider` 增加安全边界注释，MVP 仍抛诚实“尚未接入”错误；
+- `provider-publish` 类型明确 `PublishHandoffInput` 不含凭证，账号使用 `credentialRef`。
+
+**目标：**
 
 **允许修改文件：**
 

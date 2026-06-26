@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   createApiKeyProviderConfig,
   createProjectDraft,
+  sanitizeProviderConfigForStorage,
   validateProviderConfig,
   validateProjectDraft,
 } from "../src/index.js";
@@ -19,6 +20,29 @@ describe("validation domain", () => {
     expect(validateProviderConfig(config)).toEqual([]);
     expect(validateProviderConfig({ ...config, apiKey: "" })).toContain("请填写 API Key");
     expect(validateProviderConfig({ ...config, baseUrl: "not-a-url" })).toContain("Base URL 格式不正确");
+  });
+
+  it("strips the API key and keeps only non-sensitive metadata for storage", () => {
+    const config = createApiKeyProviderConfig({
+      id: "openai-main",
+      label: "OpenAI 主账号",
+      provider: "openai",
+      apiKey: "sk-secret",
+      baseUrl: "https://api.openai.com/v1",
+      model: "gpt-4.1",
+    });
+
+    const metadata = sanitizeProviderConfigForStorage(config);
+
+    expect(metadata).not.toHaveProperty("apiKey");
+    expect(metadata).toEqual({
+      id: "openai-main",
+      label: "OpenAI 主账号",
+      provider: "openai",
+      baseUrl: "https://api.openai.com/v1",
+      model: "gpt-4.1",
+      enabled: true,
+    });
   });
 
   it("validates the minimum project information required before generation starts", () => {

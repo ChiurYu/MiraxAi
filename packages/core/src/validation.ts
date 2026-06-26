@@ -1,9 +1,22 @@
 import type { ApiKeyProviderConfig, AppSettings, AppTheme, ProjectDraft, PublishMetadata, PublishPlatform } from "./types.js";
 
+export type ProviderConfigMetadata = Omit<ApiKeyProviderConfig, "apiKey">;
+
 export function createApiKeyProviderConfig(config: Omit<ApiKeyProviderConfig, "enabled"> & { enabled?: boolean }): ApiKeyProviderConfig {
   return {
     ...config,
     enabled: config.enabled ?? true,
+  };
+}
+
+export function sanitizeProviderConfigForStorage(config: ApiKeyProviderConfig): ProviderConfigMetadata {
+  return {
+    id: config.id,
+    label: config.label,
+    provider: config.provider,
+    baseUrl: config.baseUrl,
+    model: config.model,
+    enabled: config.enabled,
   };
 }
 
