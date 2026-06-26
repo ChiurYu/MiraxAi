@@ -114,9 +114,38 @@ pnpm typecheck
 
 ## Task 2：设计 rewrite executor 如何从 mock 切到 real
 
-**状态：未开始（待派工）。**
+**状态：已完成。**
 
 **目标：** 在桌面端把 rewrite 的执行从「固定调用单一 mock 实例」改为「按 `getStageMode("rewrite")` 与已启用 LLM 配置选择 provider」：`mock` → 走 `createMockAiProvider`；`real` 且配置就绪 → 走 `createOpenAiCompatibleProvider({ baseUrl, apiKey, model })` 并**真实调用**；`real` 但配置 / 连接不就绪 → 抛 Task 1 定义的诚实错误（由 `processStage` 标记 `failed`）。为可测性，把 rewrite 的 provider 选择与执行抽成可单测的纯函数 / 工厂，不把分支逻辑埋死在 `App.vue` 的 `switch` 里。
+
+**实现摘要：**
+
+- 新建 `apps/desktop/src/composables/useRewriteProvider.ts`，导出纯函数 `selectRewriteProvider({ stageMode, providerConfigs, mockProvider })`，返回 `{ ok, provider }` 或 `{ ok: false, error: AiProviderError }`。
+- 新建 `apps/desktop/src/composables/useRewriteProvider.test.ts`，覆盖 mock / not-connected / real 成功 / real 配置错误 / 非法 provider / 无 fallback 等 14 个场景。
+- 修改 `apps/desktop/src/App.vue` 的 `executeStage` rewrite 分支：按 `runtime.getStageMode("rewrite")` 选择 provider；`real` 模式失败时抛出结构化错误，由 `processStage` 标记 `failed`。
+- **Review Fix（2026-06-26）：** `selectRewriteProvider` 不再只取第一个 enabled provider，而是显式选择第一个 `enabled && (provider === "openai" || provider === "custom")` 的配置；若仅有非改写类 provider（whisper / cosyvoice / heygem）被启用，返回 `not-configured` 诚实错误。
+- `deriveRewriteSellingPoints` 改为优先从 `draft.name` / `draft.notes` 提取候选卖点，缺省时退化为安全默认。
+- 未修改 `useWorkflowRuntime.ts`：其 `stageModes` 默认仍全为 `"mock"`，无需调整即可保持默认行为不变。
+- 同步更新根目录 `vitest.config.ts`，为 workspace 包添加与 Vite 一致的 alias，确保测试解析到源码而非陈旧的 `dist`。
+
+**验证结果（2026-06-26）：**
+
+```text
+pnpm test apps/desktop/src/composables/useWorkflowRuntime.test.ts   13 passed
+pnpm test apps/desktop/src/composables                              52 passed
+pnpm --filter @mirax/desktop typecheck                              passed
+pnpm typecheck                                                      passed
+pnpm test                                                           164 passed
+```
+
+**验收标准：**
+
+- [x] `getStageMode("rewrite") === "mock"` 时，rewrite 行为与现状逐字一致（固定文案、写 `notes`、`prep.updateMetadata`），现有相关测试不回归。
+- [x] `getStageMode("rewrite") === "real"` 且存在「启用且为 OpenAI-compatible 的配置（`provider === "openai"` 或 `provider === "custom"`）+ 内存中有 `apiKey` + 有合法 `model` + 必要时 `baseUrl` 合法」时，executor 调用 `createOpenAiCompatibleProvider({ baseUrl, apiKey, model }).rewriteScript(...)` 发起**真实 LLM 调用**；调用失败时按 Task 1 契约返回结构化错误，由 `processStage` 标记 `failed`，**不 fallback 到 mock**。
+- [x] `real` 但无启用配置 / 无 apiKey 时，返回 `not-configured` 诚实错误，不静默改用 mock。
+- [x] provider 选择逻辑可被独立单测（输入 mode + 配置数组，断言选中的 provider 类型或「未就绪」原因）。
+- [x] `sellingPoints` 不再硬编码，改为来自 `draft` 或 rewrite UI 输入；缺省时退化为安全默认，不抛错。
+- [x] 默认 `stageModes` 仍使 rewrite 为 `mock`：未配置 / 未切换时 App 启动行为不变。
 
 **允许修改文件：**
 

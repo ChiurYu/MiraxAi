@@ -31,6 +31,7 @@ import { usePublishPreparation } from "./composables/usePublishPreparation.js";
 import { useAppSettings } from "./composables/useAppSettings.js";
 import { useWorkbenchDraft } from "./composables/useWorkbenchDraft.js";
 import { useWorkflowRuntime } from "./composables/useWorkflowRuntime.js";
+import { selectRewriteProvider } from "./composables/useRewriteProvider.js";
 import type { AssetListItem } from "./features/assets/assetModels.js";
 import { mockAccounts } from "./features/accounts/mockAccounts.js";
 import AccountManagementView from "./views/AccountManagementView.vue";
@@ -50,7 +51,7 @@ const mediaRenderer = createMockMediaRenderer({ artifactRoot: "/Users/Shared/Mir
 const publisher = createMockPublisher();
 
 const { draft, persist } = useWorkbenchDraft();
-const { appSettings } = useAppSettings();
+const { appSettings, providerConfigs } = useAppSettings();
 
 const generatedVideoPath = ref("");
 const generatedCoverPath = ref("");
@@ -242,10 +243,18 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
       if (!transcriptText.value.trim()) {
         throw new Error("请先完成素材解析，获取原始文案");
       }
-      const result = await aiProvider.rewriteScript({
+      const selection = selectRewriteProvider({
+        stageMode: runtime.getStageMode("rewrite"),
+        providerConfigs: providerConfigs.value,
+        mockProvider: aiProvider,
+      });
+      if (!selection.ok) {
+        throw selection.error;
+      }
+      const result = await selection.provider.rewriteScript({
         transcript: transcriptText.value,
         productName: project.value.name,
-        sellingPoints: ["通勤", "大容量", "质感"],
+        sellingPoints: deriveRewriteSellingPoints(project.value),
       });
       project.value = { ...project.value, notes: result.script };
       prep.updateMetadata({
@@ -412,6 +421,19 @@ function fileName(filePath: string): string {
   if (!trimmed) return "";
   const index = Math.max(trimmed.lastIndexOf("/"), trimmed.lastIndexOf("\\"));
   return index >= 0 ? trimmed.slice(index + 1) : trimmed;
+}
+
+function deriveRewriteSellingPoints(draft: ProjectDraft): string[] {
+  // 优先从 draft 已有文本提取候选卖点；UI 尚未传入明确卖点时，退化为安全默认。
+  const combined = [draft.name, draft.notes].filter(Boolean).join(" ");
+  const tokens = combined
+    .split(/[,，\s]+/)
+    .map((t) => t.trim())
+    .filter((t) => t.length >= 2);
+  if (tokens.length > 0) {
+    return tokens.slice(0, 3);
+  }
+  return ["通勤", "大容量", "质感"];
 }
 
 function handleSaveDraft() {
