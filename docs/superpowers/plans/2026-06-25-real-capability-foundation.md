@@ -134,7 +134,15 @@ pnpm typecheck
 
 ## Task 3：梳理 sidecar / 本地依赖检测
 
-**目标：** 明确 FFmpeg、CosyVoice、HeyGem、Playwright 四类本地依赖的检测方式、配置来源、健康检查输出与 UI 状态映射，使设置页“本地依赖”能反映真实环境，而不是只保存字符串。
+**状态：已完成。** sidecar 本地依赖检测边界已收敛：
+- `DependencyCheckResult` 新增 `state` 字段，可表达 `missing / configured / ready / unavailable` 四种状态；
+- `checkSidecarDependencies` 默认只做配置存在性与 URL 格式校验，不启动/不探测真实服务；可选 `probe` 回调供未来真实检测接入；
+- 新增 `detectFfmpeg`、`detectPlaywright`、`detectService`、`startSidecarDependency`、`stopSidecarDependency`，明确“检测接口”与“运行接口”分层；
+- `SidecarConfig` 扩展 `cosyVoiceMode`、`heygemMode`、`pythonServiceMode`、`playwrightBrowserName` 等可选字段；
+- `LocalDependenciesSettings.vue` 改用检测结果驱动状态 pill，显示“已就绪 / 需配置 / 未就绪”，不伪造可用；
+- 状态 message 不暴露用户输入的具体路径或 URL。
+
+**目标：**
 
 **允许修改文件：**
 
