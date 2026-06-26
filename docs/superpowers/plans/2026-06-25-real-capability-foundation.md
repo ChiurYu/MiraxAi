@@ -193,6 +193,14 @@ pnpm typecheck
 
 ## Task 4：设计真实媒体产物路径与错误状态
 
+**状态：已完成。** 真实媒体产物路径与错误状态边界已收敛：
+- `@mirax/core` 新增 `ArtifactState`、`ArtifactPathType`、`MediaArtifact`、`MediaArtifactError` 与 `ProjectDraft` 产物路径字段（`audioPath`、`avatarVideoPath`、`finalVideoPath`、`coverPath`）；
+- `@mirax/media-pipeline` 新增 `artifactPaths.ts`，提供 `buildArtifactPath`、`getArtifactPathType`、`createMediaArtifact`、`MediaRendererError`、`assertPrerequisitePath` 等边界辅助；
+- `mockRenderer` 的产物路径改为 `outputRoot/<projectId>/<stage>/<fileName>`，与真实规则一致，且缺少前置产物时抛出诚实错误；
+- `ffmpegCommands.ts` 在输入/输出路径为空时抛出 `MediaRendererError`，避免生成无效命令；错误 message 不携带具体路径；
+- `useWorkflowRuntime.ts` 补充产物传递与错误处理边界注释，保持 mock executor 行为不变。
+- Review Fix：`buildArtifactPath()` 进一步清洗 `fileName`，去除 `.` / `..`、开头斜杠与反斜杠，保留正常内部层级，堵住目录穿越边界缺口。
+
 **目标：** 明确 `@mirax/media-pipeline` 与 `@mirax/core` 中视频、音频、数字人视频、成片、封面的真实产物路径规则、文件存在性校验、错误状态与 UI 展示规范，不伪造文件、时长、分辨率、码率。
 
 **允许修改文件：**

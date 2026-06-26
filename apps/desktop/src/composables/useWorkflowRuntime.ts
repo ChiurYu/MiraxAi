@@ -19,6 +19,17 @@ export interface WorkflowLogEntry {
 
 export interface UseWorkflowRuntimeOptions {
   projectId: string;
+  /**
+   * 阶段执行器。
+   *
+   * 产物传递边界：
+   * - 执行器负责把当前阶段的产物路径写入 `ProjectDraft` 或返回给调用方；
+   * - 执行器内部应校验前置产物是否 `ready`，缺失时抛出诚实错误；
+   * - 错误会被 `processStage` 捕获并标记阶段为 `failed`，message 进入日志。
+   *
+   * 当前 Task 不改动 mock executor 行为，真实能力接入时通过 stageId 路由到
+   * 真实 provider / media renderer，并在失败时回传 `MediaRendererError`。
+   */
   executor: (stageId: WorkflowStageId, title: string) => Promise<string>;
 }
 
@@ -114,6 +125,8 @@ export function useWorkflowRuntime(options: UseWorkflowRuntimeOptions) {
       addLog(title, message);
       return message;
     } catch (error) {
+      // 错误处理边界：真实能力接入后，这里可能收到 MediaRendererError 等结构化错误。
+      // 目前只提取 message 写入日志，并保持阶段输入可见以便用户重试。
       if (error instanceof Error && error.message === "PUBLISH_CANCELLED") {
         workflow.value = updateStageStatus(workflow.value, stageId, "pending");
         addLog(title, "已取消发布");

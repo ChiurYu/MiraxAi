@@ -51,6 +51,38 @@ export interface ProjectDraft {
   sourceVideoPath?: string;
   voiceSamplePath?: string;
   notes?: string;
+  /** 语音合成产物路径（绝对路径、项目相对路径或 URL）。 */
+  audioPath?: string;
+  /** 数字人口播视频产物路径。 */
+  avatarVideoPath?: string;
+  /** 最终成片产物路径。 */
+  finalVideoPath?: string;
+  /** 封面图产物路径。 */
+  coverPath?: string;
+}
+
+/** 媒体产物生成状态。 */
+export type ArtifactState = "pending" | "running" | "ready" | "failed" | "stale";
+
+/** 媒体产物路径类型。 */
+export type ArtifactPathType = "absolute" | "relative" | "url";
+
+/** 媒体产物错误信息。 */
+export interface MediaArtifactError {
+  code: string;
+  message: string;
+  stageId?: string;
+}
+
+/** 单个媒体产物描述。 */
+export interface MediaArtifact {
+  kind: "audio" | "avatarVideo" | "finalVideo" | "cover" | "subtitle";
+  path: string;
+  pathType: ArtifactPathType;
+  fileName: string;
+  generatedAt?: string;
+  state: ArtifactState;
+  error?: MediaArtifactError;
 }
 
 export type AppTheme = "light" | "dark" | "system";
