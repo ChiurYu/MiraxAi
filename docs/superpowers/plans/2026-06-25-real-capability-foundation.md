@@ -252,13 +252,15 @@ pnpm typecheck
 
 ## Task 5：设计工作台各阶段从 mock 到真实能力的接入顺序
 
+**状态：已完成。** 工作台真实化顺序已文档化为 `docs/product-architecture/workbench-real-capability-rollout.md`：`@mirax/core` 新增 `WorkflowStageRuntimeMode`、阶段依赖 `STAGE_PREREQUISITES`、推荐真实化顺序与默认 mock 模式；`useWorkflowRuntime` 支持按阶段配置 `mock/real/not-connected` 并提供 `getStageMode`。本 Task 仅落地真实化顺序文档、core 阶段依赖/默认 mock 模式与 `useWorkflowRuntime` 模式选择；UI 展示属于后续 polish，不属于本 Task。
+
 **目标：** 制定 Workbench 8 个阶段（`transcribe → rewrite → voice-clone → speech → avatar → compose → review → publish`）从 mock 切换到真实能力的安全顺序、依赖检查点与降级策略，确保每次只替换一个阶段，失败时可回退到 mock 或保持诚实错误。
 
 **允许修改文件：**
 
 - 修改：`packages/core/src/workflow.ts` 或同目录相关文件（明确阶段依赖、前置产物检查函数）
 - 修改：`apps/desktop/src/composables/useWorkflowRuntime.ts`（增加 provider/runtime 选择逻辑设计，保留 mock 为默认）
-- 修改：`apps/desktop/src/components/workbench/stages/*.vue`（仅调整 stage 组件对“真实能力未接入”的状态展示，不实现真实调用）
+- 修改：`apps/desktop/src/components/workbench/stages/*.vue`（仅在未来真实化 Task 中按需调整 stage 组件 UI；本 Task 不修改）
 - 修改：`docs/superpowers/plans/2026-06-25-real-capability-foundation.md`
 - 修改：`docs/superpowers/PROJECT-STATE.md`
 - 可选创建：`docs/product-architecture/workbench-real-capability-rollout.md`
@@ -294,7 +296,7 @@ pnpm typecheck
    - 前置阶段产物状态为 `ready`；
    - 当前阶段输入参数通过 `validateProjectDraft` 校验。
 3. `useWorkflowRuntime` 支持按阶段选择 provider：mock 或真实；真实 provider 未接入时返回诚实错误，不 fallback 到 mock 自动伪造。
-4. 阶段组件 UI 明确区分：mock 结果 / 真实结果 / 未接入 / 错误；不隐藏“未接入”提示。
+4. 本 Task 不修改 stage 组件 UI；未来真实化 Task 再决定是否在 UI 上展示 mock / real / not-connected / error 状态，且不得伪造“真实能力已接入”。
 5. 每个阶段的真实化工作拆分为独立 future Task，不在本 Task 中实现。
 
 **明确不做什么：**

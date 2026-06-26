@@ -1,5 +1,6 @@
 import { computed, ref } from "vue";
 import {
+  createDefaultStageModes,
   createDefaultWorkflow,
   getNextStage,
   getStageProgress,
@@ -8,6 +9,7 @@ import {
   type Workflow,
   type WorkflowStage,
   type WorkflowStageId,
+  type WorkflowStageRuntimeMode,
   type WorkflowStageStatus,
 } from "@mirax/core";
 
@@ -31,6 +33,16 @@ export interface UseWorkflowRuntimeOptions {
    * 真实 provider / media renderer，并在失败时回传 `MediaRendererError`。
    */
   executor: (stageId: WorkflowStageId, title: string) => Promise<string>;
+  /**
+   * 每个阶段的运行时能力模式。
+   *
+   * - 未提供的阶段默认 `mock`。
+   * - 设置为 `real` 时，executor 应路由到真实 provider / sidecar；若真实能力
+   *   尚未接入，必须返回诚实错误，不得自动 fallback 到 mock 伪造成功。
+   * - `not-connected` 用于真实 provider 已配置但依赖未就绪（sidecar 缺失、连接
+   *   测试失败）的场景，UI 应明确提示“真实能力未接入”。
+   */
+  stageModes?: Partial<Record<WorkflowStageId, WorkflowStageRuntimeMode>>;
 }
 
 export function useWorkflowRuntime(options: UseWorkflowRuntimeOptions) {
@@ -39,6 +51,14 @@ export function useWorkflowRuntime(options: UseWorkflowRuntimeOptions) {
   const running = ref(false);
   const runningMode = ref<"single" | "all" | null>(null);
   const logs = ref<WorkflowLogEntry[]>([]);
+  const stageModes = ref<Record<WorkflowStageId, WorkflowStageRuntimeMode>>({
+    ...createDefaultStageModes(),
+    ...options.stageModes,
+  });
+
+  function getStageMode(stageId: WorkflowStageId): WorkflowStageRuntimeMode {
+    return stageModes.value[stageId] ?? "mock";
+  }
 
   const progress = computed(() => getStageProgress(workflow.value));
   const nextStage = computed(() => getNextStage(workflow.value));
@@ -234,10 +254,12 @@ export function useWorkflowRuntime(options: UseWorkflowRuntimeOptions) {
     running,
     runningMode,
     logs,
+    stageModes,
     progress,
     nextStage,
     activeStage,
     stageStatus,
+    getStageMode,
     runNextStage,
     runAllStages,
     runStage,

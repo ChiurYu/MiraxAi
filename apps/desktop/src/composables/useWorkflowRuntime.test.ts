@@ -137,4 +137,24 @@ describe("useWorkflowRuntime", () => {
     expect(runtime.workflow.value.stages.find((s) => s.id === "speech")?.status).toBe("pending");
     expect(runtime.workflow.value.stages.find((s) => s.id === "avatar")?.status).toBe("pending");
   });
+
+  it("defaults every stage to mock runtime mode", () => {
+    const runtime = useWorkflowRuntime({ projectId: "demo", executor: vi.fn() });
+
+    expect(runtime.getStageMode("transcribe")).toBe("mock");
+    expect(runtime.getStageMode("publish")).toBe("mock");
+    expect(Object.keys(runtime.stageModes.value)).toHaveLength(8);
+  });
+
+  it("allows configuring a per-stage runtime mode", () => {
+    const runtime = useWorkflowRuntime({
+      projectId: "demo",
+      executor: vi.fn(),
+      stageModes: { rewrite: "real", speech: "not-connected" },
+    });
+
+    expect(runtime.getStageMode("rewrite")).toBe("real");
+    expect(runtime.getStageMode("speech")).toBe("not-connected");
+    expect(runtime.getStageMode("transcribe")).toBe("mock");
+  });
 });
