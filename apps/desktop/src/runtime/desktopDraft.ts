@@ -1,6 +1,7 @@
 import {
   createApiKeyProviderConfig,
   createProjectDraft,
+  sanitizeProviderConfigForStorage,
   type ApiKeyProviderConfig,
   type ProjectDraft,
   type PublishPlatform,
@@ -42,14 +43,7 @@ export function createDefaultDesktopDraft(): DesktopDraft {
 export function sanitizeDesktopDraftForStorage(draft: DesktopDraft): PersistedDesktopDraft {
   return {
     project: draft.project,
-    providerConfig: {
-      id: draft.providerConfig.id,
-      label: draft.providerConfig.label,
-      provider: draft.providerConfig.provider,
-      baseUrl: draft.providerConfig.baseUrl,
-      model: draft.providerConfig.model,
-      enabled: draft.providerConfig.enabled,
-    },
+    providerConfig: sanitizeProviderConfigForStorage(draft.providerConfig),
   };
 }
 
@@ -67,15 +61,18 @@ export function restoreDesktopDraft(saved: Partial<PersistedDesktopDraft>): Desk
         }
       : defaults.project,
     providerConfig: saved.providerConfig
-      ? {
-          ...defaults.providerConfig,
-          id: saved.providerConfig.id ?? defaults.providerConfig.id,
-          label: saved.providerConfig.label ?? defaults.providerConfig.label,
-          provider: saved.providerConfig.provider ?? defaults.providerConfig.provider,
-          baseUrl: saved.providerConfig.baseUrl ?? defaults.providerConfig.baseUrl,
-          model: saved.providerConfig.model ?? defaults.providerConfig.model,
-          enabled: saved.providerConfig.enabled ?? defaults.providerConfig.enabled,
-        }
+      ? createApiKeyProviderConfig({
+          ...sanitizeProviderConfigForStorage({
+            ...defaults.providerConfig,
+            id: saved.providerConfig.id ?? defaults.providerConfig.id,
+            label: saved.providerConfig.label ?? defaults.providerConfig.label,
+            provider: saved.providerConfig.provider ?? defaults.providerConfig.provider,
+            baseUrl: saved.providerConfig.baseUrl ?? defaults.providerConfig.baseUrl,
+            model: saved.providerConfig.model ?? defaults.providerConfig.model,
+            enabled: saved.providerConfig.enabled ?? defaults.providerConfig.enabled,
+          }),
+          apiKey: "",
+        })
       : defaults.providerConfig,
   };
 }

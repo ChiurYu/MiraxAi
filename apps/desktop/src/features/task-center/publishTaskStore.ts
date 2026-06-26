@@ -14,6 +14,70 @@ function getStorage(): Storage | undefined {
   return undefined;
 }
 
+/**
+ * 安全过滤：确保写入 localStorage 的任务对象不包含任何凭证字段。
+ * PublishTask 类型本身不含凭证，但此处做防御性剔除，防止未来误传。
+ */
+function sanitizePublishTaskForStorage(task: PublishTask): PublishTask {
+  const sanitized: PublishTask = {
+    ...task,
+    retryCount: task.retryCount ?? 0,
+  };
+
+  const credentialKeys = ["credentialRef", "cookie", "token", "password", "apiKey", "secret"] as const;
+  for (const key of credentialKeys) {
+    if (key in sanitized) {
+      delete (sanitized as unknown as Record<typeof credentialKeys[number], unknown>)[key];
+    }
+  }
+
+  return sanitized;
+}
+
+function normalizePublishTask(raw: unknown): PublishTask | undefined {
+  if (typeof raw !== "object" || raw === null) {
+    return undefined;
+  }
+
+  const task = raw as Partial<PublishTask>;
+
+  if (
+    !task.id ||
+    !task.projectId ||
+    !task.platformId ||
+    !task.accountId ||
+    !task.status ||
+    !task.videoPath ||
+    !task.title ||
+    !task.description ||
+    !task.tags ||
+    !task.mode ||
+    !task.createdAt ||
+    !task.updatedAt
+  ) {
+    return undefined;
+  }
+
+  return {
+    id: task.id,
+    projectId: task.projectId,
+    platformId: task.platformId,
+    accountId: task.accountId,
+    status: task.status,
+    videoPath: task.videoPath,
+    title: task.title,
+    description: task.description,
+    tags: task.tags,
+    mode: task.mode,
+    createdAt: task.createdAt,
+    updatedAt: task.updatedAt,
+    errorCode: task.errorCode,
+    errorMessage: task.errorMessage,
+    failedAt: task.failedAt,
+    retryCount: task.retryCount ?? 0,
+  } as PublishTask;
+}
+
 export function loadPublishTasks(): PublishTask[] {
   const storage = getStorage();
   if (!storage) {
@@ -31,7 +95,7 @@ export function loadPublishTasks(): PublishTask[] {
       return [];
     }
 
-    return parsed as PublishTask[];
+    return parsed.map(normalizePublishTask).filter((t): t is PublishTask => t !== undefined);
   } catch {
     return [];
   }
@@ -43,7 +107,7 @@ export function savePublishTasks(tasks: PublishTask[]): void {
     return;
   }
 
-  storage.setItem(PUBLISH_TASKS_STORAGE_KEY, JSON.stringify(tasks));
+  storage.setItem(PUBLISH_TASKS_STORAGE_KEY, JSON.stringify(tasks.map(sanitizePublishTaskForStorage)));
 }
 
 export function appendPublishTask(task: PublishTask): void {

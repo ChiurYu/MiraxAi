@@ -15,6 +15,18 @@ describe("desktopDraft persistence", () => {
     expect(persisted.providerConfig).not.toHaveProperty("apiKey");
   });
 
+  it("sanitizeDesktopDraftForStorage strips URL credentials, query and hash from baseUrl", () => {
+    const draft = createDefaultDesktopDraft();
+    draft.providerConfig.baseUrl =
+      "https://user:pass@api.example.com:8443/v1/chat?token=draft-secret#/hash";
+
+    const persisted = sanitizeDesktopDraftForStorage(draft);
+
+    expect(persisted.providerConfig.baseUrl).toBe("https://api.example.com:8443/v1/chat");
+    expect(JSON.stringify(persisted)).not.toContain("draft-secret");
+    expect(JSON.stringify(persisted)).not.toContain("user:pass");
+  });
+
   it('restoreDesktopDraft restores saved values and falls back to ["douyin"] when saved platforms are empty', () => {
     const restored = restoreDesktopDraft({
       project: {

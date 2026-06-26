@@ -11,12 +11,20 @@ export interface AccountViewItem extends PublishAccount {
   uiStatus: AccountUiStatus;
 }
 
+/**
+ * Mock 账号视图数据。
+ *
+ * 安全边界：
+ * - `credentialRef` 仅作为凭证引用占位，绝不保存真实 cookie / token；
+ * - UI 状态诚实反映授权是否可用，不模拟真实 OAuth 成功。
+ */
 export const mockAccounts: AccountViewItem[] = [
   {
     id: "account-douyin-mirax",
     platformId: "douyin" as PublishPlatform,
     displayName: "Mirax 抖音号",
     status: "active",
+    credentialRef: "mock:keychain:douyin-mirax",
     uiStatus: "connected",
   },
   {
@@ -54,6 +62,7 @@ export function createAccountViewItem(input: {
   platformId: PublishPlatform;
   displayName: string;
   uiStatus: AccountUiStatus;
+  credentialRef?: string;
 }): AccountViewItem {
   let status: PublishAccount["status"] = "inactive";
   if (input.uiStatus === "connected") status = "active";
@@ -64,6 +73,7 @@ export function createAccountViewItem(input: {
     platformId: input.platformId,
     displayName: input.displayName,
     status,
+    credentialRef: input.credentialRef,
     uiStatus: input.uiStatus,
   };
 }

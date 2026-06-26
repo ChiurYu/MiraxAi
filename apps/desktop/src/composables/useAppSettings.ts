@@ -2,6 +2,8 @@ import { reactive, ref, watch } from "vue";
 import {
   createApiKeyProviderConfig,
   createDefaultAppSettings,
+  sanitizeBaseUrlForStorage,
+  sanitizeProviderConfigForStorage,
   type ApiKeyProviderConfig,
   type AppSettings,
 } from "@mirax/core";
@@ -23,7 +25,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
 export interface AppSettingsSnapshot {
   appSettings?: Partial<AppSettings>;
   sidecarConfig?: Partial<SidecarConfig>;
-  providerConfigs?: Array<Omit<ApiKeyProviderConfig, "apiKey"> & { apiKey?: string }>;
+  providerConfigs?: Array<Omit<ApiKeyProviderConfig, "apiKey">>;
   section?: SettingsSection;
 }
 
@@ -86,14 +88,7 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
     return {
       appSettings: { ...appSettings },
       sidecarConfig: { ...sidecarConfig },
-      providerConfigs: providerConfigs.value.map((config) => ({
-        id: config.id,
-        label: config.label,
-        provider: config.provider,
-        baseUrl: config.baseUrl,
-        model: config.model,
-        enabled: config.enabled,
-      })),
+      providerConfigs: providerConfigs.value.map((config) => sanitizeProviderConfigForStorage(config)),
       section: resolveSectionForSnapshot(),
     };
   }
@@ -123,8 +118,8 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
           id: config.id ?? crypto.randomUUID(),
           label: config.label ?? "未命名配置",
           provider: config.provider ?? "openai",
-          apiKey: config.apiKey ?? "",
-          baseUrl: config.baseUrl,
+          apiKey: "",
+          baseUrl: sanitizeBaseUrlForStorage(config.baseUrl),
           model: config.model,
           enabled: config.enabled ?? true,
         }),

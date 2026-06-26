@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { AlertCircle, CheckCircle2, Download, Play, RefreshCw, Wrench } from "lucide-vue-next";
 import { computed, ref } from "vue";
-import { createDefaultSidecarConfig, type SidecarConfig } from "@mirax/sidecar-manager";
+import {
+  checkSidecarDependencies,
+  createDefaultSidecarConfig,
+  type DependencyCheckResult,
+  type SidecarConfig,
+} from "@mirax/sidecar-manager";
 import { useAppSettings } from "../../composables/useAppSettings.js";
 
 type DependencyKey = "ffmpeg" | "python" | "cosyvoice" | "heygem" | "playwright";
@@ -46,22 +51,39 @@ const DEPENDENCIES: DependencyItem[] = [
   },
 ];
 
-const FILTER_OPTIONS: { value: "all" | "ok" | "needs-config" | "unavailable"; label: string }[] = [
+const FILTER_OPTIONS: { value: "all" | "ok" | "needs-config" | "not-ready"; label: string }[] = [
   { value: "all", label: "全部" },
-  { value: "ok", label: "正常" },
+  { value: "ok", label: "已就绪" },
   { value: "needs-config", label: "需配置" },
-  { value: "unavailable", label: "不可用" },
+  { value: "not-ready", label: "未就绪" },
 ];
 
 const { sidecarConfig } = useAppSettings();
 
-const filter = ref<"all" | "ok" | "needs-config" | "unavailable">("all");
+const filter = ref<"all" | "ok" | "needs-config" | "not-ready">("all");
 const expandedKey = ref<DependencyKey | null>("heygem");
 const actionMessages = ref<Record<string, string>>({});
 
 const defaultSidecar = createDefaultSidecarConfig();
 
-function configFieldFor(key: DependencyKey): keyof SidecarConfig {
+const dependencyResults = computed<DependencyCheckResult[]>(() =>
+  checkSidecarDependencies({
+    ffmpegPath: sidecarConfig.ffmpegPath,
+    hasPlaywrightBrowser: sidecarConfig.hasPlaywrightBrowser,
+    pythonServiceUrl: sidecarConfig.pythonServiceUrl,
+    heygemServiceUrl: sidecarConfig.heygemServiceUrl,
+    cosyVoiceServiceUrl: sidecarConfig.cosyVoiceServiceUrl,
+  }),
+);
+
+const resultByKey = computed(() =>
+  Object.fromEntries(dependencyResults.value.map((result) => [result.key, result])) as Record<
+    DependencyKey,
+    DependencyCheckResult
+  >,
+);
+
+function configFieldFor(key: DependencyKey): "ffmpegPath" | "pythonServiceUrl" | "cosyVoiceServiceUrl" | "heygemServiceUrl" | "hasPlaywrightBrowser" {
   switch (key) {
     case "ffmpeg":
       return "ffmpegPath";
@@ -84,30 +106,31 @@ function setValue(key: DependencyKey, value: string | boolean) {
   (sidecarConfig as Record<string, unknown>)[configFieldFor(key)] = value;
 }
 
-function dependencyOk(key: DependencyKey): boolean {
-  const value = currentValue(key);
-  return typeof value === "boolean" ? value : value.toString().trim().length > 0;
+function dependencyStatusLabel(key: DependencyKey): string {
+  const state = resultByKey.value[key]?.state ?? "missing";
+  if (state === "ready") return "已就绪";
+  if (state === "missing") return "需配置";
+  return "未就绪";
 }
 
-function dependencyStatusLabel(key: DependencyKey): string {
-  if (dependencyOk(key)) return "已就绪";
-  return key === "playwright" ? "未就绪" : "需配置";
+function dependencyOk(key: DependencyKey): boolean {
+  const state = resultByKey.value[key]?.state ?? "missing";
+  return state === "ready";
 }
 
 function runLimitedAction(key: DependencyKey, name: string) {
   const dep = DEPENDENCIES.find((d) => d.key === key);
-  actionMessages.value[key] = `${name}：${dep?.installNote ?? "该服务尚未接入，无法执行真实操作。"}`;
+  const result = resultByKey.value[key];
+  actionMessages.value[key] = `${name}：${result?.message ?? ""} ${dep?.installNote ?? "该服务尚未接入，无法执行真实操作。"}`;
 }
 
 const filteredDependencies = computed(() => {
   if (filter.value === "all") return DEPENDENCIES;
-  // Simplified filtering: unavailable if empty/false, ok if set/true
   return DEPENDENCIES.filter((d) => {
-    const isOk = dependencyOk(d.key);
-    if (filter.value === "ok") return isOk;
-    if (filter.value === "needs-config") return !isOk && d.key !== "playwright";
-    if (filter.value === "unavailable") return !isOk;
-    return true;
+    const state = resultByKey.value[d.key]?.state ?? "missing";
+    if (filter.value === "ok") return state === "ready";
+    if (filter.value === "needs-config") return state === "missing";
+    return state === "configured" || state === "unavailable";
   });
 });
 </script>

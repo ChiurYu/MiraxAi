@@ -1,5 +1,6 @@
 import { computed, ref } from "vue";
 import {
+  createDefaultStageModes,
   createDefaultWorkflow,
   getNextStage,
   getStageProgress,
@@ -8,6 +9,7 @@ import {
   type Workflow,
   type WorkflowStage,
   type WorkflowStageId,
+  type WorkflowStageRuntimeMode,
   type WorkflowStageStatus,
 } from "@mirax/core";
 
@@ -19,7 +21,28 @@ export interface WorkflowLogEntry {
 
 export interface UseWorkflowRuntimeOptions {
   projectId: string;
+  /**
+   * 阶段执行器。
+   *
+   * 产物传递边界：
+   * - 执行器负责把当前阶段的产物路径写入 `ProjectDraft` 或返回给调用方；
+   * - 执行器内部应校验前置产物是否 `ready`，缺失时抛出诚实错误；
+   * - 错误会被 `processStage` 捕获并标记阶段为 `failed`，message 进入日志。
+   *
+   * 当前 Task 不改动 mock executor 行为，真实能力接入时通过 stageId 路由到
+   * 真实 provider / media renderer，并在失败时回传 `MediaRendererError`。
+   */
   executor: (stageId: WorkflowStageId, title: string) => Promise<string>;
+  /**
+   * 每个阶段的运行时能力模式。
+   *
+   * - 未提供的阶段默认 `mock`。
+   * - 设置为 `real` 时，executor 应路由到真实 provider / sidecar；若真实能力
+   *   尚未接入，必须返回诚实错误，不得自动 fallback 到 mock 伪造成功。
+   * - `not-connected` 用于真实 provider 已配置但依赖未就绪（sidecar 缺失、连接
+   *   测试失败）的场景，UI 应明确提示“真实能力未接入”。
+   */
+  stageModes?: Partial<Record<WorkflowStageId, WorkflowStageRuntimeMode>>;
 }
 
 export function useWorkflowRuntime(options: UseWorkflowRuntimeOptions) {
@@ -28,6 +51,14 @@ export function useWorkflowRuntime(options: UseWorkflowRuntimeOptions) {
   const running = ref(false);
   const runningMode = ref<"single" | "all" | null>(null);
   const logs = ref<WorkflowLogEntry[]>([]);
+  const stageModes = ref<Record<WorkflowStageId, WorkflowStageRuntimeMode>>({
+    ...createDefaultStageModes(),
+    ...options.stageModes,
+  });
+
+  function getStageMode(stageId: WorkflowStageId): WorkflowStageRuntimeMode {
+    return stageModes.value[stageId] ?? "mock";
+  }
 
   const progress = computed(() => getStageProgress(workflow.value));
   const nextStage = computed(() => getNextStage(workflow.value));
@@ -114,6 +145,8 @@ export function useWorkflowRuntime(options: UseWorkflowRuntimeOptions) {
       addLog(title, message);
       return message;
     } catch (error) {
+      // 错误处理边界：真实能力接入后，这里可能收到 MediaRendererError 等结构化错误。
+      // 目前只提取 message 写入日志，并保持阶段输入可见以便用户重试。
       if (error instanceof Error && error.message === "PUBLISH_CANCELLED") {
         workflow.value = updateStageStatus(workflow.value, stageId, "pending");
         addLog(title, "已取消发布");
@@ -221,10 +254,12 @@ export function useWorkflowRuntime(options: UseWorkflowRuntimeOptions) {
     running,
     runningMode,
     logs,
+    stageModes,
     progress,
     nextStage,
     activeStage,
     stageStatus,
+    getStageMode,
     runNextStage,
     runAllStages,
     runStage,
