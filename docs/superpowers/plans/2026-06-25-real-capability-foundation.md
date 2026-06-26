@@ -23,6 +23,8 @@
 
 ## Task 1：补 GitHub Actions CI
 
+**状态：已完成。** CI workflow 已落地为 `.github/workflows/ci.yml`，覆盖 `push` 到 `main` 与所有 PR。
+
 **目标：** 建立仓库级 CI，在每次 push / PR 时自动跑 `pnpm test`、`pnpm typecheck`、`pnpm --filter @mirax/desktop build:web`，并确保 CI 环境与本地开发环境一致。CI 通过是阶段 5 后续 Task 合并的前置条件。
 
 **允许修改文件：**
