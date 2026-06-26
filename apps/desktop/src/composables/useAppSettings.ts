@@ -2,6 +2,7 @@ import { reactive, ref, watch } from "vue";
 import {
   createApiKeyProviderConfig,
   createDefaultAppSettings,
+  sanitizeBaseUrlForStorage,
   sanitizeProviderConfigForStorage,
   type ApiKeyProviderConfig,
   type AppSettings,
@@ -118,7 +119,7 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
           label: config.label ?? "未命名配置",
           provider: config.provider ?? "openai",
           apiKey: "",
-          baseUrl: config.baseUrl,
+          baseUrl: sanitizeBaseUrlForStorage(config.baseUrl),
           model: config.model,
           enabled: config.enabled ?? true,
         }),

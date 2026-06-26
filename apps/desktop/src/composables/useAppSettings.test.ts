@@ -231,4 +231,27 @@ describe("useAppSettings", () => {
     expect(lower).not.toContain("\"cookie\"");
     expect(lower).not.toContain("\"credential\"");
   });
+
+  it("strips URL credentials, query and hash from persisted baseUrl", async () => {
+    const storage = createFakeStorage();
+    const { addProviderConfig } = useAppSettings({ storage });
+
+    addProviderConfig({
+      id: "p-url-token",
+      label: "URL Token",
+      provider: "custom",
+      apiKey: "sk-secret",
+      baseUrl: "https://user:pass@api.example.com/v1?token=url-secret-token#/path",
+      model: "gpt-4",
+      enabled: true,
+    });
+
+    await nextTick();
+
+    const raw = storage.getItem("mirax-ai.app-settings.v1")!;
+    expect(raw).not.toContain("url-secret-token");
+    expect(raw).not.toContain("user:pass");
+    const parsed = JSON.parse(raw);
+    expect(parsed.providerConfigs[0].baseUrl).toBe("https://api.example.com/v1");
+  });
 });

@@ -76,7 +76,9 @@ gh run view <run-id>
 
 **状态：已完成。** Provider 配置安全边界已集中收敛：
 - 新增 `sanitizeProviderConfigForStorage`，明确非敏感 metadata 只保留 `id/label/provider/baseUrl/model/enabled`；
+- `sanitizeProviderConfigForStorage` 进一步收敛 `baseUrl` 存储边界，剔除 username/password/query/hash，非法 URL 直接丢弃；
 - `useAppSettings.createSnapshot` 与 `desktopDraft.sanitizeDesktopDraftForStorage` 统一使用该 helper，snapshot 类型不再允许 `apiKey`；
+- 恢复旧 snapshot / draft 时同样经过该 sanitizer，避免带 token 的 URL 长期留在内存状态；
 - `provider-ai` 类型与 `OpenAiCompatibleProvider` 增加安全边界注释，MVP 仍抛诚实“尚未接入”错误；
 - `provider-publish` 类型明确 `PublishHandoffInput` 不含凭证，账号使用 `credentialRef`。
 

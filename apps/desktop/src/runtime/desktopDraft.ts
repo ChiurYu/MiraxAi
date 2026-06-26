@@ -61,15 +61,18 @@ export function restoreDesktopDraft(saved: Partial<PersistedDesktopDraft>): Desk
         }
       : defaults.project,
     providerConfig: saved.providerConfig
-      ? {
-          ...defaults.providerConfig,
-          id: saved.providerConfig.id ?? defaults.providerConfig.id,
-          label: saved.providerConfig.label ?? defaults.providerConfig.label,
-          provider: saved.providerConfig.provider ?? defaults.providerConfig.provider,
-          baseUrl: saved.providerConfig.baseUrl ?? defaults.providerConfig.baseUrl,
-          model: saved.providerConfig.model ?? defaults.providerConfig.model,
-          enabled: saved.providerConfig.enabled ?? defaults.providerConfig.enabled,
-        }
+      ? createApiKeyProviderConfig({
+          ...sanitizeProviderConfigForStorage({
+            ...defaults.providerConfig,
+            id: saved.providerConfig.id ?? defaults.providerConfig.id,
+            label: saved.providerConfig.label ?? defaults.providerConfig.label,
+            provider: saved.providerConfig.provider ?? defaults.providerConfig.provider,
+            baseUrl: saved.providerConfig.baseUrl ?? defaults.providerConfig.baseUrl,
+            model: saved.providerConfig.model ?? defaults.providerConfig.model,
+            enabled: saved.providerConfig.enabled ?? defaults.providerConfig.enabled,
+          }),
+          apiKey: "",
+        })
       : defaults.providerConfig,
   };
 }

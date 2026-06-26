@@ -45,6 +45,36 @@ describe("validation domain", () => {
     });
   });
 
+  it("strips username, password, query and hash from baseUrl when persisting", () => {
+    const config = createApiKeyProviderConfig({
+      id: "leaky-url",
+      label: "Leaky URL",
+      provider: "custom",
+      apiKey: "sk-secret",
+      baseUrl: "https://user:pass@api.example.com:8443/v1/chat?token=secret-token#/hash",
+      model: "gpt-4",
+    });
+
+    const metadata = sanitizeProviderConfigForStorage(config);
+
+    expect(metadata.baseUrl).toBe("https://api.example.com:8443/v1/chat");
+  });
+
+  it("drops an invalid baseUrl during sanitization instead of leaking it", () => {
+    const config = createApiKeyProviderConfig({
+      id: "invalid-url",
+      label: "Invalid URL",
+      provider: "custom",
+      apiKey: "sk-secret",
+      baseUrl: "not-a-url",
+      model: "gpt-4",
+    });
+
+    const metadata = sanitizeProviderConfigForStorage(config);
+
+    expect(metadata.baseUrl).toBeUndefined();
+  });
+
   it("validates the minimum project information required before generation starts", () => {
     const draft = createProjectDraft({
       name: "女装口播 0611",

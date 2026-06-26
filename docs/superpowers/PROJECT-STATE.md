@@ -8,7 +8,7 @@
 
 阶段 4 P1 已完成：PR #2 已合并到 `main`，Stitch UI Vue 迁移进入主线。25 份 Stitch 导出收敛为 21 个 canonical 界面，Task 1–13 全部实施完成并通过自动验证与 Codex 总控视觉/回归验收。当前 UI 已覆盖 Workbench 8 个阶段、3 个资产库、任务中心、账号管理、7 类设置页面，但真实能力仍大多为 mock / 诚实空态。
 
-阶段 5 P0 进行中：「真实能力接入前置基础设施与执行顺序」。Task 1（GitHub Actions CI）已落地，Task 2（Provider 配置与真实调用边界）已完成：Provider 配置的非敏感 metadata 边界已集中到 `sanitizeProviderConfigForStorage`，`useAppSettings` snapshot 与 `desktopDraft` 统一剔除 `apiKey`，`provider-ai` 与 `provider-publish` 类型已明确凭证引用与“尚未接入”边界。继续按 Task 3–6 梳理 sidecar、媒体产物、工作台真实化与发布自动化的边界与顺序。
+阶段 5 P0 进行中：「真实能力接入前置基础设施与执行顺序」。Task 1（GitHub Actions CI）与 Task 2（Provider 配置与真实调用边界）已完成，其中 Task 2 已追加 baseUrl 存储边界修复：`sanitizeProviderConfigForStorage` 现在会剔除 URL 中的 username/password/query/hash，恢复旧 snapshot/draft 时也会重新清洗，避免 token/credential 借道 URL 进入持久化或内存状态。继续按 Task 3–6 梳理 sidecar、媒体产物、工作台真实化与发布自动化的边界与顺序。
 
 当前实施分支：`codex/stitch-ui-vue-migration`。PR #2 已合并到 `main`，Stitch UI Vue 迁移进入主线；本分支继续用于阶段 5 P0 真实能力接入前置基础设施的规划与落地。
 

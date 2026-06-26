@@ -14,10 +14,28 @@ export function sanitizeProviderConfigForStorage(config: ApiKeyProviderConfig): 
     id: config.id,
     label: config.label,
     provider: config.provider,
-    baseUrl: config.baseUrl,
+    baseUrl: sanitizeBaseUrlForStorage(config.baseUrl),
     model: config.model,
     enabled: config.enabled,
   };
+}
+
+/**
+ * 只保留 baseUrl 的协议、主机、端口与路径，剔除 username / password / query / hash。
+ * 如果 URL 非法，直接返回 undefined，由 `validateProviderConfig` 在保存时给出错误提示。
+ */
+export function sanitizeBaseUrlForStorage(baseUrl: string | undefined): string | undefined {
+  if (!baseUrl) {
+    return undefined;
+  }
+
+  try {
+    const url = new URL(baseUrl);
+    const pathname = url.pathname === "/" ? "" : url.pathname;
+    return `${url.origin}${pathname}`;
+  } catch {
+    return undefined;
+  }
 }
 
 export function validateProviderConfig(config: ApiKeyProviderConfig): string[] {
