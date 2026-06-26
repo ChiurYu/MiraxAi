@@ -10,13 +10,16 @@ import {
   Sparkles,
 } from "lucide-vue-next";
 import { computed, ref, watch } from "vue";
-import type { ProjectDraft, WorkflowStageStatus } from "@mirax/core";
+import type { ProjectDraft, WorkflowStageRuntimeMode, WorkflowStageStatus } from "@mirax/core";
+import { shouldRecordVersion } from "./scriptRewritingStage.utils.js";
 
 const props = defineProps<{
   modelValue: ProjectDraft;
   transcriptText: string;
   running: boolean;
   status: WorkflowStageStatus;
+  mode?: WorkflowStageRuntimeMode;
+  errorMessage?: string;
 }>();
 
 const emit = defineEmits<{
@@ -31,7 +34,26 @@ const rewrittenScript = computed({
 
 const scriptLength = computed(() => rewrittenScript.value.length);
 const hasTranscript = computed(() => props.transcriptText.trim().length > 0);
-const canRun = computed(() => hasTranscript.value && !props.running);
+
+const isMock = computed(() => props.mode === "mock" || props.mode === undefined);
+const isReal = computed(() => props.mode === "real");
+const isNotConnected = computed(() => props.mode === "not-connected");
+const hasError = computed(() => !!props.errorMessage?.trim());
+
+const canRun = computed(() => hasTranscript.value && !props.running && !isNotConnected.value);
+
+const modeLabel = computed(() => {
+  if (isMock.value) return "Mock 结果";
+  if (isReal.value) return "真实 LLM";
+  if (isNotConnected.value) return "真实 LLM 未连接";
+  return "";
+});
+
+const resultPlaceholder = computed(() => {
+  if (isNotConnected.value) return "真实 LLM 未连接，无法生成改写文案。";
+  if (hasTranscript.value) return "点击「重新生成」让 AI 产出改写文案，或直接在此编辑。";
+  return "请先完成素材解析，获取原始文案。";
+});
 
 const rewriteGoals = ["保持原意", "更口语化", "更专业", "自定义"] as const;
 const activeGoal = ref<(typeof rewriteGoals)[number]>("更口语化");
@@ -76,7 +98,7 @@ function addVersion(text: string) {
 watch(
   () => props.status,
   (next, prev) => {
-    if (prev === "running" && next === "completed" && rewrittenScript.value.trim()) {
+    if (shouldRecordVersion(prev ?? "pending", next, rewrittenScript.value, props.mode)) {
       addVersion(rewrittenScript.value);
     }
   },
@@ -214,17 +236,35 @@ function handleRegenerate() {
 
       <section class="field-block">
         <div class="slider-head">
-          <label class="field-label">改写结果</label>
+          <label class="field-label">
+            改写结果
+            <span v-if="modeLabel" class="mode-badge">{{ modeLabel }}</span>
+          </label>
           <span class="char-count">{{ scriptLength }} / 500</span>
         </div>
         <textarea
           v-model="rewrittenScript"
           class="result-box"
-          :placeholder="hasTranscript ? '点击「重新生成」让 AI 产出改写文案，或直接在此编辑。' : '请先完成素材解析，获取原始文案。'"
+          :placeholder="resultPlaceholder"
           rows="6"
-          :disabled="running"
+          :disabled="running || isNotConnected"
         />
       </section>
+
+      <div v-if="isNotConnected" class="status-banner status-warning">
+        <AlertCircle :size="14" />
+        <span>真实 LLM 未连接。请在设置中配置并启用 OpenAI-compatible provider 后再试。</span>
+      </div>
+
+      <div v-else-if="isReal && hasError" class="status-banner status-error">
+        <AlertCircle :size="14" />
+        <span>{{ errorMessage }}</span>
+      </div>
+
+      <div v-else-if="isReal && status !== 'completed'" class="status-banner status-info">
+        <AlertCircle :size="14" />
+        <span>真实 LLM 模式：将使用设置中启用的 provider 发起真实调用。</span>
+      </div>
 
       <div class="action-row">
         <button
@@ -645,6 +685,61 @@ function handleRegenerate() {
 
 .mx-range:focus-visible {
   box-shadow: var(--mx-focus-ring);
+}
+
+.mode-badge {
+  margin-left: 6px;
+  padding: 2px 6px;
+  border-radius: var(--mx-radius-pill);
+  background: var(--mx-accent-soft-bg);
+  color: var(--mx-accent);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  text-transform: none;
+}
+
+.status-banner {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--mx-radius-md);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.status-banner svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.status-warning {
+  background: var(--mx-warning-bg);
+  color: var(--mx-text-secondary);
+}
+
+.status-warning svg {
+  color: var(--mx-warning);
+}
+
+.status-error {
+  background: var(--mx-error-bg);
+  color: var(--mx-text-secondary);
+}
+
+.status-error svg {
+  color: var(--mx-error);
+}
+
+.status-info {
+  background: var(--mx-info-bg);
+  color: var(--mx-text-secondary);
+}
+
+.status-info svg {
+  color: var(--mx-info);
 }
 
 @media (max-width: 1100px) {

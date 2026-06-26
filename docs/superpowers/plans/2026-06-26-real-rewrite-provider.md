@@ -284,15 +284,41 @@ pnpm typecheck
 
 ## Task 4：设计 ScriptRewritingStage 的真实 / 未接入 / 失败状态
 
-**状态：未开始（待派工）。**
+**状态：已完成。**
 
 **目标：** 让 `ScriptRewritingStage.vue` 据运行时能力模式与执行结果，诚实呈现四种表现：**mock**（当前固定文案行为，可标注「Mock 结果」）、**real 未接入 / 未配置**（提示「真实 LLM 未接入，请在设置中配置并启用 provider」，「重新生成」按钮禁用或点击后诚实报错，不产出文案）、**real 失败**（展示 Task 1 错误码对应的友好信息，不记录版本、不显示「已生成」）、**real 成功**（正常展示并记录版本）。核心红线：real 未接入 / 失败时**绝不**调用 `addVersion`、绝不把 mock 文案当真实结果。
+
+**实现摘要：**
+
+- 修改 `apps/desktop/src/components/workbench/stages/ScriptRewritingStage.vue`：新增 props `mode?: WorkflowStageRuntimeMode` 与 `errorMessage?: string`；新增 computed `isMock` / `isReal` / `isNotConnected` / `hasError` / `canRun` / `modeLabel` / `resultPlaceholder`；`textarea` 在 `isNotConnected` 时禁用，`resultPlaceholder` 在未接入时提示无法生成；生成按钮 `canRun` 在未接入时禁用。
+- 新增四态 UI 横幅：
+  - `not-connected`：黄色警告条「真实 LLM 未连接。请在设置中配置并启用 OpenAI-compatible provider 后再试。」
+  - `real` 失败：红色错误条显示来自父组件的安全错误摘要。
+  - `real` 进行中 / 未成功：蓝色信息条提示「真实 LLM 模式：将使用设置中启用的 provider 发起真实调用。」
+  - `mock` 或 `mode` 缺省：标题旁显示「Mock 结果」徽章。
+- 版本记录条件收敛：原 watcher 无条件在 `status: running → completed` 且 `notes` 非空时 `addVersion`；现在由纯函数 `shouldRecordVersion(prev, next, script, mode)` 决定，只有 `mode === "mock"` / `"real"` / `undefined` 且 `script` 非空时才记录；`not-connected` 完成时不记录版本。
+- 新建 `apps/desktop/src/components/workbench/stages/scriptRewritingStage.utils.ts` 导出 `shouldRecordVersion`，把 Vue 无关逻辑抽成可单测纯函数，避免为静态断言引入 `@vue/test-utils`。
+- 新建 `apps/desktop/src/components/workbench/stages/ScriptRewritingStage.test.ts`：6 条 `shouldRecordVersion` 测试覆盖 mock / real / not-connected / 空脚本 / 非 running / 非 completed；6 条静态 UI 契约测试覆盖「Mock 结果」文案、未连接提示、真实模式提示、错误横幅、模板中无 apiKey/baseUrl/token/sk- 字面量、未连接时禁用输入区与生成按钮。
+- 修改 `apps/desktop/src/App.vue`：新增 `rewriteErrorMessage` ref；`rewriteMode` computed 取自 `runtime.getStageMode("rewrite")`；执行前清空错误，provider 选择失败或真实调用失败时写入 `rewriteErrorMessage` 并继续抛出由 `processStage` 标记 `failed`；将 `mode` 与 `error-message` 传入 `<ScriptRewritingStage />`。未修改其他阶段或 executor 分支。
+
+**验证结果（2026-06-26）：**
+
+```text
+pnpm test apps/desktop/src/components/workbench                                  21 passed
+pnpm --filter @mirax/desktop typecheck                                           passed
+pnpm --filter @mirax/desktop build:web                                           passed
+pnpm typecheck                                                                   passed
+pnpm test                                                                        187 passed
+git diff --check                                                                 no output
+git diff -- docs/reverse-engineering/legacy-ui-gap-list.md .codex/dispatch-state.json docs/人工提示词.md  no output
+```
 
 **允许修改文件：**
 
 - 修改：`apps/desktop/src/components/workbench/stages/ScriptRewritingStage.vue`（新增能力模式 / 未接入 / 失败状态的 props 与展示；失败态错误条；real 未配置时禁用生成入口；版本仅在 real 成功或 mock 时记录）
 - 修改：`apps/desktop/src/App.vue`（向 `ScriptRewritingStage` 传入 rewrite 的能力模式与最近一次错误信息；不改其他阶段模板绑定）
 - 可选创建：`apps/desktop/src/components/workbench/stages/ScriptRewritingStage.test.ts`（覆盖四种状态渲染与「real 失败不记录版本」）
+- 可选创建：`apps/desktop/src/components/workbench/stages/scriptRewritingStage.utils.ts`
 - 修改：`docs/superpowers/plans/2026-06-26-real-rewrite-provider.md`、`docs/superpowers/PROJECT-STATE.md`
 
 **禁止修改文件：**
@@ -312,11 +338,11 @@ pnpm typecheck
 
 **验收标准：**
 
-- [ ] mock 模式：渲染与交互与现状一致（固定文案、版本历史、对比功能可用）；若加「Mock 结果」标注，不得阻断现有流程。
-- [ ] real 未配置 / 未连接：显示明确「真实能力未接入」提示并指向设置页；「重新生成」禁用或点击后只产出诚实错误，**不**写入 `notes`、**不**记录版本。
-- [ ] real 失败（`status === "failed"`）：展示对应错误码的友好信息（来自 executor / 日志），保留用户输入与原始文案可见以便重试；**不**记录版本、**不**显示「已生成」。
-- [ ] real 成功：正常展示改写结果并记录会话级版本；版本记录条件从「`running → completed`」收敛为「`running → completed` 且当前为 mock 或 real 成功」，杜绝把失败 / 未接入误记为版本。
-- [ ] 组件不暴露 apiKey / baseUrl；错误展示不渲染敏感字段。
+- [x] mock 模式：渲染与交互与现状一致（固定文案、版本历史、对比功能可用）；若加「Mock 结果」标注，不得阻断现有流程。
+- [x] real 未配置 / 未连接：显示明确「真实能力未接入」提示并指向设置页；「重新生成」禁用或点击后只产出诚实错误，**不**写入 `notes`、**不**记录版本。
+- [x] real 失败（`status === "failed"`）：展示对应错误码的友好信息（来自 executor / 日志），保留用户输入与原始文案可见以便重试；**不**记录版本、**不**显示「已生成」。
+- [x] real 成功：正常展示改写结果并记录会话级版本；版本记录条件从「`running → completed`」收敛为「`running → completed` 且当前为 mock 或 real 成功」，杜绝把失败 / 未接入误记为版本。
+- [x] 组件不暴露 apiKey / baseUrl；错误展示不渲染敏感字段。
 
 **明确不做什么：**
 
