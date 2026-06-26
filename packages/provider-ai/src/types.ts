@@ -18,6 +18,12 @@ export interface RewriteScriptInput {
   transcript: string;
   productName: string;
   sellingPoints: string[];
+  /** 改写目标，真实 LLM 调用时可作为提示词上下文（可选）。 */
+  activeGoal?: string;
+  /** 提示词模板标识，真实 LLM 调用时可作为提示词上下文（可选）。 */
+  activePreset?: string;
+  /** 目标字数，真实 LLM 调用时可作为提示词上下文（可选）。 */
+  targetLength?: number;
 }
 
 export interface RewriteScriptResult {
@@ -59,6 +65,42 @@ export interface GenerateAvatarVideoResult {
 }
 
 /**
+ * AI provider 结构化错误码。
+ */
+export type AiProviderErrorCode =
+  | "not-configured"
+  | "not-connected"
+  | "unauthorized"
+  | "network"
+  | "bad-response";
+
+/**
+ * AI provider 结构化错误。
+ *
+ * 安全边界：message 中不得包含 apiKey、baseUrl 中的 token、完整响应体。
+ */
+export class AiProviderError extends Error {
+  readonly code: AiProviderErrorCode;
+
+  constructor(code: AiProviderErrorCode, message: string, options?: { cause?: unknown }) {
+    super(message, options);
+    this.code = code;
+    this.name = "AiProviderError";
+  }
+}
+
+/**
+ * AI provider 连接测试结果。失败时通过 `code` 给出结构化错误语义。
+ *
+ * `code` 为可选，mock mode 成功时可不带；openai-compatible 失败时应始终携带。
+ */
+export interface AiConnectionTestResult {
+  ok: boolean;
+  message: string;
+  code?: AiProviderErrorCode;
+}
+
+/**
  * `AiProvider` 定义了 Workbench 八个阶段中需要 AI / 语音 / 数字人能力的调用契约。
  *
  * 安全边界：
@@ -88,11 +130,36 @@ export interface MockAiProviderOptions {
 }
 
 /**
+ * OpenAI-compatible provider 的 HTTP transport 抽象。
+ *
+ * 默认实现基于全局 `fetch`，真实桌面端调用会走默认 transport。
+ * 单测可注入 fake transport 避免联网。
+ */
+export interface OpenAiCompatibleTransportRequest {
+  endpoint: string;
+  method: "GET" | "POST";
+  headers: Record<string, string>;
+  body?: unknown;
+}
+
+export interface OpenAiCompatibleTransportResponse {
+  status: number;
+  json(): Promise<unknown>;
+}
+
+export interface OpenAiCompatibleTransport {
+  request(req: OpenAiCompatibleTransportRequest): Promise<OpenAiCompatibleTransportResponse>;
+}
+
+/**
  * OpenAI-compatible provider 的内存配置。`apiKey` 为敏感字段，禁止持久化或打印。
- * MVP 阶段 `createOpenAiCompatibleProvider` 会抛出“尚未接入”的诚实错误，不执行真实调用。
+ *
+ * `baseUrl` 可选，缺省为官方 OpenAI endpoint；`custom` provider 必须由调用方传入合法 baseUrl。
+ * `transport` 可选，缺省时使用基于 `fetch` 的默认 runtime transport。
  */
 export interface OpenAiCompatibleProviderOptions {
-  baseUrl: string;
+  baseUrl?: string;
   apiKey: string;
   model: string;
+  transport?: OpenAiCompatibleTransport;
 }

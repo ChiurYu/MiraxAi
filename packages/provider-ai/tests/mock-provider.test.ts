@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createMockAiProvider, createOpenAiCompatibleProvider } from "../src/index.js";
+import { createMockAiProvider } from "../src/index.js";
 
 describe("mock ai provider", () => {
   it("returns deterministic transcript and rewritten script from local inputs", async () => {
@@ -18,6 +18,25 @@ describe("mock ai provider", () => {
     expect(transcript.text).toContain("demo.mp4");
     expect(rewritten.script).toContain("轻奢女包");
     expect(rewritten.titleSuggestions).toHaveLength(3);
+    expect(rewritten.coverTextSuggestions).toHaveLength(2);
+  });
+
+  it("ignores optional rewrite fields and keeps existing behavior", async () => {
+    const provider = createMockAiProvider();
+
+    const rewritten = await provider.rewriteScript({
+      transcript: "原始文案",
+      productName: "通勤包",
+      sellingPoints: ["大容量"],
+      activeGoal: "种草",
+      activePreset: "口播",
+      targetLength: 300,
+    });
+
+    expect(rewritten.script).toContain("通勤包");
+    expect(rewritten.script).toContain("大容量");
+    expect(rewritten.titleSuggestions).toHaveLength(3);
+    expect(rewritten.coverTextSuggestions).toHaveLength(2);
   });
 
   it("simulates voice and avatar generation with artifact paths", async () => {
@@ -41,23 +60,5 @@ describe("mock ai provider", () => {
     expect(voice.voiceId).toBe("mock-voice-project-1");
     expect(speech.audioPath).toBe("/tmp/mirax/project-1/speech.wav");
     expect(avatar.videoPath).toBe("/tmp/mirax/project-1/avatar.mp4");
-  });
-});
-
-describe("openai-compatible provider placeholder", () => {
-  it("keeps real provider calls explicit until integration is wired", async () => {
-    const provider = createOpenAiCompatibleProvider({
-      baseUrl: "https://api.openai.com/v1",
-      apiKey: "sk-demo",
-      model: "gpt-4.1",
-    });
-
-    await expect(
-      provider.rewriteScript({
-        transcript: "原始文案",
-        productName: "通勤包",
-        sellingPoints: ["大容量"],
-      }),
-    ).rejects.toThrow("OpenAI-compatible provider is not wired yet. Use MockAiProvider in MVP.");
   });
 });

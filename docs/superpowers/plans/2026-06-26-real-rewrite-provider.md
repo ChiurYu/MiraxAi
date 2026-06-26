@@ -62,7 +62,7 @@
 
 ## Task 1：确认 provider-ai 真实调用边界与错误类型
 
-**状态：未开始（待派工）。**
+**状态：已完成。**
 
 **目标：** 在写真实切换接线之前，先锁定 `AiProvider.rewriteScript` 真实化所需的输入 / 输出 / 错误契约：定义一套结构化错误类型，区分「未配置 / 未连接 / 鉴权失败 / 网络失败 / 响应解析失败」；确认 mock 与 real 共享同一 `RewriteScriptResult` 形状；在 `OpenAiCompatibleProvider` 中提供**默认基于 fetch 的 runtime transport** 用于真实调用，同时暴露可注入 transport 接口，使单测可用 fake transport、CI 不触达外部服务。本 Task 在 `@mirax/provider-ai` 包内闭环，不接触桌面端。
 
@@ -94,12 +94,12 @@ pnpm typecheck
 
 **验收标准：**
 
-- [ ] 定义结构化错误类型，错误码至少覆盖：`not-configured`（无启用配置 / 无 key / 无 model）、`not-connected`（连接测试未通过 / transport 初始化失败）、`unauthorized`（401/403）、`network`（超时 / 连接失败 / DNS 失败）、`bad-response`（响应非预期 / 解析失败 / 空 choices）。
-- [ ] `RewriteScriptInput` / `RewriteScriptResult` 形状被 mock 与 real 共享；任何新增字段均为**可选**，缺省时 `createMockAiProvider().rewriteScript` 行为与现状一致（现有 `mock-provider.test.ts` 不回归）。
-- [ ] `OpenAiCompatibleProvider` 默认使用基于 `fetch` 的 runtime transport 发起真实 OpenAI-compatible `/chat/completions` 调用；构造函数支持注入 fake transport，单测注入 fake transport 后**不触发任何真实网络请求**。
-- [ ] `createOpenAiCompatibleProvider(options)` 在 `options` 缺 `baseUrl` / `apiKey` / `model` 时直接拒绝并返回 `not-configured` 语义错误，而不是构造一个“未注入 transport”的半成品。
-- [ ] `testAiProviderConnection` 的 `openai-compatible` 分支使用默认 transport 做轻量探测，能返回上述错误码语义；其 `message` 与所有错误 message 中**不含** apiKey、baseUrl 中的 token、完整响应体；允许出现 provider id、model、HTTP 状态码范围。
-- [ ] 单测（fake transport）覆盖 rewrite 的成功、`unauthorized`、`network`、`bad-response` 四条路径，且 CI 不联网即可通过。
+- [x] 定义结构化错误类型，错误码至少覆盖：`not-configured`（无启用配置 / 无 key / 无 model）、`not-connected`（连接测试未通过 / transport 初始化失败）、`unauthorized`（401/403）、`network`（超时 / 连接失败 / DNS 失败）、`bad-response`（响应非预期 / 解析失败 / 空 choices）。
+- [x] `RewriteScriptInput` / `RewriteScriptResult` 形状被 mock 与 real 共享；任何新增字段均为**可选**，缺省时 `createMockAiProvider().rewriteScript` 行为与现状一致（现有 `mock-provider.test.ts` 不回归）。
+- [x] `OpenAiCompatibleProvider` 默认使用基于 `fetch` 的 runtime transport 发起真实 OpenAI-compatible `/chat/completions` 调用；构造函数支持注入 fake transport，单测注入 fake transport 后**不触发任何真实网络请求**。
+- [x] `createOpenAiCompatibleProvider(options)` 在 `options` 缺 `apiKey` / `model` 时直接拒绝并返回 `not-configured` 语义错误；`baseUrl` 可选，缺省使用官方 OpenAI endpoint。不要把构造参数缺失作为“未注入 transport”的半成品状态。
+- [x] `testAiProviderConnection` 的 `openai-compatible` 分支使用默认 transport 做轻量探测，能返回上述错误码语义；其 `message` 与所有错误 message 中**不含** apiKey、baseUrl 中的 token、完整响应体；允许出现 provider id、model、HTTP 状态码范围。
+- [x] 单测（fake transport）覆盖 rewrite 的成功、`unauthorized`、`network`、`bad-response` 四条路径，且 CI 不联网即可通过。
 
 **明确不做什么：**
 
