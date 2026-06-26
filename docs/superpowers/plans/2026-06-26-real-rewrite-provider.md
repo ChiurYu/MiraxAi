@@ -355,7 +355,39 @@ pnpm typecheck
 
 ## Task 5：测试与验收计划
 
-**状态：未开始（待派工）。**
+**状态：已完成。**
+
+**实现摘要（2026-06-26）：**
+
+- 未新增源码逻辑；Task 1–4 已覆盖 provider 契约、桌面端 provider 选择、凭证读取边界与 `ScriptRewritingStage` 四态 UI。
+- 复验 provider 层、桌面端 provider 选择、settings snapshot、runtime、`ScriptRewritingStage` 状态契约与全仓测试。
+- 确认 CI 所需三件套 `pnpm test`、`pnpm typecheck`、`pnpm --filter @mirax/desktop build:web` 均可在不依赖真实 LLM 网络的情况下通过。
+- 受保护文件 `docs/reverse-engineering/legacy-ui-gap-list.md`、`.codex/dispatch-state.json`、`docs/人工提示词.md` 无改动。
+
+**验证结果（2026-06-26）：**
+
+```text
+pnpm test packages/provider-ai/tests apps/desktop/src/composables/useRewriteProvider.test.ts apps/desktop/src/composables/useWorkflowRuntime.test.ts apps/desktop/src/composables/useAppSettings.test.ts apps/desktop/src/components/workbench/stages/ScriptRewritingStage.test.ts
+  7 files / 78 tests passed
+
+pnpm test apps/desktop/src/components/workbench
+  2 files / 21 tests passed
+
+pnpm test
+  25 files / 187 tests passed
+
+pnpm typecheck
+  passed
+
+pnpm --filter @mirax/desktop build:web
+  passed
+
+git diff --check
+  no output
+
+git diff -- docs/reverse-engineering/legacy-ui-gap-list.md .codex/dispatch-state.json docs/人工提示词.md
+  no output
+```
 
 **目标：** 为 rewrite 真实化提供完整的自动化与手动验收，确保：mock 默认路径零回归、real 路径在「配置就绪 / 未配置 / 失败」三态下行为正确、敏感字段不外泄、CI 不联网仍全绿。本 Task 在 Task 1–4 完成后做整体收尾验收，并在缺口处补测。
 
@@ -386,12 +418,12 @@ git diff -- docs/reverse-engineering/legacy-ui-gap-list.md .codex/dispatch-state
 
 **验收标准：**
 
-- [ ] 单测覆盖 provider 层：rewrite 成功 / `unauthorized` / `network` / `bad-response` / `not-configured` / `not-connected`，全部用 fake transport，不联网。
-- [ ] 单测覆盖桌面端：provider 选择工厂三态（mock / real 就绪 / real 未就绪）、snapshot 无 apiKey、`ScriptRewritingStage` 四状态。
-- [ ] mock 默认路径全链路零回归：未配置任何 provider 时 App 启动与 rewrite 行为与合并前一致。
-- [ ] `pnpm test`、`pnpm typecheck`、`pnpm --filter @mirax/desktop build:web` 全绿；CI（`ci.yml`）在不联网环境通过。
-- [ ] 手动 / 脚本验收记录：real 未配置时诚实提示、real 失败时不记录版本、日志与 UI 不含凭证。
-- [ ] 受保护文件 `git diff` 检查无输出。
+- [x] 单测覆盖 provider 层：rewrite 成功 / `unauthorized` / `network` / `bad-response` / `not-configured` / `not-connected`，全部用 fake transport，不联网。
+- [x] 单测覆盖桌面端：provider 选择工厂三态（mock / real 就绪 / real 未就绪）、snapshot 无 apiKey、`ScriptRewritingStage` 四状态。
+- [x] mock 默认路径全链路零回归：未配置任何 provider 时 App 启动与 rewrite 行为与合并前一致。
+- [x] `pnpm test`、`pnpm typecheck`、`pnpm --filter @mirax/desktop build:web` 全绿；CI（`ci.yml`）在不联网环境通过。
+- [x] 手动 / 脚本验收记录：real 未配置时诚实提示、real 失败时不记录版本、日志与 UI 不含凭证。
+- [x] 受保护文件 `git diff` 检查无输出。
 
 **明确不做什么：**
 
@@ -407,7 +439,7 @@ git diff -- docs/reverse-engineering/legacy-ui-gap-list.md .codex/dispatch-state
 1. `docs/superpowers/plans/2026-06-26-real-rewrite-provider.md` 已存在，包含 Task 1–5 的完整目标、允许 / 禁止修改文件、验证命令、验收标准与明确不做什么。
 2. `docs/superpowers/PROJECT-STATE.md` 已更新：记录 PR #3 已合并（merge `60b6cd3`，CI passed）、阶段 5 P0 完成、下一阶段进入 rewrite 真实 LLM provider 规划，并把最新计划入口指向本文件。
 3. 全局约束重申不修改 `legacy-ui-gap-list.md`、`.codex/dispatch-state.json`、`docs/人工提示词.md`。
-4. 本次派工未实现任何真实 OpenAI 调用、未修改任何 `packages/*` / `apps/*` 源码。
+4. Task 1–5 已完成：rewrite provider 真实调用边界、桌面端 provider 路由、凭证读取边界、UI 四态与整体验收均已落地。
 5. 验证命令覆盖 `pnpm test`、`pnpm typecheck`、`pnpm --filter @mirax/desktop build:web` 与受保护文件 diff 检查。
 
 ---
