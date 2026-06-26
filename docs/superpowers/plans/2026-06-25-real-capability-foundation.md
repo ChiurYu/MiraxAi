@@ -310,6 +310,18 @@ pnpm typecheck
 
 ## Task 6：设计发布自动化的账号、凭证、安全边界与失败恢复
 
+**状态：已完成。** 发布自动化安全边界与失败恢复已收敛：
+- `PublishAccount` 仅保留 `credentialRef` 凭证引用，不保存 cookie/token/password 明文；
+- `PublishTaskStatus` 扩展为 `pending → submitted → processing → completed / failed / cancelled / retryable`；
+- `PublishTask` 增加 `errorCode`、`errorMessage`、`failedAt`、`retryCount` 失败恢复字段；
+- `PublishHandoffResult` 增加 `platformResults` per-platform 子结果，明确输入不含凭证；
+- `mockPublisher` 返回更真实失败场景（账号未授权、平台不支持草稿、平台限制不满足），不伪装成功；
+- `local-store` schema 中 `publish_accounts` 增加 `credential_ref`，`publish_tasks` 增加错误/重试字段；
+- `AccountManagementView` 调整为诚实授权 handoff UI，明确「真实授权流程暂未接入」；
+- `publishTaskStore` 持久化时防御性过滤凭证字段，加载时对旧数据归一化 `retryCount`；
+- `usePublishPreparation` 根据 `platformResults` 创建 `submitted` / `failed` / `retryable` 任务；
+- 创建 `docs/product-architecture/publish-automation-security-design.md` 记录安全边界、状态机与失败恢复策略。
+
 **目标：** 明确 `Publisher` 从 mock publisher 切换到真实平台发布的账号管理、凭证存储、安全边界、失败恢复与任务状态机，确保平台登录/授权凭证不进入 Git、不进入任务 payload、不通过 mock 绕过真实授权。
 
 **允许修改文件：**

@@ -54,10 +54,19 @@ export function usePublishPreparation(options: UsePublishPreparationOptions) {
         mode: metadata.value.mode,
       });
 
-      const created: PublishTask[] = platforms.map((platformId, index) => {
+      const created: PublishTask[] = platforms.map((platformId) => {
         const account = accounts.value.find((item) => item.platformId === platformId);
+        const platformResult = result.platformResults.find((r) => r.platformId === platformId);
+        const taskId = platformResult?.taskId ?? `mock-publish-${options.projectId}-${platformId}`;
+        const failed = platformResult?.success === false;
+
+        let status: PublishTask["status"] = failed ? "failed" : "submitted";
+        if (failed && platformResult?.errorCode === "network_error") {
+          status = "retryable";
+        }
+
         return createPublishTask({
-          id: result.taskIds[index] ?? `mock-publish-${options.projectId}-${platformId}`,
+          id: taskId,
           projectId: options.projectId,
           platformId,
           accountId: account?.id ?? `mock-${platformId}`,
@@ -66,6 +75,10 @@ export function usePublishPreparation(options: UsePublishPreparationOptions) {
           description: metadata.value.description,
           tags: metadata.value.tags,
           mode: metadata.value.mode,
+          status,
+          errorCode: platformResult?.errorCode,
+          errorMessage: platformResult?.errorMessage,
+          failedAt: failed ? new Date().toISOString() : undefined,
         });
       });
 

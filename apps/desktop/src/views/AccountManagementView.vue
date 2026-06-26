@@ -164,7 +164,10 @@ function actionIcon(status: AccountUiStatus) {
     <div class="account-management-header">
       <div class="account-management-header-main">
         <h1>账号管理</h1>
-        <p>管理各平台发布账号的授权状态。添加账号将跳转官方登录页面完成授权，本应用不保存密码或 Token。</p>
+        <p>
+          管理各平台发布账号的授权状态。授权凭证通过 <code>credentialRef</code> 引用到系统安全存储，
+          本应用不保存密码、Cookie 或 Token 明文。真实 OAuth / 二维码 / Cookie 导入流程暂未接入。
+        </p>
       </div>
       <button type="button" class="primary" @click="openAddDialog()">
         <Plus :size="16" /> 添加账号
@@ -257,25 +260,27 @@ function actionIcon(status: AccountUiStatus) {
             即将前往
             <strong>{{ platformLabels[selectedPlatform as PublishPlatform] }}</strong>
             官方授权页面完成登录。<br />
-            本应用不会拦截或保存你的密码、Cookie 或 Token。
+            本应用不会拦截或保存你的密码、Cookie 或 Token；授权成功后，系统安全存储将返回一个
+            <code>credentialRef</code> 引用供后续发布使用。
           </p>
           <div class="add-account-notice">
             <AlertCircle :size="16" />
-            <span>请在官方页面完成授权后返回本应用。若未收到回调，账号将标记为「不可用」。</span>
+            <span>真实 OAuth / 二维码 / Cookie 导入流程暂未接入。点击按钮不会实际打开浏览器或完成授权。</span>
           </div>
         </div>
 
         <div v-else-if="addStep === 'checking'" class="add-account-checking">
           <Loader2 :size="32" class="spin" />
-          <p>正在等待授权回调...（模拟）</p>
+          <p>正在等待授权回调…（模拟，真实流程暂未接入）</p>
         </div>
 
         <div v-else-if="addStep === 'result'" class="add-account-result">
           <XCircle :size="32" />
-          <p class="add-account-result-title">未收到授权回调</p>
+          <p class="add-account-result-title">授权流程暂未接入</p>
           <p class="add-account-result-desc">
-            未在模拟时间内完成官方授权，新账号已标记为「不可用」。<br />
-            真实环境将由官方 OAuth 回调更新状态。
+            当前版本不会真实打开官方授权页面，新账号已标记为「不可用」。<br />
+            真实环境将由 OAuth / 二维码 / Cookie 导入回调更新状态，并写入系统安全存储的
+            <code>credentialRef</code>。
           </p>
         </div>
       </div>
@@ -291,7 +296,7 @@ function actionIcon(status: AccountUiStatus) {
           @click="startHandoff"
         >
           <ExternalLink :size="14" />
-          前往官方授权
+          打开授权流程（暂未接入）
         </button>
       </template>
     </AppDialog>

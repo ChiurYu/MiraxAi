@@ -33,9 +33,11 @@ const platformLabels = computed<Record<string, string>>(() =>
 const statusTabs: { key: "all" | PublishTask["status"]; label: string }[] = [
   { key: "all", label: "全部" },
   { key: "pending", label: "待提交" },
+  { key: "submitted", label: "已提交" },
   { key: "processing", label: "处理中" },
   { key: "completed", label: "成功" },
   { key: "failed", label: "失败" },
+  { key: "retryable", label: "可重试" },
   { key: "cancelled", label: "已取消" },
 ];
 
@@ -48,9 +50,11 @@ const statusMeta: Record<
   { label: string; icon: typeof Clock; className: string }
 > = {
   pending: { label: "待提交", icon: Clock, className: "is-pending" },
+  submitted: { label: "已提交", icon: CheckCircle2, className: "is-submitted" },
   processing: { label: "处理中", icon: Loader2, className: "is-processing" },
   completed: { label: "成功", icon: CheckCircle2, className: "is-completed" },
   failed: { label: "失败", icon: XCircle, className: "is-failed" },
+  retryable: { label: "可重试", icon: RefreshCw, className: "is-retryable" },
   cancelled: { label: "已取消", icon: Ban, className: "is-cancelled" },
 };
 
@@ -75,9 +79,11 @@ const statusCounts = computed(() => {
   const counts: Record<"all" | PublishTask["status"], number> = {
     all: tasks.value.length,
     pending: 0,
+    submitted: 0,
     processing: 0,
     completed: 0,
     failed: 0,
+    retryable: 0,
     cancelled: 0,
   };
   for (const task of tasks.value) {
@@ -122,7 +128,10 @@ function formatTime(value: string): string {
 
 function taskErrorMessage(task: PublishTask): string {
   if (task.status === "failed") {
-    return "平台返回发布失败，请检查账号状态、网络或视频内容后重试。";
+    return task.errorMessage ?? "平台返回发布失败，请检查账号状态、网络或视频内容后重试。";
+  }
+  if (task.status === "retryable") {
+    return task.errorMessage ?? "任务可重试，通常由网络波动或平台限流导致。";
   }
   if (task.status === "cancelled") {
     return "任务已被取消，不会继续提交到平台。";
@@ -283,7 +292,7 @@ function taskErrorMessage(task: PublishTask): string {
           </div>
         </div>
 
-        <div v-if="selectedTask.status === 'failed' || selectedTask.status === 'cancelled'" class="task-detail-section is-error">
+        <div v-if="selectedTask.status === 'failed' || selectedTask.status === 'retryable' || selectedTask.status === 'cancelled'" class="task-detail-section is-error">
           <h3><AlertCircle :size="14" /> 错误 / 说明</h3>
           <p class="task-detail-error">{{ taskErrorMessage(selectedTask) }}</p>
         </div>
@@ -493,6 +502,11 @@ function taskErrorMessage(task: PublishTask): string {
   background: var(--mx-warning-bg);
 }
 
+.task-status-badge.is-submitted {
+  color: var(--mx-accent);
+  background: var(--mx-accent-soft-bg);
+}
+
 .task-status-badge.is-processing {
   color: var(--mx-accent);
   background: var(--mx-accent-soft-bg);
@@ -504,6 +518,7 @@ function taskErrorMessage(task: PublishTask): string {
 }
 
 .task-status-badge.is-failed,
+.task-status-badge.is-retryable,
 .task-status-badge.is-cancelled {
   color: var(--mx-error);
   background: var(--mx-error-bg);
@@ -578,6 +593,11 @@ function taskErrorMessage(task: PublishTask): string {
   background: var(--mx-warning-bg);
 }
 
+.task-detail-status.is-submitted {
+  color: var(--mx-accent);
+  background: var(--mx-accent-soft-bg);
+}
+
 .task-detail-status.is-processing {
   color: var(--mx-accent);
   background: var(--mx-accent-soft-bg);
@@ -589,6 +609,7 @@ function taskErrorMessage(task: PublishTask): string {
 }
 
 .task-detail-status.is-failed,
+.task-detail-status.is-retryable,
 .task-detail-status.is-cancelled {
   color: var(--mx-error);
   background: var(--mx-error-bg);

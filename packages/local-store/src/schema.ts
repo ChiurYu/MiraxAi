@@ -47,6 +47,7 @@ export const LOCAL_STORE_MIGRATIONS = [
     platform_id TEXT NOT NULL,
     display_name TEXT NOT NULL,
     status TEXT NOT NULL,
+    credential_ref TEXT,
     last_login_at TEXT,
     updated_at TEXT NOT NULL
   );`,
@@ -87,6 +88,10 @@ export const LOCAL_STORE_MIGRATIONS = [
     description TEXT NOT NULL,
     tags_json TEXT NOT NULL,
     mode TEXT NOT NULL,
+    error_code TEXT,
+    error_message TEXT,
+    failed_at TEXT,
+    retry_count INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
   );`,

@@ -35,6 +35,7 @@ export interface PublishAccountRecord {
   platformId: string;
   displayName: string;
   status: "active" | "expired" | "inactive";
+  credentialRef?: string;
   updatedAt: string;
 }
 
@@ -93,6 +94,10 @@ export interface PublishTaskRecord {
   description: string;
   tagsJson: string;
   mode: string;
+  errorCode?: string;
+  errorMessage?: string;
+  failedAt?: string;
+  retryCount: number;
   createdAt: string;
   updatedAt: string;
 }

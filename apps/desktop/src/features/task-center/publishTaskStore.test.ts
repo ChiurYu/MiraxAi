@@ -95,4 +95,75 @@ describe("publishTaskStore", () => {
     globalThis.localStorage.setItem("mirax-ai.publish-tasks.v1", "not-json");
     expect(loadPublishTasks()).toEqual([]);
   });
+
+  it("defaults retryCount to 0 for legacy stored tasks", () => {
+    const legacyTask = {
+      id: "legacy",
+      projectId: "p1",
+      platformId: "douyin",
+      accountId: "a1",
+      status: "failed",
+      videoPath: "/tmp/final.mp4",
+      title: "T",
+      description: "D",
+      tags: [],
+      mode: "draft",
+      createdAt: "2024-01-01T00:00:00.000Z",
+      updatedAt: "2024-01-01T00:00:00.000Z",
+    };
+    globalThis.localStorage.setItem("mirax-ai.publish-tasks.v1", JSON.stringify([legacyTask]));
+
+    const tasks = loadPublishTasks();
+    expect(tasks[0]?.retryCount).toBe(0);
+  });
+
+  it("persists failure and retry fields", () => {
+    const task = createPublishTask({
+      id: "t1",
+      projectId: "p1",
+      platformId: "douyin",
+      accountId: "a1",
+      videoPath: "/tmp/final.mp4",
+      title: "T",
+      description: "D",
+      tags: [],
+      mode: "draft",
+      status: "retryable",
+      errorCode: "network_error",
+      errorMessage: "网络超时",
+      failedAt: "2024-01-01T00:00:00.000Z",
+      retryCount: 2,
+    });
+
+    savePublishTasks([task]);
+    const loaded = loadPublishTasks()[0];
+
+    expect(loaded?.status).toBe("retryable");
+    expect(loaded?.errorCode).toBe("network_error");
+    expect(loaded?.errorMessage).toBe("网络超时");
+    expect(loaded?.failedAt).toBe("2024-01-01T00:00:00.000Z");
+    expect(loaded?.retryCount).toBe(2);
+  });
+
+  it("does not persist credentials in task payload", () => {
+    const task = createPublishTask({
+      id: "t1",
+      projectId: "p1",
+      platformId: "douyin",
+      accountId: "a1",
+      videoPath: "/tmp/final.mp4",
+      title: "T",
+      description: "D",
+      tags: [],
+      mode: "draft",
+    });
+
+    savePublishTasks([task]);
+    const raw = globalThis.localStorage.getItem("mirax-ai.publish-tasks.v1") ?? "";
+
+    expect(raw).not.toContain("credentialRef");
+    expect(raw).not.toContain("cookie");
+    expect(raw).not.toContain("token");
+    expect(raw).not.toContain("password");
+  });
 });

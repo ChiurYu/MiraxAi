@@ -27,9 +27,11 @@ const { tasks, refresh } = useTaskCenterPreview({ limit: props.limit });
 
 const statusMap: Record<PublishTask["status"], { label: string; icon: typeof Clock }> = {
   pending: { label: "待提交", icon: Clock },
+  submitted: { label: "已提交", icon: CheckCircle2 },
   processing: { label: "处理中", icon: Loader2 },
   completed: { label: "成功", icon: CheckCircle2 },
   failed: { label: "失败", icon: XCircle },
+  retryable: { label: "可重试", icon: RefreshCw },
   cancelled: { label: "取消", icon: XCircle },
 };
 
@@ -66,7 +68,7 @@ defineExpose({ refresh });
           <span class="task-video">{{ task.videoPath }}</span>
         </div>
 
-        <div v-if="task.status === 'failed'" class="task-error">
+        <div v-if="task.status === 'failed' || task.status === 'retryable'" class="task-error">
           <AlertCircle :size="12" />
           <span>发布失败，请检查平台账号状态或重试。</span>
           <button class="ghost-button retry-button" @click="retryTask(task)">
@@ -179,6 +181,7 @@ defineExpose({ refresh });
 }
 
 .task-status.failed,
+.task-status.retryable,
 .task-status.cancelled {
   color: var(--mx-error);
   background: var(--mx-error-bg);
