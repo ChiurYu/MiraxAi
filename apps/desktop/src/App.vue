@@ -243,6 +243,8 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
       if (!transcriptText.value.trim()) {
         throw new Error("请先完成素材解析，获取原始文案");
       }
+      // 安全边界：apiKey / baseUrl 仅在 selectRewriteProvider 内部作为内存构造参数使用；
+      // 返回的 message、prep.updateMetadata 的 title/description 均来自 LLM 结果，不含凭证。
       const selection = selectRewriteProvider({
         stageMode: runtime.getStageMode("rewrite"),
         providerConfigs: providerConfigs.value,

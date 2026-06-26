@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ApiKeyProviderConfig, WorkflowStageRuntimeMode } from "@mirax/core";
-import { createMockAiProvider } from "@mirax/provider-ai";
+import { createMockAiProvider, type OpenAiCompatibleProvider } from "@mirax/provider-ai";
 import { selectRewriteProvider } from "./useRewriteProvider.js";
 
 function makeConfig(overrides: Partial<ApiKeyProviderConfig> = {}): ApiKeyProviderConfig {
@@ -63,6 +63,52 @@ describe("selectRewriteProvider", () => {
     });
 
     expect(result.ok).toBe(true);
+  });
+
+  it("sanitizes custom baseUrl credentials, query and hash before constructing provider", () => {
+    const result = selectRewriteProvider({
+      stageMode: "real",
+      providerConfigs: [
+        makeConfig({
+          provider: "custom",
+          baseUrl: "https://user:pass@api.example.com/v1?token=secret#/hash",
+        }),
+      ],
+      mockProvider,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const provider = result.provider as OpenAiCompatibleProvider;
+      expect(provider.baseUrl).toBe("https://api.example.com/v1");
+    }
+  });
+
+  it("returns not-configured when custom baseUrl is invalid", () => {
+    const result = selectRewriteProvider({
+      stageMode: "real",
+      providerConfigs: [makeConfig({ provider: "custom", baseUrl: "not-a-url" })],
+      mockProvider,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe("not-configured");
+    }
+  });
+
+  it("sanitizes openai baseUrl query and hash when provided", () => {
+    const result = selectRewriteProvider({
+      stageMode: "real",
+      providerConfigs: [makeConfig({ baseUrl: "https://api.openai.com/v1?token=secret#/hash" })],
+      mockProvider,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const provider = result.provider as OpenAiCompatibleProvider;
+      expect(provider.baseUrl).toBe("https://api.openai.com/v1");
+    }
   });
 
   it("returns not-configured when custom config lacks baseUrl", () => {

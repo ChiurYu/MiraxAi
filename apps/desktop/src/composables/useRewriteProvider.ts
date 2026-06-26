@@ -1,5 +1,6 @@
-import type { ApiKeyProviderConfig, WorkflowStageRuntimeMode } from "@mirax/core";
+import { sanitizeBaseUrlForStorage, type ApiKeyProviderConfig, type WorkflowStageRuntimeMode } from "@mirax/core";
 import { AiProviderError, createOpenAiCompatibleProvider, type AiProvider } from "@mirax/provider-ai";
+import { findEnabledRewriteProviderConfig } from "./useAppSettings.js";
 
 export interface RewriteProviderSelectionInput {
   stageMode: WorkflowStageRuntimeMode;
@@ -32,9 +33,7 @@ export function selectRewriteProvider(input: RewriteProviderSelectionInput): Rew
     };
   }
 
-  const config = input.providerConfigs.find(
-    (c) => c.enabled && (c.provider === "openai" || c.provider === "custom"),
-  );
+  const config = findEnabledRewriteProviderConfig(input.providerConfigs);
   if (!config) {
     const hasEnabled = input.providerConfigs.some((c) => c.enabled);
     return {
@@ -60,16 +59,25 @@ export function selectRewriteProvider(input: RewriteProviderSelectionInput): Rew
     };
   }
 
-  if (config.provider === "custom" && !config.baseUrl?.trim()) {
+  // 安全边界：baseUrl 在传入 provider 前必须经过 sanitize，剔除 username/password/query/hash。
+  // custom 必须提供合法 baseUrl；openai baseUrl 可选，但若提供则必须合法。
+  const sanitizedBaseUrl = config.baseUrl ? sanitizeBaseUrlForStorage(config.baseUrl.trim()) : undefined;
+  if (config.provider === "custom" && !sanitizedBaseUrl) {
     return {
       ok: false,
-      error: new AiProviderError("not-configured", "Custom LLM provider 必须提供 baseUrl。"),
+      error: new AiProviderError("not-configured", "Custom LLM provider 必须提供合法 baseUrl。"),
+    };
+  }
+  if (config.provider === "openai" && config.baseUrl?.trim() && !sanitizedBaseUrl) {
+    return {
+      ok: false,
+      error: new AiProviderError("not-configured", "OpenAI provider baseUrl 格式不正确。"),
     };
   }
 
   try {
     const provider = createOpenAiCompatibleProvider({
-      baseUrl: config.baseUrl,
+      baseUrl: sanitizedBaseUrl,
       apiKey: config.apiKey,
       model: config.model!,
     });

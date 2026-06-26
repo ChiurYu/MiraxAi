@@ -193,9 +193,45 @@ pnpm typecheck
 
 ## Task 3：设计 API Key / baseUrl / model 配置读取边界
 
-**状态：未开始（待派工）。**
+**状态：已完成。**
 
 **目标：** 明确 rewrite 真实化时 provider 配置（`apiKey` / `baseUrl` / `model`）从哪里读、到哪里为止，确认敏感字段**不进入日志、snapshot、任务 payload**。读取源是 `useAppSettings().providerConfigs`（内存 `ref`，恢复后 `apiKey` 恒为空串，仅当前会话用户输入后内存可见）；落点只允许：rewrite executor 内存中的一次性 provider 构造参数。
+
+**实现摘要：**
+
+- 在 `useAppSettings.ts` 中新增并导出纯函数 `findEnabledRewriteProviderConfig(configs)`，明确「启用的 rewrite LLM 配置」选取规则：`enabled === true && (provider === "openai" || provider === "custom")`。
+- `useRewriteProvider.ts` 的 `selectRewriteProvider` 改用上述函数选择配置，保持错误消息准确（区分「未启用任何 provider」与「启用的 provider 不适用于改写」）。
+- **Review Fix（2026-06-26）：** `selectRewriteProvider` 在构造真实 provider 前，使用 `@mirax/core` 的 `sanitizeBaseUrlForStorage` 对 `config.baseUrl` 进行内存清洗：custom provider 必须提供合法 baseUrl，否则返回 `not-configured`；openai provider 的 baseUrl 可选，但若提供则必须合法；含 username/password/query/hash 的 baseUrl 会被清洗为 `origin + pathname` 后再传入 `createOpenAiCompatibleProvider`，避免敏感 token 进入真实请求 endpoint。
+- `App.vue` 的 rewrite 分支添加安全边界注释，说明 `apiKey` / `baseUrl` 仅作为内存构造参数，`addLog` message 与 `prep.updateMetadata` 的 `title` / `description` 均来自受控的 LLM 结果或结构化错误，不含凭证。
+- 未修改 `useAppSettings.ts` 的 `createSnapshot` / `restore` 与 `desktopDraft.ts` 的 sanitize 行为，仅补充测试与文档：
+  - `useAppSettings.test.ts` 新增 `findEnabledRewriteProviderConfig` 选取规则测试（覆盖跨 provider 排序、disabled、非改写 provider 等场景）。
+  - `desktopDraft.test.ts` 新增 `restoreDesktopDraft` 对旧数据中带 token/query/hash 的 `baseUrl` 的清洗回归测试。
+- 创建 `docs/product-architecture/rewrite-credential-read-boundary.md`，记录读取源、允许落点、禁止落点与失败处理约定。
+
+**验证结果（2026-06-26）：**
+
+```text
+pnpm test apps/desktop/src/composables/useRewriteProvider.test.ts   17 passed
+pnpm test apps/desktop/src/composables/useAppSettings.test.ts       14 passed
+pnpm test apps/desktop/src/runtime/desktopDraft.test.ts             4 passed
+pnpm --filter @mirax/desktop typecheck                              passed
+pnpm typecheck                                                      passed
+```
+
+**验收标准：**
+
+- [x] rewrite 真实路径读取的 `apiKey` 仅存在于内存，且仅作为 `createOpenAiCompatibleProvider({ baseUrl, apiKey, model })` 的一次性参数；不写入任何 `ref` 持久化 / `localStorage` / draft。
+- [x] `useAppSettings().createSnapshot()` 输出 JSON 中**不含** `apiKey` 字段（沿用 `sanitizeProviderConfigForStorage`），测试覆盖「新增 / 编辑 provider 后 snapshot 无 key」。
+- [x] `addLog` 写入的 rewrite 相关 message 不含 apiKey、不含 baseUrl 中的 token；失败信息只暴露错误码 / 概要，不含完整 URL 与响应体。
+- [x] `prep.updateMetadata` 的 `title` / `description` 来自 LLM 文案结果，不含凭证；`desktopDraft` 持久化不携带 provider apiKey。
+- [x] 「启用的 rewrite LLM 配置」的选取规则明确：
+  - `enabled === true`；
+  - `provider === "openai"` 或 `provider === "custom"`；
+  - `apiKey` 非空；
+  - `model` 非空且合法（由 `validateProviderConfig` 校验）；
+  - 当 `provider === "custom"` 时，`baseUrl` 必须非空且经过 `sanitizeBaseUrlForStorage` 校验为合法 URL；
+  - 当 `provider === "openai"` 时，`baseUrl` 可选，缺省使用官方 OpenAI endpoint（内存默认值）；
+  - 任一不满足即视为 `not-configured`。
 
 **允许修改文件：**
 
