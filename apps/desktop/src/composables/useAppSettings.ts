@@ -34,6 +34,23 @@ export interface UseAppSettingsOptions {
   persistSection?: boolean;
 }
 
+/**
+ * 从 provider 配置数组中选出当前可用于 rewrite 真实 LLM 的配置。
+ *
+ * 规则：
+ * - 必须 `enabled === true`；
+ * - `provider` 必须是 `"openai"` 或 `"custom"`；
+ * - 返回第一个匹配项，若没有则返回 `undefined`。
+ *
+ * 注意：本函数只负责选择，不校验 `apiKey` / `model` / `baseUrl` 是否合法；
+ * 后续构造真实 provider 前仍需校验，并在缺省时返回 `not-configured`。
+ */
+export function findEnabledRewriteProviderConfig(
+  configs: ApiKeyProviderConfig[],
+): ApiKeyProviderConfig | undefined {
+  return configs.find((c) => c.enabled && (c.provider === "openai" || c.provider === "custom"));
+}
+
 function createState() {
   return {
     appSettings: reactive<AppSettings>(createDefaultAppSettings()),

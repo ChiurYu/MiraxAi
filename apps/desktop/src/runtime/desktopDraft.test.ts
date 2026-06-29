@@ -57,4 +57,23 @@ describe("desktopDraft persistence", () => {
     expect(restored.providerConfig.baseUrl).toBe("https://api.example.com/v1");
     expect(restored.providerConfig.model).toBe("kimi-for-coding");
   });
+
+  it("restoreDesktopDraft sanitizes baseUrl credentials, query and hash from legacy saved data", () => {
+    const restored = restoreDesktopDraft({
+      project: createDefaultDesktopDraft().project,
+      providerConfig: {
+        id: "legacy-ai",
+        label: "Legacy",
+        provider: "custom",
+        baseUrl: "https://user:pass@legacy.example.com:8443/v1?token=legacy-secret#/hash",
+        model: "gpt-4",
+        enabled: true,
+      },
+    });
+
+    expect(restored.providerConfig.apiKey).toBe("");
+    expect(restored.providerConfig.baseUrl).toBe("https://legacy.example.com:8443/v1");
+    expect(JSON.stringify(restored)).not.toContain("legacy-secret");
+    expect(JSON.stringify(restored)).not.toContain("user:pass");
+  });
 });

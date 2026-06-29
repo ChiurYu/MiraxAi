@@ -31,6 +31,7 @@ import { usePublishPreparation } from "./composables/usePublishPreparation.js";
 import { useAppSettings } from "./composables/useAppSettings.js";
 import { useWorkbenchDraft } from "./composables/useWorkbenchDraft.js";
 import { useWorkflowRuntime } from "./composables/useWorkflowRuntime.js";
+import { selectRewriteProvider } from "./composables/useRewriteProvider.js";
 import type { AssetListItem } from "./features/assets/assetModels.js";
 import { mockAccounts } from "./features/accounts/mockAccounts.js";
 import AccountManagementView from "./views/AccountManagementView.vue";
@@ -50,7 +51,7 @@ const mediaRenderer = createMockMediaRenderer({ artifactRoot: "/Users/Shared/Mir
 const publisher = createMockPublisher();
 
 const { draft, persist } = useWorkbenchDraft();
-const { appSettings } = useAppSettings();
+const { appSettings, providerConfigs } = useAppSettings();
 
 const generatedVideoPath = ref("");
 const generatedCoverPath = ref("");
@@ -79,6 +80,7 @@ const publishAccounts = ref<PublishAccount[]>([]);
 const selectedPublishAccountId = ref("");
 const showPublishDialog = ref(false);
 const assetLimitedAction = ref<{ view: "voices" | "avatars" | "materials"; action: "import" | "create" } | null>(null);
+const rewriteErrorMessage = ref("");
 
 const platformLabels = computed<Record<PublishPlatform, string>>(() =>
   Object.fromEntries(SUPPORTED_PLATFORM_PROFILES.map((profile) => [profile.id, profile.label])) as Record<
@@ -169,6 +171,8 @@ const runtime = useWorkflowRuntime({
   executor: executeStage,
 });
 
+const rewriteMode = computed(() => runtime.getStageMode("rewrite"));
+
 onMounted(async () => {
   systemThemeQuery = window.matchMedia?.("(prefers-color-scheme: dark)");
   syncSystemTheme();
@@ -242,17 +246,36 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
       if (!transcriptText.value.trim()) {
         throw new Error("请先完成素材解析，获取原始文案");
       }
-      const result = await aiProvider.rewriteScript({
-        transcript: transcriptText.value,
-        productName: project.value.name,
-        sellingPoints: ["通勤", "大容量", "质感"],
+      rewriteErrorMessage.value = "";
+      // 安全边界：apiKey / baseUrl 仅在 selectRewriteProvider 内部作为内存构造参数使用；
+      // 返回的 message、prep.updateMetadata 的 title/description 均来自 LLM 结果，不含凭证。
+      const selection = selectRewriteProvider({
+        stageMode: runtime.getStageMode("rewrite"),
+        providerConfigs: providerConfigs.value,
+        mockProvider: aiProvider,
       });
-      project.value = { ...project.value, notes: result.script };
-      prep.updateMetadata({
-        title: result.titleSuggestions[0] ?? project.value.name,
-        description: result.script.slice(0, 100),
-      });
-      return `生成 ${result.titleSuggestions.length} 个标题方向`;
+      if (!selection.ok) {
+        rewriteErrorMessage.value = selection.error.message;
+        throw selection.error;
+      }
+      try {
+        const result = await selection.provider.rewriteScript({
+          transcript: transcriptText.value,
+          productName: project.value.name,
+          sellingPoints: deriveRewriteSellingPoints(project.value),
+        });
+        project.value = { ...project.value, notes: result.script };
+        prep.updateMetadata({
+          title: result.titleSuggestions[0] ?? project.value.name,
+          description: result.script.slice(0, 100),
+        });
+        return `生成 ${result.titleSuggestions.length} 个标题方向`;
+      } catch (error) {
+        if (error instanceof Error) {
+          rewriteErrorMessage.value = error.message;
+        }
+        throw error;
+      }
     }
     case "voice-clone": {
       const samplePath = project.value.voiceSamplePath ?? "";
@@ -414,6 +437,19 @@ function fileName(filePath: string): string {
   return index >= 0 ? trimmed.slice(index + 1) : trimmed;
 }
 
+function deriveRewriteSellingPoints(draft: ProjectDraft): string[] {
+  // 优先从 draft 已有文本提取候选卖点；UI 尚未传入明确卖点时，退化为安全默认。
+  const combined = [draft.name, draft.notes].filter(Boolean).join(" ");
+  const tokens = combined
+    .split(/[,，\s]+/)
+    .map((t) => t.trim())
+    .filter((t) => t.length >= 2);
+  if (tokens.length > 0) {
+    return tokens.slice(0, 3);
+  }
+  return ["通勤", "大容量", "质感"];
+}
+
 function handleSaveDraft() {
   persist();
 }
@@ -509,6 +545,8 @@ function stagePreviewLabel(stageId: WorkflowStageId): string {
           :transcript-text="transcriptText"
           :running="runtime.running.value"
           :status="stage.status"
+          :mode="rewriteMode"
+          :error-message="rewriteErrorMessage"
           @run="runtime.runStage('rewrite')"
         />
         <VoiceCloningStage

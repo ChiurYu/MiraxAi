@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { nextTick } from "vue";
 import type { ApiKeyProviderConfig } from "@mirax/core";
-import { useAppSettings } from "./useAppSettings.js";
+import { findEnabledRewriteProviderConfig, useAppSettings } from "./useAppSettings.js";
 
 function createFakeStorage(): Storage {
   const store: Record<string, string> = {};
@@ -253,5 +253,72 @@ describe("useAppSettings", () => {
     expect(raw).not.toContain("user:pass");
     const parsed = JSON.parse(raw);
     expect(parsed.providerConfigs[0].baseUrl).toBe("https://api.example.com/v1");
+  });
+});
+
+describe("findEnabledRewriteProviderConfig", () => {
+  function makeConfig(overrides: Partial<ApiKeyProviderConfig> = {}): ApiKeyProviderConfig {
+    return {
+      id: "test",
+      label: "Test",
+      provider: "openai",
+      apiKey: "sk-test",
+      baseUrl: "https://api.openai.com/v1",
+      model: "gpt-4",
+      enabled: true,
+      ...overrides,
+    };
+  }
+
+  it("returns the first enabled openai/custom config", () => {
+    const configs = [
+      makeConfig({ id: "w", provider: "whisper", enabled: true }),
+      makeConfig({ id: "o", provider: "openai", enabled: true }),
+      makeConfig({ id: "c", provider: "custom", enabled: true }),
+    ];
+    const found = findEnabledRewriteProviderConfig(configs);
+    expect(found).toBeDefined();
+    expect(found!.id).toBe("o");
+  });
+
+  it("returns custom provider when it is the only match", () => {
+    const configs = [
+      makeConfig({ id: "w", provider: "whisper", enabled: true }),
+      makeConfig({ id: "c", provider: "custom", enabled: true }),
+    ];
+    const found = findEnabledRewriteProviderConfig(configs);
+    expect(found).toBeDefined();
+    expect(found!.id).toBe("c");
+  });
+
+  it("returns undefined when no openai/custom provider is enabled", () => {
+    const configs = [
+      makeConfig({ id: "w", provider: "whisper", enabled: true }),
+      makeConfig({ id: "h", provider: "heygem", enabled: true }),
+    ];
+    expect(findEnabledRewriteProviderConfig(configs)).toBeUndefined();
+  });
+
+  it("returns undefined when matching provider is disabled", () => {
+    const configs = [makeConfig({ id: "o", provider: "openai", enabled: false })];
+    expect(findEnabledRewriteProviderConfig(configs)).toBeUndefined();
+  });
+
+  it("returns the in-memory config as-is and leaves sanitization to persistence boundaries", () => {
+    const configs = [
+      makeConfig({
+        id: "c",
+        provider: "custom",
+        apiKey: "sk-secret",
+        baseUrl: "https://user:pass@api.example.com/v1?token=secret#/hash",
+      }),
+    ];
+    const found = findEnabledRewriteProviderConfig(configs);
+    expect(found).toBeDefined();
+    expect(found!.apiKey).toBe("sk-secret");
+    // The helper returns the in-memory config as-is; sanitization happens at persistence boundaries.
+    // This assertion documents that the returned object still carries the in-memory apiKey,
+    // which is acceptable because it never leaves the memory boundary.
+    expect(found!.baseUrl).toBe("https://user:pass@api.example.com/v1?token=secret#/hash");
   });
 });
