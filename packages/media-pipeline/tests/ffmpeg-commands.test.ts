@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildArtifactPath,
+  buildCoverFrameCommand,
   buildExtractAudioCommand,
   buildVerticalComposeCommand,
   createMediaArtifact,
@@ -111,16 +112,37 @@ describe("ffmpeg command builders", () => {
   });
 
   it("builds a vertical compose command with subtitle burn-in", () => {
-    expect(buildVerticalComposeCommand("/input/avatar.mp4", "/input/subtitles.srt", "/output/final.mp4")).toEqual([
+    expect(buildVerticalComposeCommand("/input/avatar.mp4", "/input/audio.wav", "/input/subtitles.srt", "/output/final.mp4")).toEqual([
       "ffmpeg",
       "-y",
       "-i",
       "/input/avatar.mp4",
+      "-i",
+      "/input/audio.wav",
       "-vf",
       "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,subtitles=/input/subtitles.srt",
+      "-map",
+      "0:v:0",
+      "-map",
+      "1:a:0",
+      "-c:v",
+      "libx264",
       "-c:a",
-      "copy",
+      "aac",
+      "-shortest",
       "/output/final.mp4",
+    ]);
+  });
+
+  it("builds a deterministic cover frame command", () => {
+    expect(buildCoverFrameCommand("/output/final.mp4", "/output/cover.png")).toEqual([
+      "ffmpeg",
+      "-y",
+      "-i",
+      "/output/final.mp4",
+      "-frames:v",
+      "1",
+      "/output/cover.png",
     ]);
   });
 
@@ -135,9 +157,10 @@ describe("ffmpeg command builders", () => {
   });
 
   it("rejects empty inputs for vertical compose", () => {
-    expect(() => buildVerticalComposeCommand("", "/sub.srt", "/out.mp4")).toThrow(MediaRendererError);
-    expect(() => buildVerticalComposeCommand("/in.mp4", "", "/out.mp4")).toThrow(MediaRendererError);
-    expect(() => buildVerticalComposeCommand("/in.mp4", "/sub.srt", "")).toThrow(MediaRendererError);
+    expect(() => buildVerticalComposeCommand("", "/audio.wav", "/sub.srt", "/out.mp4")).toThrow(MediaRendererError);
+    expect(() => buildVerticalComposeCommand("/in.mp4", "", "/sub.srt", "/out.mp4")).toThrow(MediaRendererError);
+    expect(() => buildVerticalComposeCommand("/in.mp4", "/audio.wav", "", "/out.mp4")).toThrow(MediaRendererError);
+    expect(() => buildVerticalComposeCommand("/in.mp4", "/audio.wav", "/sub.srt", "")).toThrow(MediaRendererError);
   });
 
   it("does not leak paths in error messages", () => {

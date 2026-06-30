@@ -8,6 +8,7 @@ import {
   type AppSettings,
 } from "@mirax/core";
 import { createDefaultSidecarConfig, type SidecarConfig } from "@mirax/sidecar-manager";
+import { invoke as tauriInvoke } from "@tauri-apps/api/core";
 import type { SettingsSection } from "../app/navigation.js";
 
 export const APP_SETTINGS_STORAGE_KEY = "mirax-ai.app-settings.v1";
@@ -51,6 +52,42 @@ export function findEnabledRewriteProviderConfig(
   return configs.find((c) => c.enabled && (c.provider === "openai" || c.provider === "custom"));
 }
 
+/**
+ * 从 provider 配置数组中选出当前可用于 transcribe 真实转写的配置。
+ */
+export function findEnabledTranscribeProviderConfig(
+  configs: ApiKeyProviderConfig[],
+): ApiKeyProviderConfig | undefined {
+  return configs.find((c) => c.enabled && c.provider === "whisper");
+}
+
+/**
+ * 从 provider 配置数组中选出当前可用于 speech 真实 TTS 的配置。
+ */
+export function findEnabledSpeechProviderConfig(
+  configs: ApiKeyProviderConfig[],
+): ApiKeyProviderConfig | undefined {
+  return configs.find((c) => c.enabled && c.provider === "cosyvoice");
+}
+
+/**
+ * 从 provider 配置数组中选出当前可用于 voice-clone 真实声音克隆的配置。
+ */
+export function findEnabledVoiceCloneProviderConfig(
+  configs: ApiKeyProviderConfig[],
+): ApiKeyProviderConfig | undefined {
+  return findEnabledSpeechProviderConfig(configs);
+}
+
+/**
+ * 从 provider 配置数组中选出当前可用于 avatar 真实数字人的配置。
+ */
+export function findEnabledAvatarProviderConfig(
+  configs: ApiKeyProviderConfig[],
+): ApiKeyProviderConfig | undefined {
+  return configs.find((c) => c.enabled && c.provider === "heygem");
+}
+
 function createState() {
   return {
     appSettings: reactive<AppSettings>(createDefaultAppSettings()),
@@ -58,8 +95,83 @@ function createState() {
     providerConfigs: ref<ApiKeyProviderConfig[]>([]),
     settingsSection: ref<SettingsSection>("general"),
     saveStatus: ref("未保存"),
+    verifiedFfmpegPath: ref(""),
     loaded: false,
   };
+}
+
+export type ProbeFfmpegInvoke = (command: string, args: Record<string, unknown>) => Promise<unknown>;
+
+export async function probeFfmpegPath(ffmpegPath: string, invoke?: ProbeFfmpegInvoke): Promise<boolean> {
+  const trimmed = ffmpegPath.trim();
+  if (!trimmed) {
+    return false;
+  }
+
+  const doInvoke = invoke ?? tauriInvoke;
+  try {
+    const payload = await doInvoke("probe_ffmpeg", { ffmpegPath: trimmed });
+    if (payload === true) {
+      return true;
+    }
+    if (payload && typeof payload === "object" && "ok" in payload) {
+      return Boolean((payload as { ok?: boolean }).ok);
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+export type ProviderReadiness = "disabled" | "needs-config" | "ready";
+
+/**
+ * 判断单个 provider 配置是否已可执行。
+ *
+ * 规则与 Workbench real 路由保持一致：
+ * - openai / custom rewrite：enabled + 非空 apiKey + 非空 model；custom 还需非空 baseUrl。
+ * - whisper：enabled + 非空 baseUrl + 非空 model。
+ * - cosyvoice / heygem：enabled + 非空 baseUrl；apiKey 可选。
+ */
+export function getProviderReadiness(config: ApiKeyProviderConfig): ProviderReadiness {
+  if (!config.enabled) {
+    return "disabled";
+  }
+
+  const trimmedApiKey = config.apiKey?.trim() ?? "";
+  const trimmedBaseUrl = config.baseUrl?.trim() ?? "";
+  const trimmedModel = config.model?.trim() ?? "";
+
+  switch (config.provider) {
+    case "openai": {
+      if (!trimmedApiKey || !trimmedModel) {
+        return "needs-config";
+      }
+      return "ready";
+    }
+    case "custom": {
+      if (!trimmedApiKey || !trimmedModel || !trimmedBaseUrl) {
+        return "needs-config";
+      }
+      return "ready";
+    }
+    case "whisper": {
+      if (!trimmedBaseUrl || !trimmedModel) {
+        return "needs-config";
+      }
+      return "ready";
+    }
+    case "cosyvoice":
+    case "heygem": {
+      if (!trimmedBaseUrl) {
+        return "needs-config";
+      }
+      return "ready";
+    }
+    default: {
+      return "needs-config";
+    }
+  }
 }
 
 const sharedState = createState();
@@ -69,7 +181,7 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
   const persistSection = options.persistSection ?? false;
   const state = options.storage ? createState() : sharedState;
 
-  const { appSettings, sidecarConfig, providerConfigs, settingsSection, saveStatus } = state;
+  const { appSettings, sidecarConfig, providerConfigs, settingsSection, saveStatus, verifiedFfmpegPath } = state;
 
   if (!state.loaded) {
     load();
@@ -199,6 +311,13 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
   }
 
   watch(
+    () => sidecarConfig.ffmpegPath,
+    () => {
+      verifiedFfmpegPath.value = "";
+    },
+  );
+
+  watch(
     [() => ({ ...appSettings }), () => ({ ...sidecarConfig }), providerConfigs, settingsSection],
     persist,
     { deep: true },
@@ -210,6 +329,7 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
     providerConfigs,
     settingsSection,
     saveStatus,
+    verifiedFfmpegPath,
     load,
     persist,
     restore,

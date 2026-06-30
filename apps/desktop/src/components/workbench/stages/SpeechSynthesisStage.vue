@@ -14,7 +14,7 @@ import {
 } from "lucide-vue-next";
 import { ChevronDown } from "lucide-vue-next";
 import { computed, ref } from "vue";
-import type { ProjectDraft, WorkflowStageStatus } from "@mirax/core";
+import type { ProjectDraft, WorkflowStageRuntimeMode, WorkflowStageStatus } from "@mirax/core";
 import { convertFileSrc } from "@tauri-apps/api/core";
 
 const props = defineProps<{
@@ -24,6 +24,8 @@ const props = defineProps<{
   status: WorkflowStageStatus;
   audioPath: string;
   audioDuration: number;
+  mode?: WorkflowStageRuntimeMode;
+  errorMessage?: string;
 }>();
 
 const emit = defineEmits<{
@@ -54,9 +56,22 @@ const estimatedSeconds = computed(() => {
 const hasResult = computed(
   () => props.status === "completed" && Boolean(props.audioPath),
 );
-const resultDuration = computed(() =>
-  props.audioDuration > 0 ? props.audioDuration : estimatedSeconds.value,
-);
+const isMock = computed(() => props.mode === "mock" || props.mode === undefined);
+const isReal = computed(() => props.mode === "real");
+const isNotConnected = computed(() => props.mode === "not-connected");
+const hasError = computed(() => !!props.errorMessage?.trim());
+const canRun = computed(() => !props.running && !isNotConnected.value);
+const modeLabel = computed(() => {
+  if (isMock.value) return "Mock 音频";
+  if (isReal.value) return "真实 TTS";
+  if (isNotConnected.value) return "真实 TTS 未连接";
+  return "";
+});
+const resultDurationLabel = computed(() => {
+  if (props.audioDuration > 0) return formatTime(props.audioDuration);
+  if (isMock.value) return formatTime(estimatedSeconds.value);
+  return "时长未知";
+});
 
 function basename(filePath: string): string {
   const trimmed = filePath.trim();
@@ -98,7 +113,7 @@ function resetSettings() {
 }
 
 function handleSynthesize() {
-  if (props.running) return;
+  if (!canRun.value) return;
   emit("run");
 }
 </script>
@@ -146,6 +161,20 @@ function handleSynthesize() {
       <section class="panel">
         <div class="panel-head">
           <h3 class="panel-title">合成设置</h3>
+          <span v-if="modeLabel" class="mode-badge">{{ modeLabel }}</span>
+        </div>
+
+        <div v-if="isNotConnected" class="status-banner status-warning">
+          <Info :size="14" />
+          <span>真实 TTS 未连接。请在设置中配置并启用 CosyVoice provider 后再试。</span>
+        </div>
+        <div v-else-if="isReal && hasError" class="status-banner status-error">
+          <Info :size="14" />
+          <span>{{ errorMessage }}</span>
+        </div>
+        <div v-else-if="isReal && status !== 'completed'" class="status-banner status-info">
+          <Info :size="14" />
+          <span>真实 TTS 模式：将使用设置中启用的 provider 发起真实语音合成。</span>
         </div>
 
         <div class="setting-block">
@@ -252,7 +281,7 @@ function handleSynthesize() {
           <button
             class="primary synth-button"
             type="button"
-            :disabled="running"
+            :disabled="!canRun"
             @click="handleSynthesize"
           >
             <Loader2 v-if="running" :size="16" class="spin" />
@@ -269,6 +298,7 @@ function handleSynthesize() {
           <h3 class="panel-title">合成结果</h3>
           <span v-if="hasResult" class="status-pill done">已完成</span>
           <span v-else-if="running" class="status-pill running">合成中</span>
+          <span v-else-if="hasError" class="status-pill failed">失败</span>
         </div>
 
         <template v-if="hasResult">
@@ -276,7 +306,7 @@ function handleSynthesize() {
             <span class="file-icon"><FileAudio :size="20" /></span>
             <div class="file-meta">
               <span class="file-name">{{ fileName }}</span>
-              <span class="file-sub">{{ formatTime(resultDuration) }} · WAV</span>
+              <span class="file-sub">{{ resultDurationLabel }} · WAV</span>
             </div>
           </div>
 
@@ -341,7 +371,7 @@ function handleSynthesize() {
             <FileAudio v-else :size="32" />
           </span>
           <p>
-            {{ running ? "正在合成音频…" : "完成设置后点击「开始合成」生成音频" }}
+            {{ running ? "正在合成音频…" : hasError ? "语音合成失败，请检查配置后重试。" : "完成设置后点击「开始合成」生成音频" }}
           </p>
         </div>
       </section>
@@ -425,6 +455,52 @@ function handleSynthesize() {
 .status-pill.running {
   color: var(--mx-warning);
   background: var(--mx-warning-bg);
+}
+
+.status-pill.failed {
+  color: var(--mx-error);
+  background: var(--mx-error-bg);
+}
+
+.mode-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: var(--mx-radius-pill);
+  background: var(--mx-bg-elevated);
+  color: var(--mx-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.status-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--mx-radius-md);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.status-banner svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.status-warning {
+  color: var(--mx-text-secondary);
+  background: var(--mx-warning-bg);
+}
+
+.status-error {
+  color: var(--mx-error);
+  background: var(--mx-error-bg);
+}
+
+.status-info {
+  color: var(--mx-text-secondary);
+  background: var(--mx-info-bg);
 }
 
 .summary-grid {

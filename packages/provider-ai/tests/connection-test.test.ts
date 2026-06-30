@@ -165,4 +165,164 @@ describe("ai provider connection test", () => {
     expect(result.message).not.toContain("secret");
     expect(result.message).not.toContain(leakedBaseUrl);
   });
+
+  it("returns success for cosyvoice mode when fake service is healthy", async () => {
+    const transport = createFakeTransport([{ response: { status: 200, body: { ok: true } } }]);
+
+    const result = await testAiProviderConnection({
+      mode: "cosyvoice",
+      baseUrl: "https://cosyvoice.example.com",
+      apiKey: "secret-token",
+      transport,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.message).toContain("CosyVoice");
+    expect(result.message).not.toContain("secret-token");
+  });
+
+  it("returns not-configured for cosyvoice mode when baseUrl is empty", async () => {
+    const result = await testAiProviderConnection({
+      mode: "cosyvoice",
+      baseUrl: "",
+      apiKey: "secret-token",
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.code).toBe("not-configured");
+  });
+
+  it("returns unauthorized for cosyvoice mode on 403", async () => {
+    const transport = createFakeTransport([{ response: { status: 403, body: { error: "Forbidden" } } }]);
+
+    const result = await testAiProviderConnection({
+      mode: "cosyvoice",
+      baseUrl: "https://cosyvoice.example.com",
+      apiKey: "secret-token",
+      transport,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.code).toBe("unauthorized");
+    expect(result.message).not.toContain("secret-token");
+  });
+
+  it("does not send baseUrl token in cosyvoice health endpoint", async () => {
+    let requestedEndpoint = "";
+    const transport: OpenAiCompatibleTransport = {
+      async request(req) {
+        requestedEndpoint = req.endpoint;
+        return {
+          status: 200,
+          json: async () => ({ ok: true }),
+        };
+      },
+    };
+
+    const result = await testAiProviderConnection({
+      mode: "cosyvoice",
+      baseUrl: "https://cosyvoice.example.com/api?token=url-secret#/hash",
+      apiKey: "secret-token",
+      transport,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(requestedEndpoint).toBe("https://cosyvoice.example.com/api/health");
+    expect(requestedEndpoint).not.toContain("url-secret");
+    expect(result.message).not.toContain("secret-token");
+    expect(result.message).not.toContain("url-secret");
+  });
+
+  it("returns success for whisper mode when fake service is healthy", async () => {
+    const transport = createFakeTransport([{ response: { status: 200, body: { ok: true } } }]);
+
+    const result = await testAiProviderConnection({
+      mode: "whisper",
+      baseUrl: "https://whisper.example.com",
+      apiKey: "secret-token",
+      transport,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.message).toContain("Whisper");
+    expect(result.message).not.toContain("secret-token");
+  });
+
+  it("does not send baseUrl token in whisper health endpoint", async () => {
+    let requestedEndpoint = "";
+    const transport: OpenAiCompatibleTransport = {
+      async request(req) {
+        requestedEndpoint = req.endpoint;
+        return {
+          status: 200,
+          json: async () => ({ ok: true }),
+        };
+      },
+    };
+
+    const result = await testAiProviderConnection({
+      mode: "whisper",
+      baseUrl: "https://whisper.example.com/api?token=url-secret#/hash",
+      apiKey: "secret-token",
+      transport,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(requestedEndpoint).toBe("https://whisper.example.com/api/health");
+    expect(requestedEndpoint).not.toContain("url-secret");
+    expect(result.message).not.toContain("secret-token");
+    expect(result.message).not.toContain("url-secret");
+  });
+
+  it("returns success for heygem mode when fake service is healthy", async () => {
+    let requestedEndpoint = "";
+    const transport: OpenAiCompatibleTransport = {
+      async request(req) {
+        requestedEndpoint = req.endpoint;
+        expect(req.method).toBe("GET");
+        expect(req.headers.Authorization).toBe("Bearer secret-token");
+        return {
+          status: 200,
+          json: async () => ({ ok: true }),
+        };
+      },
+    };
+
+    const result = await testAiProviderConnection({
+      mode: "heygem",
+      baseUrl: "https://heygem.example.com/api",
+      apiKey: "secret-token",
+      transport,
+    });
+
+    expect(result).toEqual({ ok: true, message: "HeyGem provider 连接正常。" });
+    expect(requestedEndpoint).toBe("https://heygem.example.com/api/health");
+  });
+
+  it("does not send baseUrl token in heygem health endpoint", async () => {
+    let requestedEndpoint = "";
+    const transport: OpenAiCompatibleTransport = {
+      async request(req) {
+        requestedEndpoint = req.endpoint;
+        return {
+          status: 500,
+          json: async () => ({ error: "bad" }),
+        };
+      },
+    };
+
+    const result = await testAiProviderConnection({
+      mode: "heygem",
+      baseUrl: "https://heygem.example.com/api?token=url-secret#/hash",
+      apiKey: "secret-token",
+      transport,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.code).toBe("bad-response");
+    expect(requestedEndpoint).toBe("https://heygem.example.com/api/health");
+    expect(requestedEndpoint).not.toContain("url-secret");
+    expect(result.message).not.toContain("secret-token");
+    expect(result.message).not.toContain("url-secret");
+  });
 });

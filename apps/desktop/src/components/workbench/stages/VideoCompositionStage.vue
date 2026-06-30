@@ -16,7 +16,7 @@ import {
   Volume2,
 } from "lucide-vue-next";
 import { computed, ref } from "vue";
-import type { ProjectDraft, WorkflowStageStatus } from "@mirax/core";
+import type { ProjectDraft, WorkflowStageRuntimeMode, WorkflowStageStatus } from "@mirax/core";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import PathPickerButton from "../../PathPickerButton.vue";
 
@@ -30,6 +30,8 @@ const props = defineProps<{
   status: WorkflowStageStatus;
   videoPath: string;
   coverPath: string;
+  mode?: WorkflowStageRuntimeMode;
+  errorMessage?: string;
 }>();
 
 const emit = defineEmits<{
@@ -40,10 +42,19 @@ const emit = defineEmits<{
 
 const hasAvatar = computed(() => Boolean(props.avatarPath.trim()));
 const hasAudio = computed(() => Boolean(props.audioPath.trim()));
-const canRun = computed(() => hasAvatar.value && hasAudio.value && !props.running);
+const isMock = computed(() => (props.mode ?? "mock") === "mock");
+const isReal = computed(() => props.mode === "real");
+const isNotConnected = computed(() => props.mode === "not-connected");
+const hasError = computed(() => props.status === "failed" && Boolean(props.errorMessage));
+const canRun = computed(() => hasAvatar.value && hasAudio.value && !props.running && !isNotConnected.value);
 const hasResult = computed(
   () => props.status === "completed" && Boolean(props.videoPath),
 );
+const modeLabel = computed(() => {
+  if (isMock.value) return "Mock 合成";
+  if (isNotConnected.value) return "未连接";
+  return "真实合成";
+});
 
 const avatarFileName = computed(() => basename(props.avatarPath));
 const audioFileName = computed(() => basename(props.audioPath));
@@ -112,9 +123,25 @@ function handleCompose() {
       <section class="panel">
         <div class="panel-head">
           <h3 class="panel-title">输入摘要</h3>
-          <button class="link-button" type="button" @click="emit('edit-avatar')">
-            更换源素材
-          </button>
+          <div class="panel-badges">
+            <span class="mode-badge" :class="{ real: isReal, warning: isNotConnected }">{{ modeLabel }}</span>
+            <button class="link-button" type="button" @click="emit('edit-avatar')">
+              更换源素材
+            </button>
+          </div>
+        </div>
+
+        <div v-if="isNotConnected" class="status-banner status-warning">
+          <Info :size="15" />
+          <span>真实合成未连接。请先在本地依赖中配置 FFmpeg。</span>
+        </div>
+        <div v-else-if="hasError" class="status-banner status-error">
+          <Info :size="15" />
+          <span>{{ errorMessage }}</span>
+        </div>
+        <div v-else-if="isReal && !hasResult" class="status-banner status-info">
+          <Info :size="15" />
+          <span>真实合成模式：将使用设置中的 FFmpeg 生成 finalVideoPath。</span>
         </div>
 
         <div class="input-summary">
@@ -401,6 +428,7 @@ function handleCompose() {
           <h3 class="panel-title">合成结果</h3>
           <span v-if="hasResult" class="status-pill done">已完成</span>
           <span v-else-if="running" class="status-pill running">合成中</span>
+          <span v-else-if="hasError" class="status-pill failed">失败</span>
         </div>
 
         <template v-if="hasResult">
@@ -534,6 +562,14 @@ function handleCompose() {
   gap: 12px;
 }
 
+.panel-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .panel-title {
   margin: 0;
   font-size: 15px;
@@ -558,6 +594,74 @@ function handleCompose() {
 .status-pill.running {
   color: var(--mx-warning);
   background: var(--mx-warning-bg);
+}
+
+.status-pill.failed {
+  color: var(--mx-danger);
+  background: var(--mx-danger-bg);
+}
+
+.mode-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: var(--mx-radius-pill);
+  color: var(--mx-text-secondary);
+  background: var(--mx-bg-elevated);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.mode-badge.real {
+  color: var(--mx-info);
+  background: var(--mx-info-bg);
+}
+
+.mode-badge.warning {
+  color: var(--mx-warning);
+  background: var(--mx-warning-bg);
+}
+
+.status-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--mx-radius-md);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.status-banner svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.status-info {
+  color: var(--mx-text-secondary);
+  background: var(--mx-info-bg);
+}
+
+.status-info svg {
+  color: var(--mx-info);
+}
+
+.status-warning {
+  color: var(--mx-text-secondary);
+  background: var(--mx-warning-bg);
+}
+
+.status-warning svg {
+  color: var(--mx-warning);
+}
+
+.status-error {
+  color: var(--mx-danger);
+  background: var(--mx-danger-bg);
+}
+
+.status-error svg {
+  color: var(--mx-danger);
 }
 
 .link-button {

@@ -46,6 +46,9 @@ export interface SynthesizeSpeechInput {
   voiceId: string;
   script: string;
   projectId: string;
+  outputPath?: string;
+  speed?: number;
+  emotion?: string;
 }
 
 export interface SynthesizeSpeechResult {
@@ -57,6 +60,7 @@ export interface GenerateAvatarVideoInput {
   audioPath: string;
   avatarId: string;
   projectId: string;
+  outputPath?: string;
 }
 
 export interface GenerateAvatarVideoResult {
@@ -72,7 +76,12 @@ export type AiProviderErrorCode =
   | "not-connected"
   | "unauthorized"
   | "network"
-  | "bad-response";
+  | "bad-response"
+  | "transcribe-failed"
+  | "voice-unavailable"
+  | "clone-failed"
+  | "synthesis-failed"
+  | "avatar-failed";
 
 /**
  * AI provider 结构化错误。
@@ -161,5 +170,35 @@ export interface OpenAiCompatibleProviderOptions {
   baseUrl?: string;
   apiKey: string;
   model: string;
+  transport?: OpenAiCompatibleTransport;
+}
+
+/**
+ * CosyVoice / TTS provider 的内存配置。`apiKey` 可选，本地服务可不需要鉴权。
+ */
+export interface CosyVoiceProviderOptions {
+  baseUrl: string;
+  apiKey?: string;
+  model?: string;
+  transport?: OpenAiCompatibleTransport;
+}
+
+/**
+ * Whisper-compatible provider 的内存配置。`apiKey` 可选，本地服务可不需要鉴权。
+ */
+export interface WhisperProviderOptions {
+  baseUrl: string;
+  apiKey?: string;
+  model: string;
+  transport?: OpenAiCompatibleTransport;
+}
+
+/**
+ * HeyGem-compatible provider 的内存配置。`apiKey` 可选，本地服务可不需要鉴权。
+ */
+export interface HeyGemProviderOptions {
+  baseUrl: string;
+  apiKey?: string;
+  model?: string;
   transport?: OpenAiCompatibleTransport;
 }

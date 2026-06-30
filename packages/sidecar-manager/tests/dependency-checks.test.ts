@@ -87,6 +87,19 @@ describe("sidecar dependency checks", () => {
     expect(results.find((r) => r.key === "heygem")?.state).toBe("unavailable");
   });
 
+  it("reports ffmpeg unavailable when probe returns false", () => {
+    const result = detectFfmpeg("/usr/local/bin/ffmpeg", () => false);
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        key: "ffmpeg",
+        ok: false,
+        state: "unavailable",
+      }),
+    );
+    expect(result.message).not.toContain("/usr/local/bin/ffmpeg");
+  });
+
   it("does not expose absolute paths in detection messages", () => {
     const result = detectFfmpeg("/Users/bob/secret/ffmpeg");
 

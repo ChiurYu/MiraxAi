@@ -1,0 +1,47 @@
+import { describe, expect, it } from "vitest";
+import fs from "node:fs";
+import path from "node:path";
+
+const source = fs.readFileSync(path.resolve(__dirname, "App.vue"), "utf-8");
+
+describe("App provider runtime wiring", () => {
+  it("passes provider-derived stage modes into workflow runtime and keeps them synced", () => {
+    expect(source).toContain("const providerStageModes = computed");
+    expect(source).toContain("stageModes: providerStageModes.value");
+    expect(source).toContain("runtime.stageModes.value = modes;");
+  });
+
+  it("only enables real provider stages for executable current-session configs", () => {
+    expect(source).toContain("function hasExecutableRewriteProvider()");
+    expect(source).toContain("function hasExecutableTranscribeProvider()");
+    expect(source).toContain("function hasExecutableSpeechProvider()");
+    expect(source).toContain("function hasExecutableVoiceCloneProvider()");
+    expect(source).toContain("function hasExecutableAvatarProvider()");
+    expect(source).toContain("sanitizeBaseUrlForStorage");
+    expect(source).toContain("config.apiKey.trim()");
+    expect(source).toContain("config.model?.trim()");
+    expect(source).toContain('config.provider === "custom"');
+    expect(source).not.toContain('rewrite: findEnabledRewriteProviderConfig(providerConfigs.value) ? "real" : "mock"');
+  });
+
+  it("does not mark compose real from an unverified ffmpeg path", () => {
+    expect(source).toContain("verifiedFfmpegPath");
+    expect(source).toContain('"not-connected"');
+    expect(source).not.toContain('compose: sidecarConfig.ffmpegPath.trim() ? "real"');
+  });
+
+  it("only marks compose real when verified ffmpeg path matches the current path", () => {
+    expect(source).toContain("verifiedFfmpegPath.value === trimmedFfmpegPath");
+    expect(source).toContain('compose: composeMode');
+  });
+
+  it("clears verified ffmpeg readiness when ffmpegPath changes", () => {
+    expect(source).toContain("verifiedFfmpegPath");
+    expect(source).toContain("sidecarConfig.ffmpegPath");
+  });
+
+  it("does not send the built-in demo avatar id to real HeyGem", () => {
+    expect(source).toContain('avatarMode === "real" && selectedAvatarId.value === "presenter-a"');
+    expect(source).toContain("请选择 HeyGem provider 可识别的真实形象。");
+  });
+});

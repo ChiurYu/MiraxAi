@@ -1,7 +1,16 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { nextTick } from "vue";
 import type { ApiKeyProviderConfig } from "@mirax/core";
-import { findEnabledRewriteProviderConfig, useAppSettings } from "./useAppSettings.js";
+import {
+  findEnabledAvatarProviderConfig,
+  findEnabledRewriteProviderConfig,
+  findEnabledSpeechProviderConfig,
+  findEnabledTranscribeProviderConfig,
+  findEnabledVoiceCloneProviderConfig,
+  getProviderReadiness,
+  probeFfmpegPath,
+  useAppSettings,
+} from "./useAppSettings.js";
 
 function createFakeStorage(): Storage {
   const store: Record<string, string> = {};
@@ -121,6 +130,36 @@ describe("useAppSettings", () => {
     expect(parsed.appSettings.outputPaths.baseOutput).toBe("/tmp/mirax-output");
     expect(parsed.sidecarConfig.ffmpegPath).toBe("/opt/ffmpeg");
     expect(parsed.sidecarConfig.hasPlaywrightBrowser).toBe(true);
+  });
+
+  it("keeps verifiedFfmpegPath as a session-only value and does not persist it", async () => {
+    const storage = createFakeStorage();
+    const { sidecarConfig, verifiedFfmpegPath } = useAppSettings({ storage });
+
+    sidecarConfig.ffmpegPath = "/opt/ffmpeg";
+    await nextTick();
+    verifiedFfmpegPath.value = "/opt/ffmpeg";
+
+    await nextTick();
+
+    const raw = storage.getItem("mirax-ai.app-settings.v1")!;
+    const parsed = JSON.parse(raw);
+    expect(parsed).not.toHaveProperty("verifiedFfmpegPath");
+    expect(raw).not.toContain("verifiedFfmpegPath");
+  });
+
+  it("clears verifiedFfmpegPath when ffmpegPath changes", async () => {
+    const storage = createFakeStorage();
+    const { sidecarConfig, verifiedFfmpegPath } = useAppSettings({ storage });
+
+    sidecarConfig.ffmpegPath = "/opt/ffmpeg";
+    await nextTick();
+    verifiedFfmpegPath.value = "/opt/ffmpeg";
+    expect(verifiedFfmpegPath.value).toBe("/opt/ffmpeg");
+
+    sidecarConfig.ffmpegPath = "/usr/bin/ffmpeg";
+    await nextTick();
+    expect(verifiedFfmpegPath.value).toBe("");
   });
 
   it("persists provider metadata without apiKey", async () => {
@@ -320,5 +359,230 @@ describe("findEnabledRewriteProviderConfig", () => {
     // This assertion documents that the returned object still carries the in-memory apiKey,
     // which is acceptable because it never leaves the memory boundary.
     expect(found!.baseUrl).toBe("https://user:pass@api.example.com/v1?token=secret#/hash");
+  });
+});
+
+describe("findEnabledTranscribeProviderConfig", () => {
+  function makeConfig(overrides: Partial<ApiKeyProviderConfig> = {}): ApiKeyProviderConfig {
+    return {
+      id: "test",
+      label: "Test",
+      provider: "whisper",
+      apiKey: "whisper-token",
+      baseUrl: "https://whisper.example.com",
+      model: "whisper-v3",
+      enabled: true,
+      ...overrides,
+    };
+  }
+
+  it("returns the first enabled whisper config", () => {
+    const configs = [
+      makeConfig({ id: "o", provider: "openai", enabled: true }),
+      makeConfig({ id: "w", provider: "whisper", enabled: true }),
+    ];
+
+    const found = findEnabledTranscribeProviderConfig(configs);
+
+    expect(found).toBeDefined();
+    expect(found!.id).toBe("w");
+  });
+
+  it("returns undefined when only non-transcribe providers are enabled", () => {
+    const configs = [
+      makeConfig({ id: "o", provider: "openai", enabled: true }),
+      makeConfig({ id: "c", provider: "cosyvoice", enabled: true }),
+    ];
+
+    expect(findEnabledTranscribeProviderConfig(configs)).toBeUndefined();
+  });
+});
+
+describe("findEnabledSpeechProviderConfig", () => {
+  function makeConfig(overrides: Partial<ApiKeyProviderConfig> = {}): ApiKeyProviderConfig {
+    return {
+      id: "test",
+      label: "Test",
+      provider: "cosyvoice",
+      apiKey: "tts-token",
+      baseUrl: "https://cosyvoice.example.com",
+      model: "cosyvoice-v1",
+      enabled: true,
+      ...overrides,
+    };
+  }
+
+  it("returns the first enabled cosyvoice config", () => {
+    const configs = [
+      makeConfig({ id: "o", provider: "openai", enabled: true }),
+      makeConfig({ id: "c", provider: "cosyvoice", enabled: true }),
+      makeConfig({ id: "h", provider: "heygem", enabled: true }),
+    ];
+
+    const found = findEnabledSpeechProviderConfig(configs);
+
+    expect(found).toBeDefined();
+    expect(found!.id).toBe("c");
+  });
+
+  it("returns undefined when cosyvoice config is disabled", () => {
+    const configs = [makeConfig({ id: "c", provider: "cosyvoice", enabled: false })];
+
+    expect(findEnabledSpeechProviderConfig(configs)).toBeUndefined();
+  });
+
+  it("returns undefined when only non-speech providers are enabled", () => {
+    const configs = [
+      makeConfig({ id: "o", provider: "openai", enabled: true }),
+      makeConfig({ id: "h", provider: "heygem", enabled: true }),
+    ];
+
+    expect(findEnabledSpeechProviderConfig(configs)).toBeUndefined();
+  });
+});
+
+describe("findEnabledVoiceCloneProviderConfig", () => {
+  function makeConfig(overrides: Partial<ApiKeyProviderConfig> = {}): ApiKeyProviderConfig {
+    return {
+      id: "test",
+      label: "Test",
+      provider: "cosyvoice",
+      apiKey: "voice-token",
+      baseUrl: "https://cosyvoice.example.com",
+      model: "cosyvoice-v1",
+      enabled: true,
+      ...overrides,
+    };
+  }
+
+  it("returns the first enabled cosyvoice config", () => {
+    const configs = [
+      makeConfig({ id: "o", provider: "openai", enabled: true }),
+      makeConfig({ id: "c", provider: "cosyvoice", enabled: true }),
+    ];
+
+    const found = findEnabledVoiceCloneProviderConfig(configs);
+
+    expect(found).toBeDefined();
+    expect(found!.id).toBe("c");
+  });
+
+  it("returns undefined when only non-voice-clone providers are enabled", () => {
+    const configs = [
+      makeConfig({ id: "o", provider: "openai", enabled: true }),
+      makeConfig({ id: "h", provider: "heygem", enabled: true }),
+    ];
+
+    expect(findEnabledVoiceCloneProviderConfig(configs)).toBeUndefined();
+  });
+});
+
+describe("findEnabledAvatarProviderConfig", () => {
+  function makeConfig(overrides: Partial<ApiKeyProviderConfig> = {}): ApiKeyProviderConfig {
+    return {
+      id: "test",
+      label: "Test",
+      provider: "heygem",
+      apiKey: "avatar-token",
+      baseUrl: "https://heygem.example.com",
+      model: "heygem-v1",
+      enabled: true,
+      ...overrides,
+    };
+  }
+
+  it("returns the first enabled heygem config", () => {
+    const configs = [
+      makeConfig({ id: "o", provider: "openai", enabled: true }),
+      makeConfig({ id: "disabled", provider: "heygem", enabled: false }),
+      makeConfig({ id: "h", provider: "heygem", enabled: true }),
+    ];
+
+    const found = findEnabledAvatarProviderConfig(configs);
+
+    expect(found).toBeDefined();
+    expect(found!.id).toBe("h");
+  });
+
+  it("returns undefined when only non-avatar providers are enabled", () => {
+    const configs = [
+      makeConfig({ id: "o", provider: "openai", enabled: true }),
+      makeConfig({ id: "c", provider: "cosyvoice", enabled: true }),
+    ];
+
+    expect(findEnabledAvatarProviderConfig(configs)).toBeUndefined();
+  });
+});
+
+describe("probeFfmpegPath", () => {
+  it("returns true when probe_ffmpeg invoke succeeds", async () => {
+    const result = await probeFfmpegPath("/opt/ffmpeg", async (command) => {
+      expect(command).toBe("probe_ffmpeg");
+      return true;
+    });
+    expect(result).toBe(true);
+  });
+
+  it("returns false when probe_ffmpeg invoke throws", async () => {
+    const result = await probeFfmpegPath("/opt/ffmpeg", async () => {
+      throw new Error("probe failed");
+    });
+    expect(result).toBe(false);
+  });
+});
+
+describe("getProviderReadiness", () => {
+  function makeConfig(overrides: Partial<ApiKeyProviderConfig> = {}): ApiKeyProviderConfig {
+    return {
+      id: "test",
+      label: "Test",
+      provider: "openai",
+      apiKey: "sk-test",
+      baseUrl: "https://api.openai.com/v1",
+      model: "gpt-4",
+      enabled: true,
+      ...overrides,
+    };
+  }
+
+  it("returns disabled when config is not enabled", () => {
+    expect(getProviderReadiness(makeConfig({ enabled: false }))).toBe("disabled");
+  });
+
+  it("returns needs-config for openai when apiKey or model is empty", () => {
+    expect(getProviderReadiness(makeConfig({ apiKey: "" }))).toBe("needs-config");
+    expect(getProviderReadiness(makeConfig({ model: "" }))).toBe("needs-config");
+    expect(getProviderReadiness(makeConfig({ apiKey: "  ", model: "  " }))).toBe("needs-config");
+  });
+
+  it("returns ready for openai with apiKey and model", () => {
+    expect(getProviderReadiness(makeConfig())).toBe("ready");
+  });
+
+  it("returns needs-config for custom when baseUrl is missing", () => {
+    expect(getProviderReadiness(makeConfig({ provider: "custom", baseUrl: "" }))).toBe("needs-config");
+  });
+
+  it("returns ready for custom with apiKey, model and baseUrl", () => {
+    expect(getProviderReadiness(makeConfig({ provider: "custom" }))).toBe("ready");
+  });
+
+  it("returns needs-config for whisper when baseUrl or model is empty", () => {
+    expect(getProviderReadiness(makeConfig({ provider: "whisper", baseUrl: "" }))).toBe("needs-config");
+    expect(getProviderReadiness(makeConfig({ provider: "whisper", model: "" }))).toBe("needs-config");
+  });
+
+  it("returns ready for whisper with baseUrl and model", () => {
+    expect(getProviderReadiness(makeConfig({ provider: "whisper" }))).toBe("ready");
+  });
+
+  it("returns needs-config for cosyvoice / heygem when baseUrl is empty", () => {
+    expect(getProviderReadiness(makeConfig({ provider: "cosyvoice", baseUrl: "" }))).toBe("needs-config");
+    expect(getProviderReadiness(makeConfig({ provider: "heygem", baseUrl: "" }))).toBe("needs-config");
+  });
+
+  it("returns ready for cosyvoice / heygem with baseUrl even when apiKey is empty", () => {
+    expect(getProviderReadiness(makeConfig({ provider: "cosyvoice", apiKey: "" }))).toBe("ready");
+    expect(getProviderReadiness(makeConfig({ provider: "heygem", apiKey: "" }))).toBe("ready");
   });
 });

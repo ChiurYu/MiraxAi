@@ -5,6 +5,7 @@ import {
   FolderOpen,
   History,
   Image,
+  Info,
   Link2,
   Loader2,
   PlayCircle,
@@ -12,12 +13,15 @@ import {
   Sparkles,
 } from "lucide-vue-next";
 import { computed, onUnmounted, ref, watch } from "vue";
-import type { ProjectDraft } from "@mirax/core";
+import type { ProjectDraft, WorkflowStageRuntimeMode, WorkflowStageStatus } from "@mirax/core";
 import PathPickerButton from "../../PathPickerButton.vue";
 
 const props = defineProps<{
   modelValue: ProjectDraft;
   running: boolean;
+  status: WorkflowStageStatus;
+  mode?: WorkflowStageRuntimeMode;
+  errorMessage?: string;
 }>();
 
 const emit = defineEmits<{
@@ -43,6 +47,18 @@ const videoFileFilters = [
 const extractVideo = ref(true);
 const extractAudio = ref(true);
 const autoTranscribe = ref(true);
+
+const isMock = computed(() => props.mode === "mock" || props.mode === undefined);
+const isReal = computed(() => props.mode === "real");
+const isNotConnected = computed(() => props.mode === "not-connected");
+const hasError = computed(() => !!props.errorMessage?.trim());
+const canRun = computed(() => !props.running && !isNotConnected.value && Boolean(sourceVideoPath.value));
+const modeLabel = computed(() => {
+  if (isMock.value) return "Mock 解析";
+  if (isReal.value) return "真实转写";
+  if (isNotConnected.value) return "真实转写未连接";
+  return "";
+});
 
 const elapsed = ref(0);
 let elapsedTimer: ReturnType<typeof setInterval> | null = null;
@@ -81,14 +97,30 @@ function formatElapsed(totalSeconds: number): string {
 }
 
 function handleParse() {
-  if (props.running || !sourceVideoPath.value) return;
+  if (!canRun.value) return;
   emit("run");
 }
 </script>
 
 <template>
   <div class="material-parsing-stage">
-    <h2 class="stage-title">导入源素材</h2>
+    <div class="stage-heading">
+      <h2 class="stage-title">导入源素材</h2>
+      <span v-if="modeLabel" class="mode-badge">{{ modeLabel }}</span>
+    </div>
+
+    <div v-if="isNotConnected" class="status-banner status-warning">
+      <Info :size="16" />
+      <span>真实转写未连接。请在设置中配置并启用 Whisper provider。</span>
+    </div>
+    <div v-else-if="isReal && hasError" class="status-banner status-error">
+      <Info :size="16" />
+      <span>{{ errorMessage }}</span>
+    </div>
+    <div v-else-if="isReal && status !== 'completed'" class="status-banner status-info">
+      <Info :size="16" />
+      <span>真实转写模式：将使用设置中启用的 provider 生成 transcript。</span>
+    </div>
 
     <div class="stage-tabs" :class="{ 'is-disabled': running }">
       <button
@@ -244,7 +276,7 @@ function handleParse() {
     <button
       class="primary wide-button parse-button"
       type="button"
-      :disabled="running || !sourceVideoPath"
+      :disabled="!canRun"
       @click="handleParse"
     >
       <Loader2 v-if="running" :size="20" class="spin" />
@@ -287,12 +319,57 @@ function handleParse() {
   min-width: 0;
 }
 
+.stage-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
 .stage-title {
-  margin: 0 0 24px;
+  margin: 0;
   font-size: 20px;
   font-weight: 600;
   line-height: 28px;
   color: var(--mx-text-primary);
+}
+
+.mode-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--mx-radius-pill);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--mx-text-secondary);
+  background: var(--mx-bg-muted);
+}
+
+.status-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border-radius: var(--mx-radius-md);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.status-info {
+  color: var(--mx-info);
+  background: var(--mx-info-bg);
+}
+
+.status-warning {
+  color: var(--mx-warning);
+  background: var(--mx-warning-bg);
+}
+
+.status-error {
+  color: var(--mx-error);
+  background: var(--mx-error-bg);
 }
 
 .stage-tabs {

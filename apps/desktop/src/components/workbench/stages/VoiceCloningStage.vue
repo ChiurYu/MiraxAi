@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { CheckCircle2, Loader2, Plus, Volume2 } from "lucide-vue-next";
+import { CheckCircle2, Info, Loader2, Plus, Volume2 } from "lucide-vue-next";
 import { computed } from "vue";
-import type { ProjectDraft, WorkflowStageStatus } from "@mirax/core";
+import type { ProjectDraft, WorkflowStageRuntimeMode, WorkflowStageStatus } from "@mirax/core";
 import PathPickerButton from "../../PathPickerButton.vue";
 
 const props = defineProps<{
@@ -11,6 +11,8 @@ const props = defineProps<{
   voiceName: string;
   running: boolean;
   status: WorkflowStageStatus;
+  mode?: WorkflowStageRuntimeMode;
+  errorMessage?: string;
 }>();
 
 const emit = defineEmits<{
@@ -29,8 +31,19 @@ const audioFilters = [
 ];
 
 const hasSample = computed(() => voiceSamplePath.value.trim().length > 0);
-const canRun = computed(() => hasSample.value && !props.running);
+const isMock = computed(() => props.mode === "mock" || props.mode === undefined);
+const isReal = computed(() => props.mode === "real");
+const isNotConnected = computed(() => props.mode === "not-connected");
+const hasError = computed(() => !!props.errorMessage?.trim());
+const hasResult = computed(() => props.status === "completed" && Boolean(props.voiceId));
+const canRun = computed(() => hasSample.value && !props.running && !isNotConnected.value);
 const scriptLength = computed(() => props.scriptText.trim().length);
+const modeLabel = computed(() => {
+  if (isMock.value) return "Mock 声音";
+  if (isReal.value) return "真实声音克隆";
+  if (isNotConnected.value) return "真实声音克隆未连接";
+  return "";
+});
 
 function fileName(path: string): string {
   const trimmed = path.trim();
@@ -80,12 +93,28 @@ function handleConfirm() {
         <div class="detail-header">
           <div class="detail-title-row">
             <h2 class="detail-name">{{ voiceName || "未选择声音" }}</h2>
-            <span v-if="voiceId" class="voice-badge ready">已就绪</span>
+            <span v-if="modeLabel" class="mode-badge">{{ modeLabel }}</span>
+            <span v-if="hasResult" class="voice-badge ready">已就绪</span>
+            <span v-else-if="running" class="voice-badge training">克隆中</span>
+            <span v-else-if="hasError" class="voice-badge failed">失败</span>
             <span v-else class="voice-badge training">待克隆</span>
           </div>
           <p class="detail-desc">
             {{ voiceId ? `Voice ID：${voiceId}` : "选择样本后点击「开始克隆」，生成 voiceId 后进入语音合成。" }}
           </p>
+        </div>
+
+        <div v-if="isNotConnected" class="status-banner status-warning">
+          <Info :size="16" />
+          <span>真实声音克隆未连接。请在设置中配置并启用 CosyVoice provider。</span>
+        </div>
+        <div v-else-if="isReal && hasError" class="status-banner status-error">
+          <Info :size="16" />
+          <span>{{ errorMessage }}</span>
+        </div>
+        <div v-else-if="isReal && status !== 'completed'" class="status-banner status-info">
+          <Info :size="16" />
+          <span>真实声音克隆模式：将使用设置中启用的 provider 生成 voiceId。</span>
         </div>
 
         <div class="detail-meta">
@@ -249,6 +278,47 @@ function handleConfirm() {
 .voice-badge.training {
   color: var(--mx-warning);
   background: var(--mx-warning-bg);
+}
+
+.voice-badge.failed {
+  color: var(--mx-error);
+  background: var(--mx-error-bg);
+}
+
+.mode-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--mx-radius-pill);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--mx-text-secondary);
+  background: var(--mx-bg-muted);
+}
+
+.status-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--mx-radius-md);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.status-info {
+  color: var(--mx-info);
+  background: var(--mx-info-bg);
+}
+
+.status-warning {
+  color: var(--mx-warning);
+  background: var(--mx-warning-bg);
+}
+
+.status-error {
+  color: var(--mx-error);
+  background: var(--mx-error-bg);
 }
 
 .detail-meta {

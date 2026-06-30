@@ -45,7 +45,7 @@ export function validateProviderConfig(config: ApiKeyProviderConfig): string[] {
     errors.push("请填写配置名称");
   }
 
-  if (!config.apiKey.trim()) {
+  if ((config.provider === "openai" || config.provider === "custom") && !config.apiKey.trim()) {
     errors.push("请填写 API Key");
   }
 

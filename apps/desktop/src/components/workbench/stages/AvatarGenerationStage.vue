@@ -5,7 +5,6 @@ import {
   FolderOpen,
   Info,
   Loader2,
-  Mic,
   Music,
   Plus,
   RotateCcw,
@@ -13,7 +12,7 @@ import {
 } from "lucide-vue-next";
 import { ChevronDown, Download } from "lucide-vue-next";
 import { computed, ref } from "vue";
-import type { ProjectDraft, WorkflowStageStatus } from "@mirax/core";
+import type { ProjectDraft, WorkflowStageRuntimeMode, WorkflowStageStatus } from "@mirax/core";
 import { convertFileSrc } from "@tauri-apps/api/core";
 
 const props = defineProps<{
@@ -26,6 +25,8 @@ const props = defineProps<{
   selectedAvatarId: string;
   avatarPath: string;
   avatarDuration?: number;
+  mode?: WorkflowStageRuntimeMode;
+  errorMessage?: string;
 }>();
 
 const emit = defineEmits<{
@@ -39,7 +40,11 @@ const hasAudio = computed(() => Boolean(props.audioPath.trim()));
 const hasResult = computed(
   () => props.status === "completed" && Boolean(props.avatarPath),
 );
-const canRun = computed(() => hasAudio.value && !props.running);
+const isMock = computed(() => (props.mode ?? "mock") === "mock");
+const isReal = computed(() => props.mode === "real");
+const isNotConnected = computed(() => props.mode === "not-connected");
+const hasError = computed(() => props.status === "failed" && Boolean(props.errorMessage));
+const canRun = computed(() => hasAudio.value && !props.running && !isNotConnected.value);
 
 const audioFileName = computed(() => basename(props.audioPath));
 const avatarFileName = computed(() => basename(props.avatarPath));
@@ -55,6 +60,11 @@ const avatarPreviewUrl = new URL(
 const avatarLabel = computed(() =>
   props.selectedAvatarId === BUILT_IN_AVATAR ? "内置示例形象" : "自定义形象",
 );
+const modeLabel = computed(() => {
+  if (isMock.value) return "Mock 数字人";
+  if (isNotConnected.value) return "未连接";
+  return "真实数字人";
+});
 
 // 模型版本、画面景别、画面比例、输出分辨率均为 session-only UI；provider 暂不消费这些参数。
 const modelVersion = ref("高清模型 V2");
@@ -106,8 +116,24 @@ function handleGenerate() {
       <section class="panel">
         <div class="panel-head">
           <h3 class="panel-title">输入摘要</h3>
-          <span v-if="hasAudio" class="status-pill ready">已就绪</span>
-          <span v-else class="status-pill pending">待输入</span>
+          <div class="panel-badges">
+            <span class="mode-badge" :class="{ real: isReal, warning: isNotConnected }">{{ modeLabel }}</span>
+            <span v-if="hasAudio" class="status-pill ready">已就绪</span>
+            <span v-else class="status-pill pending">待输入</span>
+          </div>
+        </div>
+
+        <div v-if="isNotConnected" class="status-banner status-warning">
+          <Info :size="15" />
+          <span>真实数字人未连接。请在设置中配置并启用 HeyGem provider。</span>
+        </div>
+        <div v-else-if="hasError" class="status-banner status-error">
+          <Info :size="15" />
+          <span>{{ errorMessage }}</span>
+        </div>
+        <div v-else-if="isReal && !hasResult" class="status-banner status-info">
+          <Info :size="15" />
+          <span>真实数字人模式：将使用设置中启用的 provider 生成 avatarVideoPath。</span>
         </div>
 
         <div class="summary-card" :class="{ 'is-missing': !hasAudio }">
@@ -218,7 +244,7 @@ function handleGenerate() {
         <div class="session-note">
           <Info :size="14" />
           <span
-            >模型版本、景别、比例与分辨率当前为会话级配置，不会传给当前 mock provider。</span
+            >模型版本、景别、比例与分辨率当前为会话级配置，不会传给当前 provider。</span
           >
         </div>
 
@@ -261,6 +287,7 @@ function handleGenerate() {
           <h3 class="panel-title">生成结果</h3>
           <span v-if="hasResult" class="status-pill done">已完成</span>
           <span v-else-if="running" class="status-pill running">生成中</span>
+          <span v-else-if="hasError" class="status-pill failed">失败</span>
         </div>
 
         <template v-if="hasResult">
@@ -385,6 +412,14 @@ function handleGenerate() {
   gap: 12px;
 }
 
+.panel-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .panel-title {
   margin: 0;
   font-size: 15px;
@@ -419,6 +454,74 @@ function handleGenerate() {
 .status-pill.running {
   color: var(--mx-warning);
   background: var(--mx-warning-bg);
+}
+
+.status-pill.failed {
+  color: var(--mx-danger);
+  background: var(--mx-danger-bg);
+}
+
+.mode-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: var(--mx-radius-pill);
+  color: var(--mx-text-secondary);
+  background: var(--mx-bg-elevated);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.mode-badge.real {
+  color: var(--mx-info);
+  background: var(--mx-info-bg);
+}
+
+.mode-badge.warning {
+  color: var(--mx-warning);
+  background: var(--mx-warning-bg);
+}
+
+.status-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--mx-radius-md);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.status-banner svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.status-info {
+  color: var(--mx-text-secondary);
+  background: var(--mx-info-bg);
+}
+
+.status-info svg {
+  color: var(--mx-info);
+}
+
+.status-warning {
+  color: var(--mx-text-secondary);
+  background: var(--mx-warning-bg);
+}
+
+.status-warning svg {
+  color: var(--mx-warning);
+}
+
+.status-error {
+  color: var(--mx-danger);
+  background: var(--mx-danger-bg);
+}
+
+.status-error svg {
+  color: var(--mx-danger);
 }
 
 .summary-card {

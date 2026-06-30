@@ -7,9 +7,9 @@ import {
   type ApiKeyProvider,
   type ApiKeyProviderConfig,
 } from "@mirax/core";
-import { testAiProviderConnection } from "@mirax/provider-ai";
+import { testAiProviderConnection, type AiConnectionTestInput } from "@mirax/provider-ai";
 import AppDrawer from "../../components/ui/AppDrawer.vue";
-import { useAppSettings } from "../../composables/useAppSettings.js";
+import { useAppSettings, getProviderReadiness, type ProviderReadiness } from "../../composables/useAppSettings.js";
 
 const PROVIDER_OPTIONS: { value: ApiKeyProvider; label: string }[] = [
   { value: "openai", label: "OpenAI" },
@@ -26,6 +26,15 @@ const FILTER_OPTIONS: { value: "all" | "enabled" | "needs-config" | "failed"; la
   { value: "failed", label: "连接失败" },
 ];
 
+const STATUS_META: Record<
+  ProviderReadiness,
+  { label: string; icon: typeof AlertCircle | typeof CheckCircle2; className: string }
+> = {
+  disabled: { label: "已停用", icon: AlertCircle, className: "disabled" },
+  "needs-config": { label: "需要配置", icon: AlertCircle, className: "needs-config" },
+  ready: { label: "已就绪", icon: CheckCircle2, className: "ready" },
+};
+
 const { providerConfigs, addProviderConfig, updateProviderConfig, removeProviderConfig } = useAppSettings();
 
 const drawerOpen = ref(false);
@@ -36,7 +45,8 @@ const filter = ref<"all" | "enabled" | "needs-config" | "failed">("all");
 const filteredConfigs = computed(() => {
   if (filter.value === "all") return providerConfigs.value;
   if (filter.value === "enabled") return providerConfigs.value.filter((c) => c.enabled);
-  if (filter.value === "needs-config") return providerConfigs.value.filter((c) => !c.baseUrl && c.provider === "openai");
+  if (filter.value === "needs-config")
+    return providerConfigs.value.filter((c) => getProviderReadiness(c) === "needs-config");
   return providerConfigs.value.filter((c) => testMessages.value[c.id] && !testMessages.value[c.id].includes("可用"));
 });
 
@@ -82,21 +92,32 @@ async function testProvider(config: ApiKeyProviderConfig) {
   testMessages.value[config.id] = "检测中…";
 
   try {
-    const input =
-      config.provider === "openai"
-        ? ({
-            mode: "openai-compatible",
-            baseUrl: config.baseUrl ?? "",
-            apiKey: config.apiKey,
-            model: config.model ?? "",
-          } as const)
-        : ({ mode: "mock" } as const);
-
-    const result = await testAiProviderConnection(input);
+    const result = await testAiProviderConnection(connectionTestInputFor(config));
     testMessages.value[config.id] = result.ok ? "连接正常" : result.message;
   } catch (error) {
     testMessages.value[config.id] = error instanceof Error ? error.message : "连接测试失败";
   }
+}
+
+function connectionTestInputFor(config: ApiKeyProviderConfig): AiConnectionTestInput {
+  if (config.provider === "whisper") {
+    return { mode: "whisper", baseUrl: config.baseUrl ?? "", apiKey: config.apiKey };
+  }
+  if (config.provider === "cosyvoice") {
+    return { mode: "cosyvoice", baseUrl: config.baseUrl ?? "", apiKey: config.apiKey };
+  }
+  if (config.provider === "heygem") {
+    return { mode: "heygem", baseUrl: config.baseUrl ?? "", apiKey: config.apiKey };
+  }
+  if (config.provider === "custom" && !config.baseUrl?.trim()) {
+    throw new Error("Custom provider Base URL 不能为空。");
+  }
+  return {
+    mode: "openai-compatible",
+    baseUrl: config.baseUrl,
+    apiKey: config.apiKey,
+    model: config.model ?? "",
+  };
 }
 
 function toggleProviderEnabled(config: ApiKeyProviderConfig) {
@@ -149,11 +170,13 @@ function deleteProvider(id: string) {
         </div>
         <div class="provider-cell">{{ config.model || "—" }}</div>
         <div class="provider-cell">
-          <span class="provider-status" :class="{ enabled: config.enabled }"
+          <span class="provider-status" :class="STATUS_META[getProviderReadiness(config)].className"
           >
-            <CheckCircle2 v-if="config.enabled" :size="12" />
-            <AlertCircle v-else :size="12" />
-            {{ config.enabled ? "已启用" : "已停用" }}
+            <component
+              :is="STATUS_META[getProviderReadiness(config)].icon"
+              :size="12"
+            />
+            {{ STATUS_META[getProviderReadiness(config)].label }}
           </span>
         </div>
         <div class="provider-cell provider-actions">
@@ -345,9 +368,14 @@ function deleteProvider(id: string) {
   background: var(--mx-bg-elevated);
 }
 
-.provider-status.enabled {
+.provider-status.ready {
   color: var(--mx-success);
   background: var(--mx-success-bg);
+}
+
+.provider-status.needs-config {
+  color: var(--mx-warning);
+  background: var(--mx-warning-bg);
 }
 
 .provider-actions {

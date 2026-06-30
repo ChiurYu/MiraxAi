@@ -22,6 +22,20 @@ describe("validation domain", () => {
     expect(validateProviderConfig({ ...config, baseUrl: "not-a-url" })).toContain("Base URL 格式不正确");
   });
 
+  it("allows local service providers without an API key", () => {
+    for (const provider of ["whisper", "cosyvoice", "heygem"] as const) {
+      const config = createApiKeyProviderConfig({
+        id: provider,
+        label: provider,
+        provider,
+        apiKey: "",
+        baseUrl: `http://localhost:9000/${provider}`,
+      });
+
+      expect(validateProviderConfig(config)).toEqual([]);
+    }
+  });
+
   it("strips the API key and keeps only non-sensitive metadata for storage", () => {
     const config = createApiKeyProviderConfig({
       id: "openai-main",

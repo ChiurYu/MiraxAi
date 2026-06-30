@@ -36,9 +36,13 @@ export function buildExtractAudioCommand(inputPath: string, outputPath: string):
  *
  * 真实调用阶段仍由外部调度器负责，本函数只负责命令组装。
  */
-export function buildVerticalComposeCommand(inputVideo: string, subtitleFile: string, outputPath: string): string[] {
+export function buildVerticalComposeCommand(inputVideo: string, inputAudio: string, subtitleFile: string, outputPath: string): string[] {
   if (!inputVideo.trim()) {
     throw new MediaRendererError("missing-input", "视频合成输入视频不能为空", "compose");
+  }
+
+  if (!inputAudio.trim()) {
+    throw new MediaRendererError("missing-input", "视频合成输入音频不能为空", "compose");
   }
 
   if (!subtitleFile.trim()) {
@@ -54,10 +58,31 @@ export function buildVerticalComposeCommand(inputVideo: string, subtitleFile: st
     "-y",
     "-i",
     inputVideo,
+    "-i",
+    inputAudio,
     "-vf",
     `scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,subtitles=${subtitleFile}`,
+    "-map",
+    "0:v:0",
+    "-map",
+    "1:a:0",
+    "-c:v",
+    "libx264",
     "-c:a",
-    "copy",
+    "aac",
+    "-shortest",
     outputPath,
   ];
+}
+
+export function buildCoverFrameCommand(inputVideo: string, outputPath: string): string[] {
+  if (!inputVideo.trim()) {
+    throw new MediaRendererError("missing-input", "封面抽帧输入视频不能为空", "compose");
+  }
+
+  if (!outputPath.trim()) {
+    throw new MediaRendererError("missing-output", "封面抽帧输出路径不能为空", "compose");
+  }
+
+  return ["ffmpeg", "-y", "-i", inputVideo, "-frames:v", "1", outputPath];
 }

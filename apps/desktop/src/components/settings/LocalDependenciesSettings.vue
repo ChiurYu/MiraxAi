@@ -7,7 +7,7 @@ import {
   type DependencyCheckResult,
   type SidecarConfig,
 } from "@mirax/sidecar-manager";
-import { useAppSettings } from "../../composables/useAppSettings.js";
+import { useAppSettings, probeFfmpegPath } from "../../composables/useAppSettings.js";
 
 type DependencyKey = "ffmpeg" | "python" | "cosyvoice" | "heygem" | "playwright";
 
@@ -58,7 +58,7 @@ const FILTER_OPTIONS: { value: "all" | "ok" | "needs-config" | "not-ready"; labe
   { value: "not-ready", label: "未就绪" },
 ];
 
-const { sidecarConfig } = useAppSettings();
+const { sidecarConfig, verifiedFfmpegPath } = useAppSettings();
 
 const filter = ref<"all" | "ok" | "needs-config" | "not-ready">("all");
 const expandedKey = ref<DependencyKey | null>("heygem");
@@ -66,15 +66,33 @@ const actionMessages = ref<Record<string, string>>({});
 
 const defaultSidecar = createDefaultSidecarConfig();
 
-const dependencyResults = computed<DependencyCheckResult[]>(() =>
-  checkSidecarDependencies({
+const dependencyResults = computed<DependencyCheckResult[]>(() => {
+  const trimmedFfmpegPath = sidecarConfig.ffmpegPath.trim();
+  const results = checkSidecarDependencies({
     ffmpegPath: sidecarConfig.ffmpegPath,
     hasPlaywrightBrowser: sidecarConfig.hasPlaywrightBrowser,
     pythonServiceUrl: sidecarConfig.pythonServiceUrl,
     heygemServiceUrl: sidecarConfig.heygemServiceUrl,
     cosyVoiceServiceUrl: sidecarConfig.cosyVoiceServiceUrl,
-  }),
-);
+  });
+
+  return results.map((result) => {
+    if (result.key !== "ffmpeg") {
+      return result;
+    }
+
+    if (verifiedFfmpegPath.value && verifiedFfmpegPath.value === trimmedFfmpegPath) {
+      return {
+        key: "ffmpeg",
+        ok: true,
+        state: "ready",
+        message: "FFmpeg 路径已验证为可执行",
+      };
+    }
+
+    return result;
+  });
+});
 
 const resultByKey = computed(() =>
   Object.fromEntries(dependencyResults.value.map((result) => [result.key, result])) as Record<
@@ -118,7 +136,26 @@ function dependencyOk(key: DependencyKey): boolean {
   return state === "ready";
 }
 
-function runLimitedAction(key: DependencyKey, name: string) {
+async function runLimitedAction(key: DependencyKey, name: string) {
+  if (key === "ffmpeg") {
+    const trimmed = sidecarConfig.ffmpegPath.trim();
+    if (!trimmed) {
+      verifiedFfmpegPath.value = "";
+      actionMessages.value[key] = "请先配置 FFmpeg 可执行文件路径";
+      return;
+    }
+
+    const ok = await probeFfmpegPath(trimmed);
+    if (ok) {
+      verifiedFfmpegPath.value = trimmed;
+      actionMessages.value[key] = "FFmpeg 路径已验证为可执行";
+    } else {
+      verifiedFfmpegPath.value = "";
+      actionMessages.value[key] = "FFmpeg 路径无法执行，请检查路径是否正确";
+    }
+    return;
+  }
+
   const dep = DEPENDENCIES.find((d) => d.key === key);
   const result = resultByKey.value[key];
   actionMessages.value[key] = `${name}：${result?.message ?? ""} ${dep?.installNote ?? "该服务尚未接入，无法执行真实操作。"}`;

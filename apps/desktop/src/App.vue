@@ -1,9 +1,15 @@
 <script setup lang="ts">
 import { Plus, Upload } from "lucide-vue-next";
-import { computed, onMounted, onUnmounted, reactive, ref } from "vue";
-import { type ProjectDraft, type PublishPlatform, type WorkflowStageId } from "@mirax/core";
-import { createMockMediaRenderer } from "@mirax/media-pipeline";
-import { createMockAiProvider } from "@mirax/provider-ai";
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
+import {
+  sanitizeBaseUrlForStorage,
+  type ProjectDraft,
+  type PublishPlatform,
+  type WorkflowStageId,
+  type WorkflowStageRuntimeMode,
+} from "@mirax/core";
+import { createMockMediaRenderer, MediaRendererError } from "@mirax/media-pipeline";
+import { AiProviderError, createMockAiProvider } from "@mirax/provider-ai";
 import { SUPPORTED_PLATFORM_PROFILES, createMockPublisher, type PublishAccount } from "@mirax/provider-publish";
 import {
   createNavigationState,
@@ -28,10 +34,22 @@ import VideoCompositionStage from "./components/workbench/stages/VideoCompositio
 import VoiceCloningStage from "./components/workbench/stages/VoiceCloningStage.vue";
 import WorkbenchStagePlaceholder from "./components/workbench/stages/WorkbenchStagePlaceholder.vue";
 import { usePublishPreparation } from "./composables/usePublishPreparation.js";
-import { useAppSettings } from "./composables/useAppSettings.js";
+import {
+  findEnabledAvatarProviderConfig,
+  findEnabledRewriteProviderConfig,
+  findEnabledSpeechProviderConfig,
+  findEnabledTranscribeProviderConfig,
+  findEnabledVoiceCloneProviderConfig,
+  useAppSettings,
+} from "./composables/useAppSettings.js";
 import { useWorkbenchDraft } from "./composables/useWorkbenchDraft.js";
 import { useWorkflowRuntime } from "./composables/useWorkflowRuntime.js";
+import { buildAvatarOutputPath, selectAvatarProvider } from "./composables/useAvatarProvider.js";
+import { selectComposeRenderer } from "./composables/useComposeRenderer.js";
 import { selectRewriteProvider } from "./composables/useRewriteProvider.js";
+import { buildSpeechOutputPath, selectSpeechProvider } from "./composables/useSpeechProvider.js";
+import { selectTranscribeProvider } from "./composables/useTranscribeProvider.js";
+import { selectVoiceCloneProvider } from "./composables/useVoiceCloneProvider.js";
 import type { AssetListItem } from "./features/assets/assetModels.js";
 import { mockAccounts } from "./features/accounts/mockAccounts.js";
 import AccountManagementView from "./views/AccountManagementView.vue";
@@ -51,7 +69,7 @@ const mediaRenderer = createMockMediaRenderer({ artifactRoot: "/Users/Shared/Mir
 const publisher = createMockPublisher();
 
 const { draft, persist } = useWorkbenchDraft();
-const { appSettings, providerConfigs } = useAppSettings();
+const { appSettings, providerConfigs, sidecarConfig, verifiedFfmpegPath } = useAppSettings();
 
 const generatedVideoPath = ref("");
 const generatedCoverPath = ref("");
@@ -80,7 +98,12 @@ const publishAccounts = ref<PublishAccount[]>([]);
 const selectedPublishAccountId = ref("");
 const showPublishDialog = ref(false);
 const assetLimitedAction = ref<{ view: "voices" | "avatars" | "materials"; action: "import" | "create" } | null>(null);
+const transcribeErrorMessage = ref("");
 const rewriteErrorMessage = ref("");
+const voiceCloneErrorMessage = ref("");
+const speechErrorMessage = ref("");
+const avatarErrorMessage = ref("");
+const composeErrorMessage = ref("");
 
 const platformLabels = computed<Record<PublishPlatform, string>>(() =>
   Object.fromEntries(SUPPORTED_PLATFORM_PROFILES.map((profile) => [profile.id, profile.label])) as Record<
@@ -166,12 +189,80 @@ const prep = usePublishPreparation({
   publisher,
 });
 
+function hasValidProviderBaseUrl(baseUrl: string | undefined): boolean {
+  return Boolean(baseUrl?.trim() && sanitizeBaseUrlForStorage(baseUrl.trim()));
+}
+
+function hasExecutableRewriteProvider(): boolean {
+  const config = findEnabledRewriteProviderConfig(providerConfigs.value);
+  if (!config || !config.apiKey.trim() || !config.model?.trim()) {
+    return false;
+  }
+
+  const sanitizedBaseUrl = config.baseUrl ? sanitizeBaseUrlForStorage(config.baseUrl.trim()) : undefined;
+  if (config.provider === "custom") {
+    return Boolean(sanitizedBaseUrl);
+  }
+  return config.baseUrl?.trim() ? Boolean(sanitizedBaseUrl) : true;
+}
+
+function hasExecutableTranscribeProvider(): boolean {
+  const config = findEnabledTranscribeProviderConfig(providerConfigs.value);
+  return Boolean(config && hasValidProviderBaseUrl(config.baseUrl) && config.model?.trim());
+}
+
+function hasExecutableSpeechProvider(): boolean {
+  const config = findEnabledSpeechProviderConfig(providerConfigs.value);
+  return Boolean(config && hasValidProviderBaseUrl(config.baseUrl));
+}
+
+function hasExecutableVoiceCloneProvider(): boolean {
+  const config = findEnabledVoiceCloneProviderConfig(providerConfigs.value);
+  return Boolean(config && hasValidProviderBaseUrl(config.baseUrl));
+}
+
+function hasExecutableAvatarProvider(): boolean {
+  const config = findEnabledAvatarProviderConfig(providerConfigs.value);
+  return Boolean(config && hasValidProviderBaseUrl(config.baseUrl));
+}
+
+const providerStageModes = computed<Record<WorkflowStageId, WorkflowStageRuntimeMode>>(() => {
+  const trimmedFfmpegPath = sidecarConfig.ffmpegPath.trim();
+  const composeMode: WorkflowStageRuntimeMode =
+    verifiedFfmpegPath.value && verifiedFfmpegPath.value === trimmedFfmpegPath
+      ? "real"
+      : trimmedFfmpegPath
+        ? "not-connected"
+        : "mock";
+
+  return {
+    transcribe: hasExecutableTranscribeProvider() ? "real" : "mock",
+    rewrite: hasExecutableRewriteProvider() ? "real" : "mock",
+    "voice-clone": hasExecutableVoiceCloneProvider() ? "real" : "mock",
+    speech: hasExecutableSpeechProvider() ? "real" : "mock",
+    avatar: hasExecutableAvatarProvider() ? "real" : "mock",
+    compose: composeMode,
+    review: "mock",
+    publish: "mock",
+  };
+});
+
 const runtime = useWorkflowRuntime({
   projectId: "demo-project",
   executor: executeStage,
+  stageModes: providerStageModes.value,
 });
 
+watch(providerStageModes, (modes) => {
+  runtime.stageModes.value = modes;
+});
+
+const transcribeMode = computed(() => runtime.getStageMode("transcribe"));
 const rewriteMode = computed(() => runtime.getStageMode("rewrite"));
+const voiceCloneMode = computed(() => runtime.getStageMode("voice-clone"));
+const speechMode = computed(() => runtime.getStageMode("speech"));
+const avatarMode = computed(() => runtime.getStageMode("avatar"));
+const composeMode = computed(() => runtime.getStageMode("compose"));
 
 onMounted(async () => {
   systemThemeQuery = window.matchMedia?.("(prefers-color-scheme: dark)");
@@ -234,13 +325,42 @@ const platformProfiles = computed(() => SUPPORTED_PLATFORM_PROFILES);
 async function executeStage(stageId: WorkflowStageId, title: string): Promise<string> {
   switch (stageId) {
     case "transcribe": {
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-      const result = await aiProvider.transcribe({
-        sourceVideoPath: project.value.sourceVideoPath ?? "",
-        language: "zh-CN",
+      const transcribeMode = runtime.getStageMode("transcribe");
+      transcribeErrorMessage.value = "";
+      if (transcribeMode === "real") {
+        transcriptText.value = "";
+      }
+      const sourceVideoPath = project.value.sourceVideoPath ?? "";
+      if (!sourceVideoPath.trim()) {
+        const error = new AiProviderError("not-configured", "请先选择或粘贴源素材。");
+        transcribeErrorMessage.value = error.message;
+        throw error;
+      }
+      const selection = selectTranscribeProvider({
+        stageMode: transcribeMode,
+        providerConfigs: providerConfigs.value,
+        mockProvider: aiProvider,
       });
-      transcriptText.value = result.text;
-      return `已提取 ${result.segments.length} 段文案`;
+      if (!selection.ok) {
+        transcribeErrorMessage.value = selection.error.message;
+        throw selection.error;
+      }
+      if (transcribeMode === "mock") {
+        await new Promise((resolve) => setTimeout(resolve, 1200));
+      }
+      try {
+        const result = await selection.provider.transcribe({
+          sourceVideoPath,
+          language: "zh-CN",
+        });
+        transcriptText.value = result.text;
+        return `已提取 ${result.segments.length} 段文案`;
+      } catch (error) {
+        if (error instanceof Error) {
+          transcribeErrorMessage.value = error.message;
+        }
+        throw error;
+      }
     }
     case "rewrite": {
       if (!transcriptText.value.trim()) {
@@ -278,58 +398,183 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
       }
     }
     case "voice-clone": {
+      const voiceCloneMode = runtime.getStageMode("voice-clone");
+      voiceCloneErrorMessage.value = "";
+      if (voiceCloneMode === "real") {
+        selectedVoiceId.value = "";
+        selectedVoiceName.value = "";
+      }
       const samplePath = project.value.voiceSamplePath ?? "";
       if (!samplePath.trim()) {
-        throw new Error("请先选择声音样本文件");
+        const error = new AiProviderError("not-configured", "请先选择声音样本文件。");
+        voiceCloneErrorMessage.value = error.message;
+        throw error;
       }
-      const result = await aiProvider.cloneVoice({
-        voiceSamplePath: samplePath,
-        projectId: runtime.workflow.value.projectId,
+      const selection = selectVoiceCloneProvider({
+        stageMode: voiceCloneMode,
+        providerConfigs: providerConfigs.value,
+        mockProvider: aiProvider,
       });
-      selectedVoiceId.value = result.voiceId;
-      selectedVoiceName.value = fileName(result.samplePath || samplePath);
-      return `声音配置 ${result.voiceId} 已就绪`;
+      if (!selection.ok) {
+        voiceCloneErrorMessage.value = selection.error.message;
+        throw selection.error;
+      }
+      try {
+        const result = await selection.provider.cloneVoice({
+          voiceSamplePath: samplePath,
+          projectId: runtime.workflow.value.projectId,
+        });
+        selectedVoiceId.value = result.voiceId;
+        selectedVoiceName.value = fileName(result.samplePath || samplePath);
+        return `声音配置 ${result.voiceId} 已就绪`;
+      } catch (error) {
+        if (error instanceof Error) {
+          voiceCloneErrorMessage.value = error.message;
+        }
+        throw error;
+      }
     }
     case "speech": {
-      const result = await aiProvider.synthesizeSpeech({
-        voiceId: selectedVoiceId.value || `mock-voice-${runtime.workflow.value.projectId}`,
-        script: project.value.notes ?? project.value.name,
-        projectId: runtime.workflow.value.projectId,
+      const speechMode = runtime.getStageMode("speech");
+      speechErrorMessage.value = "";
+      if (speechMode === "real") {
+        generatedAudioPath.value = "";
+        generatedAudioDuration.value = 0;
+      }
+      const selection = selectSpeechProvider({
+        stageMode: speechMode,
+        providerConfigs: providerConfigs.value,
+        mockProvider: aiProvider,
       });
-      generatedAudioPath.value = result.audioPath;
-      generatedAudioDuration.value = result.durationSeconds;
-      return `音频已生成：${result.audioPath}`;
+      if (!selection.ok) {
+        speechErrorMessage.value = selection.error.message;
+        throw selection.error;
+      }
+
+      const script = speechMode === "real" ? (project.value.notes ?? "").trim() : project.value.notes ?? project.value.name;
+      if (!script.trim()) {
+        const error = new AiProviderError("not-configured", "请先完成文案改写，获取语音合成文案。");
+        speechErrorMessage.value = error.message;
+        throw error;
+      }
+
+      const voiceId = speechMode === "real" ? selectedVoiceId.value.trim() : selectedVoiceId.value || `mock-voice-${runtime.workflow.value.projectId}`;
+      if (!voiceId.trim()) {
+        const error = new AiProviderError("voice-unavailable", "请先选择可用于 TTS 的声音。");
+        speechErrorMessage.value = error.message;
+        throw error;
+      }
+
+      try {
+        const result = await selection.provider.synthesizeSpeech({
+          voiceId,
+          script,
+          projectId: runtime.workflow.value.projectId,
+          outputPath:
+            speechMode === "real"
+              ? buildSpeechOutputPath(appSettings.outputPaths.audioOutput, runtime.workflow.value.projectId)
+              : undefined,
+        });
+        generatedAudioPath.value = result.audioPath;
+        generatedAudioDuration.value = result.durationSeconds;
+        return `音频已生成：${result.audioPath}`;
+      } catch (error) {
+        if (error instanceof Error) {
+          speechErrorMessage.value = error.message;
+        }
+        throw error;
+      }
     }
     case "avatar": {
-      if (!generatedAudioPath.value.trim()) {
-        throw new Error("请先完成语音合成，获取驱动音频");
+      const avatarMode = runtime.getStageMode("avatar");
+      avatarErrorMessage.value = "";
+      if (avatarMode === "real") {
+        generatedAvatarPath.value = "";
+        generatedAvatarDuration.value = 0;
       }
-      const result = await aiProvider.generateAvatarVideo({
-        audioPath: generatedAudioPath.value,
-        avatarId: selectedAvatarId.value || "presenter-a",
-        projectId: runtime.workflow.value.projectId,
+      if (!generatedAudioPath.value.trim()) {
+        const error = new AiProviderError("not-configured", "请先完成语音合成，获取驱动音频。");
+        avatarErrorMessage.value = error.message;
+        throw error;
+      }
+      if (avatarMode === "real" && selectedAvatarId.value === "presenter-a") {
+        const error = new AiProviderError("not-configured", "请选择 HeyGem provider 可识别的真实形象。");
+        avatarErrorMessage.value = error.message;
+        throw error;
+      }
+      const selection = selectAvatarProvider({
+        stageMode: avatarMode,
+        providerConfigs: providerConfigs.value,
+        mockProvider: aiProvider,
       });
-      generatedAvatarPath.value = result.videoPath;
-      generatedAvatarDuration.value = result.durationSeconds;
-      return `数字人片段已生成：${result.videoPath}`;
+      if (!selection.ok) {
+        avatarErrorMessage.value = selection.error.message;
+        throw selection.error;
+      }
+      try {
+        const result = await selection.provider.generateAvatarVideo({
+          audioPath: generatedAudioPath.value,
+          avatarId: selectedAvatarId.value || "presenter-a",
+          projectId: runtime.workflow.value.projectId,
+          outputPath:
+            avatarMode === "real"
+              ? buildAvatarOutputPath(appSettings.outputPaths.videoOutput, runtime.workflow.value.projectId)
+              : undefined,
+        });
+        generatedAvatarPath.value = result.videoPath;
+        generatedAvatarDuration.value = result.durationSeconds;
+        return `数字人片段已生成：${result.videoPath}`;
+      } catch (error) {
+        if (error instanceof Error) {
+          avatarErrorMessage.value = error.message;
+        }
+        throw error;
+      }
     }
     case "compose": {
+      const composeMode = runtime.getStageMode("compose");
+      composeErrorMessage.value = "";
+      if (composeMode === "real") {
+        generatedVideoPath.value = "";
+        generatedCoverPath.value = "";
+      }
       if (!generatedAvatarPath.value.trim()) {
-        throw new Error("请先完成形象生成，获取数字人视频");
+        const error = new MediaRendererError("missing-prerequisite", "请先完成形象生成，获取数字人视频。", "compose");
+        composeErrorMessage.value = error.message;
+        throw error;
       }
       if (!generatedAudioPath.value.trim()) {
-        throw new Error("请先完成语音合成，获取音频");
+        const error = new MediaRendererError("missing-prerequisite", "请先完成语音合成，获取音频。", "compose");
+        composeErrorMessage.value = error.message;
+        throw error;
       }
-      const result = await mediaRenderer.render({
-        projectId: runtime.workflow.value.projectId,
-        avatarVideoPath: generatedAvatarPath.value,
-        audioPath: generatedAudioPath.value,
-        subtitleText: project.value.notes ?? project.value.name,
-        coverText: project.value.name,
+      const selection = selectComposeRenderer({
+        stageMode: composeMode,
+        ffmpegPath: sidecarConfig.ffmpegPath,
+        mockRenderer: mediaRenderer,
+        artifactRoot: appSettings.outputPaths.videoOutput,
       });
-      generatedVideoPath.value = result.videoPath;
-      generatedCoverPath.value = result.coverPath;
-      return `成片已生成：${result.videoPath}`;
+      if (!selection.ok) {
+        composeErrorMessage.value = selection.error.message;
+        throw selection.error;
+      }
+      try {
+        const result = await selection.renderer.render({
+          projectId: runtime.workflow.value.projectId,
+          avatarVideoPath: generatedAvatarPath.value,
+          audioPath: generatedAudioPath.value,
+          subtitleText: project.value.notes ?? project.value.name,
+          coverText: project.value.name,
+        });
+        generatedVideoPath.value = result.videoPath;
+        generatedCoverPath.value = result.coverPath;
+        return `成片已生成：${result.videoPath}`;
+      } catch (error) {
+        if (error instanceof Error) {
+          composeErrorMessage.value = error.message;
+        }
+        throw error;
+      }
     }
     case "review": {
       const videoPath = generatedVideoPath.value;
@@ -525,6 +770,9 @@ function stagePreviewLabel(stageId: WorkflowStageId): string {
           v-if="stage.id === 'transcribe'"
           v-model="project"
           :running="runtime.running.value"
+          :status="stage.status"
+          :mode="transcribeMode"
+          :error-message="transcribeErrorMessage"
           @run="runtime.runStage('transcribe')"
           @view-tasks="handleViewTasks"
         />
@@ -557,6 +805,8 @@ function stagePreviewLabel(stageId: WorkflowStageId): string {
           :voice-name="selectedVoiceName"
           :running="runtime.running.value"
           :status="stage.status"
+          :mode="voiceCloneMode"
+          :error-message="voiceCloneErrorMessage"
           @run="runtime.runStage('voice-clone')"
           @create-voice="handleNavigate('voices')"
         />
@@ -568,6 +818,8 @@ function stagePreviewLabel(stageId: WorkflowStageId): string {
           :status="stage.status"
           :audio-path="generatedAudioPath"
           :audio-duration="generatedAudioDuration"
+          :mode="speechMode"
+          :error-message="speechErrorMessage"
           @run="runtime.runStage('speech')"
           @edit-script="runtime.goToStage('rewrite')"
           @change-voice="runtime.goToStage('voice-clone')"
@@ -583,6 +835,8 @@ function stagePreviewLabel(stageId: WorkflowStageId): string {
           :selected-avatar-id="selectedAvatarId"
           :avatar-path="generatedAvatarPath"
           :avatar-duration="generatedAvatarDuration"
+          :mode="avatarMode"
+          :error-message="avatarErrorMessage"
           @run="runtime.runStage('avatar')"
           @update:selected-avatar-id="selectedAvatarId = $event"
           @create-avatar="handleNavigate('avatars')"
@@ -599,6 +853,8 @@ function stagePreviewLabel(stageId: WorkflowStageId): string {
           :status="stage.status"
           :video-path="generatedVideoPath"
           :cover-path="generatedCoverPath"
+          :mode="composeMode"
+          :error-message="composeErrorMessage"
           @run="runtime.runStage('compose')"
           @edit-script="runtime.goToStage('rewrite')"
           @edit-avatar="runtime.goToStage('avatar')"

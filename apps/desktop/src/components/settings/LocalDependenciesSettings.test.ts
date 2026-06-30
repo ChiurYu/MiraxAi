@@ -1,0 +1,25 @@
+import { describe, expect, it } from "vitest";
+import fs from "node:fs";
+import path from "node:path";
+
+const source = fs.readFileSync(path.resolve(__dirname, "LocalDependenciesSettings.vue"), "utf-8");
+
+describe("LocalDependenciesSettings FFmpeg verified readiness", () => {
+  it("reflects verified ffmpeg path as ready in the dependency card", () => {
+    expect(source).toContain("verifiedFfmpegPath");
+    expect(source).toContain('state: "ready"');
+    expect(source).toContain('key: "ffmpeg"');
+    expect(source).toContain("FFmpeg 路径已验证为可执行");
+  });
+
+  it("only overrides ffmpeg state when verified path matches the current path", () => {
+    expect(source).toContain("verifiedFfmpegPath.value === trimmedFfmpegPath");
+    expect(source).toContain("trimmedFfmpegPath");
+    expect(source).toContain("sidecarConfig.ffmpegPath.trim()");
+  });
+
+  it("keeps non-verified ffmpeg paths as configured instead of ready", () => {
+    expect(source).toContain("checkSidecarDependencies");
+    expect(source).toContain("dependencyResults");
+  });
+});
