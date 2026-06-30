@@ -5,6 +5,15 @@ import {
   sanitizeDesktopDraftForStorage,
 } from "./desktopDraft.js";
 
+describe("createDefaultDesktopDraft", () => {
+  it("does not pre-fill sourceVideoPath or voiceSamplePath", () => {
+    const draft = createDefaultDesktopDraft();
+
+    expect(draft.project.sourceVideoPath).toBe("");
+    expect(draft.project.voiceSamplePath).toBe("");
+  });
+});
+
 describe("desktopDraft persistence", () => {
   it("sanitizeDesktopDraftForStorage does not persist API Key", () => {
     const draft = createDefaultDesktopDraft();

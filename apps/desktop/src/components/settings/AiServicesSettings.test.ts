@@ -34,3 +34,22 @@ describe("AiServicesSettings readiness display wiring", () => {
     expect(source).toContain('"needs-config"');
   });
 });
+
+describe("AiServicesSettings connection-failed status", () => {
+  it("tracks failed connection test IDs separately from config readiness", () => {
+    expect(source).toContain("failedConfigIds");
+  });
+
+  it("renders a connection-failed state label", () => {
+    expect(source).toContain("连接失败");
+    expect(source).toContain('.provider-status.failed');
+  });
+
+  it("includes failed providers in the failed filter", () => {
+    expect(source).toContain('filter.value === "failed"');
+  });
+
+  it("clears the failed state on a successful retry", () => {
+    expect(source).toContain("failedConfigIds.value.delete");
+  });
+});

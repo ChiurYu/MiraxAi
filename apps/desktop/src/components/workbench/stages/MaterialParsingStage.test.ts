@@ -46,4 +46,15 @@ describe("MaterialParsingStage UI contracts", () => {
     expect(appSource).toContain("if (transcribeMode === \"real\") {");
     expect(appSource).toContain("transcriptText.value = \"\";");
   });
+
+  it("does not show fabricated recent-parse demo entries", () => {
+    expect(source).not.toContain("夏日通勤基础款搭配公式.mp4");
+    expect(source).not.toContain("14.2 MB");
+    expect(source).not.toContain("Yesterday • Link Extracted");
+  });
+
+  it("shows an honest empty state for recent parses", () => {
+    expect(source).toContain("暂无最近解析记录");
+    expect(source).toContain("recent-empty");
+  });
 });

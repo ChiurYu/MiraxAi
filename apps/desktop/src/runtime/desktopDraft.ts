@@ -25,8 +25,8 @@ export function createDefaultDesktopDraft(): DesktopDraft {
     project: createProjectDraft({
       name: "轻奢女包口播 0611",
       targetPlatforms: ["douyin", "xiaohongshu"],
-      sourceVideoPath: "/素材/对标视频.mp4",
-      voiceSamplePath: "/素材/声音样本.wav",
+      sourceVideoPath: "",
+      voiceSamplePath: "",
       notes: "强调通勤、大容量、上身质感。",
     }),
     providerConfig: createApiKeyProviderConfig({

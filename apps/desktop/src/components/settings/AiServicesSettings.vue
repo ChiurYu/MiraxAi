@@ -35,19 +35,32 @@ const STATUS_META: Record<
   ready: { label: "已就绪", icon: CheckCircle2, className: "ready" },
 };
 
+const FAILED_META: { label: string; icon: typeof AlertCircle; className: string } = {
+  label: "连接失败",
+  icon: AlertCircle,
+  className: "failed",
+};
+
 const { providerConfigs, addProviderConfig, updateProviderConfig, removeProviderConfig } = useAppSettings();
 
 const drawerOpen = ref(false);
 const editingConfig = ref<ApiKeyProviderConfig | null>(null);
 const testMessages = ref<Record<string, string>>({});
+const failedConfigIds = ref<Set<string>>(new Set());
 const filter = ref<"all" | "enabled" | "needs-config" | "failed">("all");
+
+function isConnectionFailed(config: ApiKeyProviderConfig): boolean {
+  return config.enabled && getProviderReadiness(config) === "ready" && failedConfigIds.value.has(config.id);
+}
 
 const filteredConfigs = computed(() => {
   if (filter.value === "all") return providerConfigs.value;
   if (filter.value === "enabled") return providerConfigs.value.filter((c) => c.enabled);
   if (filter.value === "needs-config")
     return providerConfigs.value.filter((c) => getProviderReadiness(c) === "needs-config");
-  return providerConfigs.value.filter((c) => testMessages.value[c.id] && !testMessages.value[c.id].includes("可用"));
+  if (filter.value === "failed")
+    return providerConfigs.value.filter((c) => isConnectionFailed(c));
+  return providerConfigs.value;
 });
 
 function startAddProvider() {
@@ -94,8 +107,14 @@ async function testProvider(config: ApiKeyProviderConfig) {
   try {
     const result = await testAiProviderConnection(connectionTestInputFor(config));
     testMessages.value[config.id] = result.ok ? "连接正常" : result.message;
+    if (result.ok) {
+      failedConfigIds.value.delete(config.id);
+    } else {
+      failedConfigIds.value.add(config.id);
+    }
   } catch (error) {
     testMessages.value[config.id] = error instanceof Error ? error.message : "连接测试失败";
+    failedConfigIds.value.add(config.id);
   }
 }
 
@@ -170,13 +189,15 @@ function deleteProvider(id: string) {
         </div>
         <div class="provider-cell">{{ config.model || "—" }}</div>
         <div class="provider-cell">
-          <span class="provider-status" :class="STATUS_META[getProviderReadiness(config)].className"
+          <span
+            class="provider-status"
+            :class="isConnectionFailed(config) ? FAILED_META.className : STATUS_META[getProviderReadiness(config)].className"
           >
             <component
-              :is="STATUS_META[getProviderReadiness(config)].icon"
+              :is="isConnectionFailed(config) ? FAILED_META.icon : STATUS_META[getProviderReadiness(config)].icon"
               :size="12"
             />
-            {{ STATUS_META[getProviderReadiness(config)].label }}
+            {{ isConnectionFailed(config) ? FAILED_META.label : STATUS_META[getProviderReadiness(config)].label }}
           </span>
         </div>
         <div class="provider-cell provider-actions">
@@ -376,6 +397,11 @@ function deleteProvider(id: string) {
 .provider-status.needs-config {
   color: var(--mx-warning);
   background: var(--mx-warning-bg);
+}
+
+.provider-status.failed {
+  color: var(--mx-error);
+  background: var(--mx-error-bg);
 }
 
 .provider-actions {

@@ -290,23 +290,9 @@ function handleParse() {
         最近解析
       </h3>
       <div class="recent-list">
-        <div class="recent-item">
-          <div class="recent-thumb">
-            <Film :size="20" />
-          </div>
-          <div class="recent-meta">
-            <p>夏日通勤基础款搭配公式.mp4</p>
-            <span>2 mins ago • 14.2 MB</span>
-          </div>
-        </div>
-        <div class="recent-item">
-          <div class="recent-thumb">
-            <Link2 :size="20" />
-          </div>
-          <div class="recent-meta">
-            <p>抖音 - 职场穿搭干货</p>
-            <span>Yesterday • Link Extracted</span>
-          </div>
+        <div class="recent-empty">
+          <Info :size="16" />
+          <span>暂无最近解析记录。完成首次素材解析后，记录会出现在这里。</span>
         </div>
       </div>
     </div>
@@ -700,5 +686,17 @@ function handleParse() {
 .recent-meta span {
   font-size: 11px;
   color: var(--mx-text-tertiary);
+}
+
+.recent-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border: 1px dashed var(--mx-border-active);
+  border-radius: var(--mx-radius-md);
+  color: var(--mx-text-tertiary);
+  font-size: 12px;
+  background: var(--mx-bg-input);
 }
 </style>
