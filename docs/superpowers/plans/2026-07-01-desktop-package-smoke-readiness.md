@@ -71,7 +71,7 @@ git diff -- docs/reverse-engineering/legacy-ui-gap-list.md docs/人工提示词.
 
 - [x] Save screenshots, command logs, `report.json`, and `summary.md` under `/tmp/mirax-desktop-package-smoke/`.
 
-**Result (2026-07-01):** Browser-built assets smoke passed, `cargo fmt --check` passed, and `cargo check` passed. Full desktop package build was attempted and blocked by local pnpm build-script approval policy: `ERR_PNPM_IGNORED_BUILDS` for `esbuild@0.21.5` during the Tauri before-build install. Classified as P2 local-tooling-policy because browser dogfood remains usable and no product runtime issue was found. Evidence: `/tmp/mirax-desktop-package-smoke/report.json`.
+**Result (2026-07-01):** Browser-built assets smoke passed, `cargo fmt --check` passed, `cargo check` passed, and full desktop package build produced `apps/desktop/src-tauri/target/release/bundle/macos/Mirax AI.app`. Initial package build was blocked by local pnpm build-script approval policy for `esbuild@0.21.5`; the controller fixed it with the minimal workspace allowlist entry and reran the package build successfully. Evidence: `/tmp/mirax-desktop-package-smoke/report.json`.
 
 **Report format:**
 
