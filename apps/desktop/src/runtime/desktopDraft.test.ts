@@ -12,6 +12,18 @@ describe("createDefaultDesktopDraft", () => {
     expect(draft.project.sourceVideoPath).toBe("");
     expect(draft.project.voiceSamplePath).toBe("");
   });
+
+  it("uses neutral honest defaults without fake user-authored name or notes", () => {
+    const draft = createDefaultDesktopDraft();
+
+    // 全新草稿不应预填看起来像真实选题的项目名与备注
+    expect(draft.project.name).not.toBe("轻奢女包口播 0611");
+    expect(draft.project.notes).not.toBe("强调通勤、大容量、上身质感。");
+
+    // 中性、诚实的默认值（非空 name 以避免触发校验噪音）
+    expect(draft.project.name).toBe("未命名项目");
+    expect(draft.project.notes).toBe("");
+  });
 });
 
 describe("desktopDraft persistence", () => {

@@ -23,11 +23,11 @@ export interface PersistedDesktopDraft {
 export function createDefaultDesktopDraft(): DesktopDraft {
   return {
     project: createProjectDraft({
-      name: "轻奢女包口播 0611",
+      name: "未命名项目",
       targetPlatforms: ["douyin", "xiaohongshu"],
       sourceVideoPath: "",
       voiceSamplePath: "",
-      notes: "强调通勤、大容量、上身质感。",
+      notes: "",
     }),
     providerConfig: createApiKeyProviderConfig({
       id: "main-ai",
