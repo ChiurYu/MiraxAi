@@ -131,6 +131,24 @@ function syncSystemTheme() {
   systemTheme.value = systemThemeQuery?.matches ? "dark" : "light";
 }
 
+function isTauriAvailable(): boolean {
+  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+}
+
+// 让 macOS/Tauri 原生标题栏跟随应用内 resolved theme；浏览器 dev:web 等非 Tauri 环境直接跳过。
+async function syncNativeWindowTheme(next: "light" | "dark") {
+  if (!isTauriAvailable()) return;
+  try {
+    const { getCurrentWindow } = await import("@tauri-apps/api/window");
+    await getCurrentWindow().setTheme(next);
+  } catch {
+    // 缺少 set-theme 权限或非 Tauri 运行时静默跳过，避免影响主流程。
+  }
+}
+
+// immediate 确保应用启动时立即同步一次，避免浅色主题下原生标题栏仍为黑色。
+watch(theme, (next) => void syncNativeWindowTheme(next), { immediate: true });
+
 const publishModeText = computed(() => (prep.metadata.value.mode === "direct" ? "直接发布" : "存为草稿"));
 
 const publishSummary = computed(() => {
