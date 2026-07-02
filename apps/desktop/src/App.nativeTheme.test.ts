@@ -7,10 +7,16 @@ import path from "node:path";
 const srcDir = path.resolve(__dirname);
 const appSource = fs.readFileSync(path.join(srcDir, "App.vue"), "utf-8");
 const appScript = appSource.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)?.[1] ?? "";
+const topBarSource = fs.readFileSync(path.join(srcDir, "components", "app", "TopBar.vue"), "utf-8");
 const capabilities = fs.readFileSync(
   path.resolve(srcDir, "..", "src-tauri", "capabilities", "default.json"),
   "utf-8",
 );
+const tauriConf = fs.readFileSync(
+  path.resolve(srcDir, "..", "src-tauri", "tauri.conf.json"),
+  "utf-8",
+);
+const stylesSource = fs.readFileSync(path.join(srcDir, "styles.css"), "utf-8");
 
 describe("原生标题栏主题同步", () => {
   it("监听 resolved theme 并调用原生窗口 setTheme", () => {
@@ -34,5 +40,46 @@ describe("原生标题栏主题同步", () => {
 
   it("capability 声明最小 set-theme 权限", () => {
     expect(capabilities).toContain("core:window:allow-set-theme");
+  });
+});
+
+describe("macOS 原生标题栏 Overlay 主修复", () => {
+  it("窗口配置启用 Overlay 标题栏并隐藏标题文字", () => {
+    const parsed = JSON.parse(tauriConf) as {
+      app?: { windows?: Array<{ titleBarStyle?: string; hiddenTitle?: boolean }> };
+    };
+    const primaryWindow = parsed.app?.windows?.[0];
+    expect(primaryWindow?.titleBarStyle).toBe("Overlay");
+    expect(primaryWindow?.hiddenTitle).toBe(true);
+  });
+
+  it("Tauri 环境挂载时标记 is-tauri 以启用标题栏内边距", () => {
+    expect(appScript).toContain('document.documentElement.classList.add("is-tauri")');
+    expect(appScript).toContain("if (isTauriAvailable())");
+  });
+
+  it("CSS 提供标题栏安全内边距，且仅在 is-tauri 下生效（dev:web 保持 0）", () => {
+    expect(stylesSource).toContain("--mx-titlebar-inset: 0px;");
+    expect(stylesSource).toMatch(/html\.is-tauri\s*\{[\s\S]*--mx-titlebar-inset:\s*28px;/);
+    expect(stylesSource).toContain("var(--mx-titlebar-inset)");
+  });
+
+  it("拖拽区只覆盖标题栏 inset，不覆盖顶栏按钮", () => {
+    expect(topBarSource).toContain('class="window-drag-strip" data-tauri-drag-region');
+    expect(topBarSource).not.toContain('<header class="window-bar" data-tauri-drag-region>');
+    expect(stylesSource).toMatch(/html\.is-tauri \.window-drag-strip\s*\{[\s\S]*height:\s*var\(--mx-titlebar-inset\);/);
+  });
+
+  it("系统外观变化时显式通知 Tauri 窗口，确保 WKWebView prefers-color-scheme 同步", () => {
+    const syncBlock = appScript.match(/function syncSystemTheme\([\s\S]*?\n\}/)?.[0] ?? "";
+    expect(syncBlock).toContain("systemThemeQuery?.matches");
+    expect(syncBlock).toContain('appSettings.theme === "system"');
+    expect(syncBlock).toContain("syncNativeWindowTheme(systemTheme.value)");
+  });
+
+  it("dev 模式下支持 URL hash #theme=light|dark 预设主题以辅助验收", () => {
+    expect(appScript).toContain("import.meta.env.DEV");
+    expect(appScript).toContain('window.location.hash.match(/theme=(light|dark)/)');
+    expect(appScript).toContain("appSettings.theme = hashTheme");
   });
 });

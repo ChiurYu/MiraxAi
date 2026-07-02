@@ -46,6 +46,7 @@ const pageTitle = computed(() => {
 
 <template>
   <header class="window-bar">
+    <span class="window-drag-strip" data-tauri-drag-region aria-hidden="true"></span>
     <div class="project-overview">
       <div class="project-title" :class="{ 'workbench-title': isWorkbench }">
         <strong>{{ pageTitle }}</strong>

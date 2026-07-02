@@ -129,6 +129,11 @@ let systemThemeQuery: MediaQueryList | undefined;
 
 function syncSystemTheme() {
   systemTheme.value = systemThemeQuery?.matches ? "dark" : "light";
+  // 当应用跟随系统主题时，显式通知 Tauri 原生窗口当前外观，确保 WKWebView 的
+  // prefers-color-scheme 与 macOS 系统外观保持同步（尤其在 release .app 中）。
+  if (appSettings.theme === "system") {
+    void syncNativeWindowTheme(systemTheme.value);
+  }
 }
 
 function isTauriAvailable(): boolean {
@@ -141,8 +146,12 @@ async function syncNativeWindowTheme(next: "light" | "dark") {
   try {
     const { getCurrentWindow } = await import("@tauri-apps/api/window");
     await getCurrentWindow().setTheme(next);
-  } catch {
-    // 缺少 set-theme 权限或非 Tauri 运行时静默跳过，避免影响主流程。
+  } catch (error) {
+    // setTheme 失败不致命：原生标题栏浅色化的主修复来自 Overlay 标题栏 + CSS 主题背景覆盖，
+    // 此调用仅作辅助（同步系统外观提示）。dev 下打印诊断，避免吞掉有用信息。
+    if (import.meta.env.DEV) {
+      console.warn("[mirax] 原生窗口 setTheme 调用失败（非致命）", error);
+    }
   }
 }
 
@@ -283,6 +292,22 @@ const avatarMode = computed(() => runtime.getStageMode("avatar"));
 const composeMode = computed(() => runtime.getStageMode("compose"));
 
 onMounted(async () => {
+  // Tauri 原生窗口标记：启用 CSS 标题栏安全内边距（Overlay 标题栏下移品牌/顶栏内容）。
+  // 浏览器 dev:web 不加此 class，--mx-titlebar-inset 保持 0，布局与原来一致。
+  if (isTauriAvailable()) {
+    document.documentElement.classList.add("is-tauri");
+  }
+
+  // dev 模式下支持通过 URL hash #theme=light|dark 预设主题，便于真实 Tauri 验收时
+  // 在不依赖 UI 点击的情况下切换 light/dark/light 三态。生产构建不会携带 devUrl hash。
+  if (import.meta.env.DEV) {
+    const hashTheme = window.location.hash.match(/theme=(light|dark)/)?.[1] as "light" | "dark" | undefined;
+    if (hashTheme) {
+      appSettings.theme = hashTheme;
+      history.replaceState(null, "", window.location.href.split("#")[0]);
+    }
+  }
+
   systemThemeQuery = window.matchMedia?.("(prefers-color-scheme: dark)");
   syncSystemTheme();
   systemThemeQuery?.addEventListener("change", syncSystemTheme);
