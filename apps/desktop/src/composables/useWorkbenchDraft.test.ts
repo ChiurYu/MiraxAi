@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { nextTick } from "vue";
 import { useWorkbenchDraft } from "./useWorkbenchDraft.js";
+import { DESKTOP_DRAFT_STORAGE_KEY } from "../runtime/desktopDraft.js";
 
 function createFakeStorage(): Storage {
   const store: Record<string, string> = {};
@@ -36,7 +37,7 @@ describe("useWorkbenchDraft", () => {
   it("restores saved project and provider config from storage", () => {
     const storage = createFakeStorage();
     storage.setItem(
-      "mirax-ai.desktop-draft.v1",
+      DESKTOP_DRAFT_STORAGE_KEY,
       JSON.stringify({
         project: {
           name: "测试项目",
@@ -72,7 +73,7 @@ describe("useWorkbenchDraft", () => {
     draft.providerConfig.apiKey = "sk-secret";
     await nextTick();
 
-    const raw = storage.getItem("mirax-ai.desktop-draft.v1");
+    const raw = storage.getItem(DESKTOP_DRAFT_STORAGE_KEY);
     expect(raw).toBeTruthy();
     const parsed = JSON.parse(raw!);
     expect(parsed.providerConfig).not.toHaveProperty("apiKey");
@@ -85,17 +86,110 @@ describe("useWorkbenchDraft", () => {
     draft.project.name = "新项目";
     await nextTick();
 
-    const raw = storage.getItem("mirax-ai.desktop-draft.v1");
+    const raw = storage.getItem(DESKTOP_DRAFT_STORAGE_KEY);
     const parsed = JSON.parse(raw!);
     expect(parsed.project.name).toBe("新项目");
   });
 
   it("handles invalid storage gracefully", () => {
     const storage = createFakeStorage();
-    storage.setItem("mirax-ai.desktop-draft.v1", "not-json");
+    storage.setItem(DESKTOP_DRAFT_STORAGE_KEY, "not-json");
 
     const { saveStatus } = useWorkbenchDraft({ storage });
 
     expect(saveStatus.value).toBe("草稿读取失败");
+  });
+
+  it("restores activeStageId from storage", () => {
+    const storage = createFakeStorage();
+    storage.setItem(
+      DESKTOP_DRAFT_STORAGE_KEY,
+      JSON.stringify({
+        project: {
+          name: "测试项目",
+          sourceVideoPath: "",
+          voiceSamplePath: "",
+          notes: "",
+          targetPlatforms: ["douyin"],
+        },
+        providerConfig: {
+          id: "main-ai",
+          label: "主模型配置",
+          provider: "openai",
+          baseUrl: "https://api.openai.com/v1",
+          model: "gpt-4.1",
+          enabled: true,
+        },
+        activeStageId: "voice-clone",
+      }),
+    );
+
+    const { draft } = useWorkbenchDraft({ storage });
+
+    expect(draft.activeStageId).toBe("voice-clone");
+  });
+
+  it("persists activeStageId when it changes", async () => {
+    const storage = createFakeStorage();
+    const { draft } = useWorkbenchDraft({ storage });
+
+    draft.activeStageId = "speech";
+    await nextTick();
+
+    const raw = storage.getItem(DESKTOP_DRAFT_STORAGE_KEY);
+    expect(raw).toBeTruthy();
+    const parsed = JSON.parse(raw!);
+    expect(parsed.activeStageId).toBe("speech");
+  });
+
+  it("restores workflow stage statuses from storage", () => {
+    const storage = createFakeStorage();
+    const draft = useWorkbenchDraft({ storage }).draft;
+    draft.workflow.stages[0].status = "completed";
+    draft.workflow.stages[1].status = "completed";
+    const persistedWorkflow = JSON.parse(JSON.stringify(draft.workflow));
+
+    storage.setItem(
+      DESKTOP_DRAFT_STORAGE_KEY,
+      JSON.stringify({
+        project: {
+          name: "测试项目",
+          sourceVideoPath: "",
+          voiceSamplePath: "",
+          notes: "",
+          targetPlatforms: ["douyin"],
+        },
+        providerConfig: {
+          id: "main-ai",
+          label: "主模型配置",
+          provider: "openai",
+          baseUrl: "https://api.openai.com/v1",
+          model: "gpt-4.1",
+          enabled: true,
+        },
+        activeStageId: "speech",
+        workflow: persistedWorkflow,
+      }),
+    );
+
+    const { draft: restoredDraft } = useWorkbenchDraft({ storage });
+
+    expect(restoredDraft.activeStageId).toBe("speech");
+    expect(restoredDraft.workflow.stages[0].status).toBe("completed");
+    expect(restoredDraft.workflow.stages[1].status).toBe("completed");
+    expect(restoredDraft.workflow.stages[2].status).toBe("pending");
+  });
+
+  it("persists workflow stage status changes", async () => {
+    const storage = createFakeStorage();
+    const { draft } = useWorkbenchDraft({ storage });
+
+    draft.workflow.stages[0].status = "completed";
+    await nextTick();
+
+    const raw = storage.getItem(DESKTOP_DRAFT_STORAGE_KEY);
+    expect(raw).toBeTruthy();
+    const parsed = JSON.parse(raw!);
+    expect(parsed.workflow.stages[0].status).toBe("completed");
   });
 });

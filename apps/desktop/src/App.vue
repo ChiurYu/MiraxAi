@@ -268,6 +268,23 @@ const runtime = useWorkflowRuntime({
   stageModes: providerStageModes.value,
 });
 
+// 恢复草稿中保存的 workflow 状态与当前阶段，使刷新后仍停留在原阶段。
+runtime.workflow.value = draft.workflow;
+runtime.activeStageId.value = draft.activeStageId ?? "transcribe";
+watch(
+  () => runtime.activeStageId.value,
+  (stageId) => {
+    draft.activeStageId = stageId;
+  },
+);
+watch(
+  () => runtime.workflow.value,
+  (workflow) => {
+    draft.workflow = workflow;
+  },
+  { deep: true },
+);
+
 watch(providerStageModes, (modes) => {
   runtime.stageModes.value = modes;
 });

@@ -24,6 +24,12 @@ describe("createDefaultDesktopDraft", () => {
     expect(draft.project.name).toBe("未命名项目");
     expect(draft.project.notes).toBe("");
   });
+
+  it("starts at the first workflow stage", () => {
+    const draft = createDefaultDesktopDraft();
+
+    expect(draft.activeStageId).toBe("transcribe");
+  });
 });
 
 describe("desktopDraft persistence", () => {
@@ -48,6 +54,15 @@ describe("desktopDraft persistence", () => {
     expect(JSON.stringify(persisted)).not.toContain("user:pass");
   });
 
+  it("sanitizeDesktopDraftForStorage persists activeStageId", () => {
+    const draft = createDefaultDesktopDraft();
+    draft.activeStageId = "voice-clone";
+
+    const persisted = sanitizeDesktopDraftForStorage(draft);
+
+    expect(persisted.activeStageId).toBe("voice-clone");
+  });
+
   it('restoreDesktopDraft restores saved values and falls back to ["douyin"] when saved platforms are empty', () => {
     const restored = restoreDesktopDraft({
       project: {
@@ -66,6 +81,7 @@ describe("desktopDraft persistence", () => {
         model: "kimi-for-coding",
         enabled: true,
       },
+      activeStageId: "speech",
     });
 
     expect(restored.project.name).toBe("测试项目");
@@ -77,6 +93,74 @@ describe("desktopDraft persistence", () => {
     expect(restored.providerConfig.label).toBe("自定义模型");
     expect(restored.providerConfig.baseUrl).toBe("https://api.example.com/v1");
     expect(restored.providerConfig.model).toBe("kimi-for-coding");
+    expect(restored.activeStageId).toBe("speech");
+  });
+
+  it("restoreDesktopDraft defaults activeStageId to transcribe when missing", () => {
+    const restored = restoreDesktopDraft({
+      project: createDefaultDesktopDraft().project,
+      providerConfig: createDefaultDesktopDraft().providerConfig,
+    });
+
+    expect(restored.activeStageId).toBe("transcribe");
+  });
+
+  it("restoreDesktopDraft defaults activeStageId to transcribe when invalid", () => {
+    const restored = restoreDesktopDraft({
+      project: createDefaultDesktopDraft().project,
+      providerConfig: createDefaultDesktopDraft().providerConfig,
+      activeStageId: "not-a-stage" as unknown as "transcribe",
+    });
+
+    expect(restored.activeStageId).toBe("transcribe");
+  });
+
+  it("sanitizeDesktopDraftForStorage persists workflow stage statuses", () => {
+    const draft = createDefaultDesktopDraft();
+    draft.workflow.stages[0].status = "completed";
+    draft.workflow.stages[1].status = "completed";
+    draft.workflow.stages[2].status = "running";
+
+    const persisted = sanitizeDesktopDraftForStorage(draft);
+
+    expect(persisted.workflow?.stages[0].status).toBe("completed");
+    expect(persisted.workflow?.stages[2].status).toBe("running");
+  });
+
+  it("restoreDesktopDraft restores saved workflow stage statuses", () => {
+    const draft = createDefaultDesktopDraft();
+    draft.workflow.stages[0].status = "completed";
+    draft.workflow.stages[1].status = "completed";
+    draft.workflow.stages[2].status = "running";
+
+    const persisted = sanitizeDesktopDraftForStorage(draft);
+    const restored = restoreDesktopDraft(persisted);
+
+    expect(restored.workflow.stages[0].status).toBe("completed");
+    expect(restored.workflow.stages[1].status).toBe("completed");
+    expect(restored.workflow.stages[2].status).toBe("running");
+    expect(restored.workflow.stages[3].status).toBe("pending");
+  });
+
+  it("restoreDesktopDraft defaults workflow when missing or malformed", () => {
+    const restored = restoreDesktopDraft({
+      project: createDefaultDesktopDraft().project,
+      providerConfig: createDefaultDesktopDraft().providerConfig,
+    });
+
+    expect(restored.workflow.stages.every((s) => s.status === "pending")).toBe(true);
+    expect(restored.workflow.stages).toHaveLength(8);
+  });
+
+  it("restoreDesktopDraft defaults invalid stage statuses to pending", () => {
+    const draft = createDefaultDesktopDraft();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (draft.workflow.stages[0] as any).status = "fake-status";
+
+    const persisted = sanitizeDesktopDraftForStorage(draft);
+    const restored = restoreDesktopDraft(persisted);
+
+    expect(restored.workflow.stages[0].status).toBe("pending");
   });
 
   it("restoreDesktopDraft sanitizes baseUrl credentials, query and hash from legacy saved data", () => {
