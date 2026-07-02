@@ -30,6 +30,7 @@ export const voiceAssets: AssetListItem[] = [
     version: "V1",
     thumbnail: assetUrl("../../assets/stitch/voices/user-profile-voice.jpg"),
     preview: assetUrl("../../assets/stitch/voices/user-profile-voice.jpg"),
+    samplePath: "/tmp/mirax-ai/mock-voice-samples/voice-linyue.wav",
     createdAt: "2026-06-24T08:00:00Z",
     updatedAt: "2026-06-25T10:24:00Z",
     metadata: {
@@ -53,6 +54,7 @@ export const voiceAssets: AssetListItem[] = [
     version: "V1",
     thumbnail: assetUrl("../../assets/stitch/voices/user-profile-voice.jpg"),
     preview: assetUrl("../../assets/stitch/voices/user-profile-voice.jpg"),
+    samplePath: "/tmp/mirax-ai/mock-voice-samples/voice-chenmo.wav",
     createdAt: "2026-06-23T14:00:00Z",
     updatedAt: "2026-06-24T18:42:00Z",
     metadata: {
@@ -123,6 +125,7 @@ export const voiceAssets: AssetListItem[] = [
     version: "V1",
     thumbnail: assetUrl("../../assets/stitch/voices/user-profile-voice.jpg"),
     preview: assetUrl("../../assets/stitch/voices/user-profile-voice.jpg"),
+    samplePath: "/tmp/mirax-ai/mock-voice-samples/voice-ava.wav",
     createdAt: "2026-06-01T00:00:00Z",
     updatedAt: "系统预置",
     metadata: {

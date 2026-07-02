@@ -682,6 +682,9 @@ function handleOpenVideo() {
 function handleVoiceSelect(item: AssetListItem) {
   selectedVoiceId.value = item.id;
   selectedVoiceName.value = item.name;
+  if (item.samplePath) {
+    project.value = { ...project.value, voiceSamplePath: item.samplePath };
+  }
   if (navigation.returnToStage) {
     returnToWorkbench(navigation);
   }

@@ -44,6 +44,7 @@ export interface AssetListItem {
   version?: string;
   thumbnail?: string;
   preview?: string;
+  samplePath?: string;
   createdAt: string;
   updatedAt: string;
   metadata?: Record<string, string>;

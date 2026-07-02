@@ -43,6 +43,12 @@ describe("App provider runtime wiring", () => {
     expect(source).toContain("请选择 HeyGem provider 可识别的真实形象。");
   });
 
+  it("writes selected voice samplePath into project.voiceSamplePath for mock flow", () => {
+    expect(source).toContain("function handleVoiceSelect(item: AssetListItem)");
+    expect(source).toContain("if (item.samplePath)");
+    expect(source).toContain("voiceSamplePath: item.samplePath");
+  });
+
   it("passes publish task statuses into history instead of assuming success", () => {
     expect(source).toContain("taskStatuses: tasks.map((task) => task.status)");
   });
