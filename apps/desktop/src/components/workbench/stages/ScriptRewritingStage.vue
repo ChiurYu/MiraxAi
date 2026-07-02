@@ -24,6 +24,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   "update:modelValue": [value: ProjectDraft];
+  "update:transcriptText": [value: string];
   run: [];
 }>();
 
@@ -176,9 +177,10 @@ function handleRegenerate() {
         <textarea
           class="transcript-box"
           :value="transcriptText"
-          :placeholder="hasTranscript ? '' : '尚未获取原始文案，请先完成素材解析。'"
-          readonly
+          :placeholder="hasTranscript ? '' : '尚未获取原始文案，可在此粘贴或编辑。'"
           rows="3"
+          :disabled="running"
+          @input="emit('update:transcriptText', ($event.target as HTMLTextAreaElement).value)"
         />
       </section>
 

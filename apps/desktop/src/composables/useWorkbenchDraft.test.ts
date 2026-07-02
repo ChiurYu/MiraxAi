@@ -180,16 +180,45 @@ describe("useWorkbenchDraft", () => {
     expect(restoredDraft.workflow.stages[2].status).toBe("pending");
   });
 
-  it("persists workflow stage status changes", async () => {
+  it("persists transcriptText changes", async () => {
     const storage = createFakeStorage();
     const { draft } = useWorkbenchDraft({ storage });
 
-    draft.workflow.stages[0].status = "completed";
+    draft.transcriptText = "手动输入的真实商品口播文案";
     await nextTick();
 
     const raw = storage.getItem(DESKTOP_DRAFT_STORAGE_KEY);
     expect(raw).toBeTruthy();
     const parsed = JSON.parse(raw!);
-    expect(parsed.workflow.stages[0].status).toBe("completed");
+    expect(parsed.transcriptText).toBe("手动输入的真实商品口播文案");
+  });
+
+  it("restores transcriptText from storage", () => {
+    const storage = createFakeStorage();
+    storage.setItem(
+      DESKTOP_DRAFT_STORAGE_KEY,
+      JSON.stringify({
+        project: {
+          name: "测试项目",
+          sourceVideoPath: "",
+          voiceSamplePath: "",
+          notes: "",
+          targetPlatforms: ["douyin"],
+        },
+        providerConfig: {
+          id: "main-ai",
+          label: "主模型配置",
+          provider: "openai",
+          baseUrl: "https://api.openai.com/v1",
+          model: "gpt-4.1",
+          enabled: true,
+        },
+        transcriptText: "恢复后的真实文案",
+      }),
+    );
+
+    const { draft } = useWorkbenchDraft({ storage });
+
+    expect(draft.transcriptText).toBe("恢复后的真实文案");
   });
 });

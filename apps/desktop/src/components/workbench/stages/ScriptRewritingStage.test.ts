@@ -65,4 +65,15 @@ describe("ScriptRewritingStage UI contracts", () => {
     // The generate button disabled state is bound to !canRun, which includes isNotConnected.
     expect(template).toMatch(/:disabled="!canRun"/);
   });
+
+  it("makes the transcript textarea editable", () => {
+    const transcriptBlock = template.match(/<textarea[\s\S]*?class="transcript-box"[\s\S]*?\/?>/)?.[0] ?? "";
+    expect(transcriptBlock).not.toContain("readonly");
+    expect(transcriptBlock).toContain("@input=\"emit('update:transcriptText'");
+  });
+
+  it("emits update:transcriptText from the component", () => {
+    const script = source.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)?.[1] ?? "";
+    expect(script).toContain('"update:transcriptText": [value: string]');
+  });
 });

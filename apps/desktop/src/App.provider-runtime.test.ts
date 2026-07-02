@@ -52,4 +52,11 @@ describe("App provider runtime wiring", () => {
   it("passes publish task statuses into history instead of assuming success", () => {
     expect(source).toContain("taskStatuses: tasks.map((task) => task.status)");
   });
+
+  it("wires ScriptRewritingStage transcript edits back to the persisted draft", () => {
+    expect(source).toContain('v-model="project"');
+    expect(source).toContain(":transcript-text=\"transcriptText\"");
+    expect(source).toContain('@update:transcript-text=');
+    expect(source).toContain("draft.transcriptText");
+  });
 });

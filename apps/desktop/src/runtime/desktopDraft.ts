@@ -20,6 +20,7 @@ export interface DesktopDraft {
   providerConfig: ApiKeyProviderConfig;
   activeStageId: WorkflowStageId;
   workflow: Workflow;
+  transcriptText: string;
 }
 
 export interface PersistedDesktopDraft {
@@ -27,6 +28,7 @@ export interface PersistedDesktopDraft {
   providerConfig: Omit<ApiKeyProviderConfig, "apiKey">;
   activeStageId?: WorkflowStageId;
   workflow?: Workflow;
+  transcriptText?: string;
 }
 
 export function createDefaultDesktopDraft(): DesktopDraft {
@@ -48,6 +50,7 @@ export function createDefaultDesktopDraft(): DesktopDraft {
     }),
     activeStageId: "transcribe",
     workflow: createDefaultWorkflow("demo-project"),
+    transcriptText: "",
   };
 }
 
@@ -57,6 +60,7 @@ export function sanitizeDesktopDraftForStorage(draft: DesktopDraft): PersistedDe
     providerConfig: sanitizeProviderConfigForStorage(draft.providerConfig),
     activeStageId: draft.activeStageId,
     workflow: draft.workflow,
+    transcriptText: draft.transcriptText,
   };
 }
 
@@ -128,6 +132,7 @@ export function restoreDesktopDraft(saved: Partial<PersistedDesktopDraft>): Desk
       : defaults.providerConfig,
     activeStageId: sanitizeActiveStageId(saved.activeStageId),
     workflow: sanitizeWorkflow(saved.workflow, defaults.workflow),
+    transcriptText: typeof saved.transcriptText === "string" ? saved.transcriptText : defaults.transcriptText,
   };
 }
 

@@ -34,6 +34,7 @@ export function useWorkbenchDraft(options: UseWorkbenchDraftOptions = {}) {
       Object.assign(draft.providerConfig, restored.providerConfig);
       draft.activeStageId = restored.activeStageId;
       draft.workflow = restored.workflow;
+      draft.transcriptText = restored.transcriptText;
       saveStatus.value = "已恢复草稿";
     } catch {
       saveStatus.value = "草稿读取失败";
@@ -56,7 +57,7 @@ export function useWorkbenchDraft(options: UseWorkbenchDraftOptions = {}) {
   }
 
   watch(
-    [() => draft.project, () => draft.providerConfig, () => draft.activeStageId, () => draft.workflow],
+    [() => draft.project, () => draft.providerConfig, () => draft.activeStageId, () => draft.workflow, () => draft.transcriptText],
     () => {
       persist();
     },

@@ -30,6 +30,12 @@ describe("createDefaultDesktopDraft", () => {
 
     expect(draft.activeStageId).toBe("transcribe");
   });
+
+  it("initializes transcriptText to an empty string", () => {
+    const draft = createDefaultDesktopDraft();
+
+    expect(draft.transcriptText).toBe("");
+  });
 });
 
 describe("desktopDraft persistence", () => {
@@ -61,6 +67,32 @@ describe("desktopDraft persistence", () => {
     const persisted = sanitizeDesktopDraftForStorage(draft);
 
     expect(persisted.activeStageId).toBe("voice-clone");
+  });
+
+  it("sanitizeDesktopDraftForStorage persists transcriptText", () => {
+    const draft = createDefaultDesktopDraft();
+    draft.transcriptText = "真实商品口播文案";
+
+    const persisted = sanitizeDesktopDraftForStorage(draft);
+
+    expect(persisted.transcriptText).toBe("真实商品口播文案");
+  });
+
+  it("restoreDesktopDraft restores transcriptText and defaults to empty when missing", () => {
+    const withTranscript = restoreDesktopDraft({
+      project: createDefaultDesktopDraft().project,
+      providerConfig: createDefaultDesktopDraft().providerConfig,
+      transcriptText: "手动输入的文案",
+    });
+
+    expect(withTranscript.transcriptText).toBe("手动输入的文案");
+
+    const withoutTranscript = restoreDesktopDraft({
+      project: createDefaultDesktopDraft().project,
+      providerConfig: createDefaultDesktopDraft().providerConfig,
+    });
+
+    expect(withoutTranscript.transcriptText).toBe("");
   });
 
   it('restoreDesktopDraft restores saved values and falls back to ["douyin"] when saved platforms are empty', () => {

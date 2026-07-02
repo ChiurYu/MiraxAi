@@ -87,8 +87,13 @@ const stitchCoverCandidates = [
 
 // 形象选择为 session-only 状态，不进入持久化 draft。
 const selectedAvatarId = ref("presenter-a");
-// 转写文案为 session-only 真实数据：transcribe 成功时写入，rewrite 以它为输入。
-const transcriptText = ref("");
+// 原始文案默认来自 mock/real 转写；用户可在文案改写阶段手动编辑，编辑结果写入持久化 draft。
+const transcriptText = computed({
+  get: () => draft.transcriptText ?? "",
+  set: (value: string) => {
+    draft.transcriptText = value;
+  },
+});
 // 声音选择：voiceId 与 voiceName 必须来自真实的 voice-clone executor 结果或样本文件名。
 const selectedVoiceId = ref("");
 const selectedVoiceName = ref("");
@@ -847,6 +852,7 @@ function stagePreviewLabel(stageId: WorkflowStageId): string {
           :status="stage.status"
           :mode="rewriteMode"
           :error-message="rewriteErrorMessage"
+          @update:transcript-text="transcriptText = $event"
           @run="runtime.runStage('rewrite')"
         />
         <VoiceCloningStage
