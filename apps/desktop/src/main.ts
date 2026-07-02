@@ -1,5 +1,13 @@
 import { createApp } from "vue";
 import App from "./App.vue";
+import { initLocalStore } from "./localStore/index.js";
 import "./styles.css";
 
-createApp(App).mount("#app");
+async function bootstrap() {
+  await initLocalStore();
+
+  const app = createApp(App);
+  app.mount("#app");
+}
+
+bootstrap();

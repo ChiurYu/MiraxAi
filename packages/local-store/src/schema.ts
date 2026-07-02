@@ -1,5 +1,6 @@
 export const LOCAL_STORE_SCHEMA_TABLES = [
   "provider_configs",
+  "provider_secrets",
   "content_drafts",
   "video_projects",
   "publish_accounts",
@@ -18,6 +19,12 @@ export const LOCAL_STORE_MIGRATIONS = [
     model TEXT,
     enabled INTEGER NOT NULL DEFAULT 1,
     credential_ref TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );`,
+  `CREATE TABLE IF NOT EXISTS provider_secrets (
+    credential_ref TEXT PRIMARY KEY,
+    api_key TEXT NOT NULL,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
   );`,

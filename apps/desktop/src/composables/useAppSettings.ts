@@ -8,8 +8,30 @@ import {
   type AppSettings,
 } from "@mirax/core";
 import { createDefaultSidecarConfig, type SidecarConfig } from "@mirax/sidecar-manager";
+import {
+  createAppSettingsRepository,
+  createProviderConfigRepository,
+  createProviderSecretsRepository,
+  createSidecarConfigRepository,
+  type LocalStoreDb,
+} from "@mirax/local-store";
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";
 import type { SettingsSection } from "../app/navigation.js";
+
+let sharedDb: LocalStoreDb | undefined;
+let initialSnapshot: Partial<AppSettingsSnapshot> | undefined;
+
+export function setLocalStoreDb(db: LocalStoreDb): void {
+  sharedDb = db;
+}
+
+export function getLocalStoreDb(): LocalStoreDb | undefined {
+  return sharedDb;
+}
+
+export function setInitialAppSettingsSnapshot(snapshot: Partial<AppSettingsSnapshot>): void {
+  initialSnapshot = snapshot;
+}
 
 export const APP_SETTINGS_STORAGE_KEY = "mirax-ai.app-settings.v1";
 
@@ -33,6 +55,7 @@ export interface AppSettingsSnapshot {
 export interface UseAppSettingsOptions {
   storage?: Storage;
   persistSection?: boolean;
+  db?: LocalStoreDb;
 }
 
 /**
@@ -183,6 +206,7 @@ const sharedState = createState();
 export function useAppSettings(options: UseAppSettingsOptions = {}) {
   const storage = options.storage ?? (typeof window !== "undefined" ? window.localStorage : undefined);
   const persistSection = options.persistSection ?? false;
+  const db = options.db ?? sharedDb;
   const state = options.storage ? createState() : sharedState;
 
   const { appSettings, sidecarConfig, providerConfigs, settingsSection, saveStatus, verifiedFfmpegPath, verifiedProviderIds, failedProviderIds } = state;
@@ -253,7 +277,7 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
           id: config.id ?? crypto.randomUUID(),
           label: config.label ?? "未命名配置",
           provider: config.provider ?? "openai",
-          apiKey: "",
+          apiKey: (config as Partial<ApiKeyProviderConfig>).apiKey ?? "",
           baseUrl: sanitizeBaseUrlForStorage(config.baseUrl),
           model: config.model,
           enabled: config.enabled ?? true,
@@ -267,6 +291,13 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
   }
 
   function load() {
+    if (initialSnapshot) {
+      restore(initialSnapshot);
+      initialSnapshot = undefined;
+      saveStatus.value = "已恢复设置";
+      return;
+    }
+
     if (!storage) {
       saveStatus.value = "无可用存储";
       return;
@@ -283,7 +314,72 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
     }
   }
 
+  async function persistToDb() {
+    if (!db) return;
+
+    try {
+      const appSettingsRepo = createAppSettingsRepository(db);
+      const sidecarConfigRepo = createSidecarConfigRepository(db);
+      const providerConfigRepo = createProviderConfigRepository(db);
+      const providerSecretsRepo = createProviderSecretsRepository(db);
+      const now = new Date().toISOString();
+
+      await appSettingsRepo.save({
+        id: "default",
+        theme: appSettings.theme,
+        outputPathsJson: JSON.stringify(appSettings.outputPaths),
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      await sidecarConfigRepo.save({
+        id: "default",
+        ffmpegPath: sidecarConfig.ffmpegPath,
+        pythonServiceUrl: sidecarConfig.pythonServiceUrl,
+        cosyVoiceServiceUrl: sidecarConfig.cosyVoiceServiceUrl,
+        heygemServiceUrl: sidecarConfig.heygemServiceUrl,
+        hasPlaywrightBrowser: sidecarConfig.hasPlaywrightBrowser,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      for (const config of providerConfigs.value) {
+        const credentialRef = config.id;
+        await providerConfigRepo.save({
+          id: config.id,
+          provider: config.provider,
+          label: config.label,
+          baseUrl: sanitizeBaseUrlForStorage(config.baseUrl),
+          model: config.model,
+          enabled: config.enabled,
+          credentialRef,
+          createdAt: now,
+          updatedAt: now,
+        });
+
+        const trimmedApiKey = config.apiKey?.trim() ?? "";
+        if (trimmedApiKey) {
+          await providerSecretsRepo.save({
+            credentialRef,
+            apiKey: trimmedApiKey,
+            createdAt: now,
+            updatedAt: now,
+          });
+        }
+      }
+
+      saveStatus.value = "设置已保存";
+    } catch {
+      saveStatus.value = "设置保存失败";
+    }
+  }
+
   function persist() {
+    if (db) {
+      void persistToDb();
+      return;
+    }
+
     if (!storage) {
       saveStatus.value = "无可用存储";
       return;
@@ -315,6 +411,14 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
     providerConfigs.value = providerConfigs.value.filter((config) => config.id !== id);
     clearProviderVerified(id);
     clearProviderFailed(id);
+
+    if (db) {
+      const providerRepo = createProviderConfigRepository(db);
+      const secretsRepo = createProviderSecretsRepository(db);
+      void Promise.all([providerRepo.deleteById(id), secretsRepo.deleteByCredentialRef(id)]).catch(() => {
+        // ignore cleanup errors
+      });
+    }
   }
 
   function markProviderVerified(id: string) {

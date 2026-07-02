@@ -62,6 +62,7 @@ const {
 
 const drawerOpen = ref(false);
 const editingConfig = ref<ApiKeyProviderConfig | null>(null);
+const editingApiKey = ref("");
 const testMessages = ref<Record<string, string>>({});
 const filter = ref<"all" | "enabled" | "needs-config" | "failed">("all");
 
@@ -100,33 +101,39 @@ function startAddProvider() {
     provider: "openai",
     apiKey: "",
   });
+  editingApiKey.value = "";
   drawerOpen.value = true;
 }
 
 function startEditProvider(config: ApiKeyProviderConfig) {
   editingConfig.value = { ...config };
+  editingApiKey.value = "";
   drawerOpen.value = true;
 }
 
 function closeDrawer() {
   drawerOpen.value = false;
   editingConfig.value = null;
+  editingApiKey.value = "";
 }
 
 function saveProvider() {
   if (!editingConfig.value) return;
 
-  const errors = validateProviderConfig(editingConfig.value);
+  const original = providerConfigs.value.find((c) => c.id === editingConfig.value!.id);
+  const apiKey = editingApiKey.value.trim() || original?.apiKey || "";
+
+  const configToSave = { ...editingConfig.value, apiKey };
+  const errors = validateProviderConfig(configToSave);
   if (errors.length > 0) {
     window.alert(errors.join("\n"));
     return;
   }
 
-  const existing = providerConfigs.value.find((c) => c.id === editingConfig.value!.id);
-  if (existing) {
-    updateProviderConfig(editingConfig.value);
+  if (original) {
+    updateProviderConfig(configToSave);
   } else {
-    addProviderConfig(editingConfig.value);
+    addProviderConfig(configToSave);
   }
   clearProviderVerified(editingConfig.value.id);
   clearProviderFailed(editingConfig.value.id);
@@ -281,14 +288,14 @@ function deleteProvider(id: string) {
         >
           <span class="field-label">API Key</span>
           <input
-            v-model="editingConfig.apiKey"
+            v-model="editingApiKey"
             type="password"
             :name="apiKeyFieldName"
             autocomplete="new-password"
-            placeholder="本地填写，不进入持久化 snapshot"
+            placeholder="已保存在本机，可留空保留，输入新值则替换"
           />
-          <span v-if="!editingConfig.apiKey.trim()" class="field-hint">
-            刷新后 API Key 不会保留，请重新输入后保存并测试。
+          <span class="field-hint">
+            API Key 仅保存在本机 SQLite，不会进入 snapshot 或 localStorage。
           </span>
         </label>
       </form>

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { nextTick } from "vue";
 import type { ApiKeyProviderConfig } from "@mirax/core";
+import { FakeLocalStoreDb } from "@mirax/local-store";
 import {
   findEnabledAvatarProviderConfig,
   findEnabledRewriteProviderConfig,
@@ -9,8 +10,11 @@ import {
   findEnabledVoiceCloneProviderConfig,
   getProviderReadiness,
   probeFfmpegPath,
+  setInitialAppSettingsSnapshot,
+  setLocalStoreDb,
   useAppSettings,
 } from "./useAppSettings.js";
+import { loadAppSettingsSnapshotFromDb } from "../localStore/loadSnapshot.js";
 
 function createFakeStorage(): Storage {
   const store: Record<string, string> = {};
@@ -679,5 +683,145 @@ describe("getProviderReadiness", () => {
   it("returns ready for cosyvoice / heygem with baseUrl even when apiKey is empty", () => {
     expect(getProviderReadiness(makeConfig({ provider: "cosyvoice", apiKey: "" }))).toBe("ready");
     expect(getProviderReadiness(makeConfig({ provider: "heygem", apiKey: "" }))).toBe("ready");
+  });
+});
+
+describe("useAppSettings SQLite persistence", () => {
+  beforeEach(() => {
+    setInitialAppSettingsSnapshot({});
+  });
+
+  function fakeDbWithProvider(): FakeLocalStoreDb {
+    const db = new FakeLocalStoreDb();
+    db.whenSelect(
+      `SELECT id, provider, label, base_url as baseUrl, model, enabled, credential_ref as credentialRef, created_at as createdAt, updated_at as updatedAt FROM provider_configs`,
+      [
+        {
+          id: "p1",
+          provider: "openai",
+          label: "主模型",
+          baseUrl: "https://api.openai.com/v1",
+          model: "gpt-4.1",
+          enabled: 1,
+          credentialRef: "p1",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+    );
+    db.whenSelect(
+      `SELECT credential_ref as credentialRef, api_key as apiKey, created_at as createdAt, updated_at as updatedAt FROM provider_secrets WHERE credential_ref = ? LIMIT 1`,
+      [
+        {
+          credentialRef: "p1",
+          apiKey: "sk-from-sqlite",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+    );
+    return db;
+  }
+
+  it("loads provider apiKey from SQLite snapshot", async () => {
+    const db = fakeDbWithProvider();
+    const snapshot = await loadAppSettingsSnapshotFromDb(db);
+    setInitialAppSettingsSnapshot(snapshot);
+
+    const { providerConfigs } = useAppSettings({ storage: createFakeStorage() });
+
+    expect(providerConfigs.value).toHaveLength(1);
+    expect(providerConfigs.value[0].apiKey).toBe("sk-from-sqlite");
+  });
+
+  it("persists provider metadata and secret to separate repositories", async () => {
+    const db = new FakeLocalStoreDb();
+    const { addProviderConfig } = useAppSettings({ storage: createFakeStorage(), db });
+
+    addProviderConfig({
+      id: "p1",
+      label: "主模型",
+      provider: "openai",
+      apiKey: "sk-secret",
+      model: "gpt-4",
+      enabled: true,
+    });
+
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const sqls = db.calls.map((c) => c.sql);
+    expect(sqls.some((sql) => sql.includes("INSERT OR REPLACE INTO provider_configs"))).toBe(true);
+    expect(sqls.some((sql) => sql.includes("INSERT OR REPLACE INTO provider_secrets"))).toBe(true);
+
+    const secretCall = db.calls.find((c) => c.sql.includes("provider_secrets"));
+    expect(secretCall?.bind).toContain("sk-secret");
+  });
+
+  it("deletes provider metadata and secret when provider is removed", async () => {
+    const db = new FakeLocalStoreDb();
+    const { addProviderConfig, removeProviderConfig } = useAppSettings({ storage: createFakeStorage(), db });
+
+    addProviderConfig({
+      id: "p1",
+      label: "主模型",
+      provider: "openai",
+      apiKey: "sk-secret",
+      model: "gpt-4",
+      enabled: true,
+    });
+    await nextTick();
+    db.clear();
+
+    removeProviderConfig("p1");
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const deleteConfigCall = db.calls.find((c) => c.sql.includes("DELETE FROM provider_configs"));
+    const deleteSecretCall = db.calls.find((c) => c.sql.includes("DELETE FROM provider_secrets"));
+    expect(deleteConfigCall?.bind).toEqual(["p1"]);
+    expect(deleteSecretCall?.bind).toEqual(["p1"]);
+  });
+
+  it("does not persist provider apiKey to localStorage when db is provided", async () => {
+    const storage = createFakeStorage();
+    const db = new FakeLocalStoreDb();
+    const { addProviderConfig } = useAppSettings({ storage, db });
+
+    addProviderConfig({
+      id: "p1",
+      label: "主模型",
+      provider: "openai",
+      apiKey: "sk-secret",
+      model: "gpt-4",
+      enabled: true,
+    });
+
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const raw = storage.getItem("mirax-ai.app-settings.v1");
+    expect(raw).toBeNull();
+  });
+
+  it("uses the shared SQLite db when useAppSettings is called without options", async () => {
+    const db = new FakeLocalStoreDb();
+    setLocalStoreDb(db);
+
+    const { addProviderConfig } = useAppSettings();
+    addProviderConfig({
+      id: "p-shared",
+      label: "共享 DB",
+      provider: "openai",
+      apiKey: "sk-secret",
+      model: "gpt-4",
+      enabled: true,
+    });
+
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(db.calls.some((c) => c.sql.includes("INSERT OR REPLACE INTO provider_configs"))).toBe(true);
+    expect(db.calls.some((c) => c.sql.includes("INSERT OR REPLACE INTO provider_secrets"))).toBe(true);
   });
 });

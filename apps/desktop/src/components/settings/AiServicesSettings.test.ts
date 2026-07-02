@@ -78,7 +78,7 @@ describe("AiServicesSettings API key editing boundary", () => {
   it("does not present restored empty API keys as reusable saved secrets", () => {
     expect(source).toContain("apiKeyFieldName");
     expect(source).toContain('autocomplete="new-password"');
-    expect(source).toContain("刷新后 API Key 不会保留");
+    expect(source).toContain("已保存在本机，可留空保留，输入新值则替换");
     expect(source).not.toContain('autocomplete="off"');
   });
 });

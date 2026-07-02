@@ -29,6 +29,18 @@ describe("local store schema", () => {
     expect(publishTasksSql).toContain("failed_at TEXT");
     expect(publishTasksSql).toContain("retry_count INTEGER NOT NULL DEFAULT 0");
   });
+
+  it("stores provider api_key only in provider_secrets, not provider_configs", () => {
+    const sql = createLocalStoreMigrationSql();
+    const providerConfigsSql = extractTableSql(sql, "provider_configs");
+    const providerSecretsSql = extractTableSql(sql, "provider_secrets");
+
+    expect(sql).toContain("CREATE TABLE IF NOT EXISTS provider_secrets");
+    expect(providerSecretsSql).toContain("credential_ref TEXT PRIMARY KEY");
+    expect(providerSecretsSql).toContain("api_key TEXT NOT NULL");
+    expect(providerConfigsSql).not.toContain("api_key");
+    expect(providerConfigsSql).not.toContain("apikey");
+  });
 });
 
 function extractTableSql(sql: string, tableName: string): string {
