@@ -53,8 +53,11 @@ describe("AiServicesSettings connection-passed status", () => {
 });
 
 describe("AiServicesSettings connection-failed status", () => {
-  it("tracks failed connection test IDs separately from config readiness", () => {
-    expect(source).toContain("failedConfigIds");
+  it("tracks failed connection test IDs through useAppSettings", () => {
+    expect(source).toContain("markProviderFailed");
+    expect(source).toContain("clearProviderFailed");
+    expect(source).toContain("isProviderFailed");
+    expect(source).not.toContain("failedConfigIds");
   });
 
   it("renders a connection-failed state label", () => {
@@ -67,6 +70,6 @@ describe("AiServicesSettings connection-failed status", () => {
   });
 
   it("clears the failed state on a successful retry", () => {
-    expect(source).toContain("failedConfigIds.value.delete");
+    expect(source).toContain("clearProviderFailed(config.id)");
   });
 });

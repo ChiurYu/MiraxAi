@@ -47,12 +47,22 @@ const FAILED_META: { label: string; icon: typeof AlertCircle; className: string 
   className: "failed",
 };
 
-const { providerConfigs, addProviderConfig, updateProviderConfig, removeProviderConfig, markProviderVerified, clearProviderVerified, isProviderVerified } = useAppSettings();
+const {
+  providerConfigs,
+  addProviderConfig,
+  updateProviderConfig,
+  removeProviderConfig,
+  markProviderVerified,
+  clearProviderVerified,
+  isProviderVerified,
+  markProviderFailed,
+  clearProviderFailed,
+  isProviderFailed,
+} = useAppSettings();
 
 const drawerOpen = ref(false);
 const editingConfig = ref<ApiKeyProviderConfig | null>(null);
 const testMessages = ref<Record<string, string>>({});
-const failedConfigIds = ref<Set<string>>(new Set());
 const filter = ref<"all" | "enabled" | "needs-config" | "failed">("all");
 
 function isConnectionPassed(config: ApiKeyProviderConfig): boolean {
@@ -60,7 +70,7 @@ function isConnectionPassed(config: ApiKeyProviderConfig): boolean {
 }
 
 function isConnectionFailed(config: ApiKeyProviderConfig): boolean {
-  return config.enabled && getProviderReadiness(config) === "ready" && failedConfigIds.value.has(config.id);
+  return config.enabled && getProviderReadiness(config) === "ready" && isProviderFailed(config.id);
 }
 
 function statusMetaFor(config: ApiKeyProviderConfig) {
@@ -115,7 +125,7 @@ function saveProvider() {
     addProviderConfig(editingConfig.value);
   }
   clearProviderVerified(editingConfig.value.id);
-  failedConfigIds.value.delete(editingConfig.value.id);
+  clearProviderFailed(editingConfig.value.id);
   closeDrawer();
 }
 
@@ -127,15 +137,15 @@ async function testProvider(config: ApiKeyProviderConfig) {
     testMessages.value[config.id] = result.ok ? "连接正常" : result.message;
     if (result.ok) {
       markProviderVerified(config.id);
-      failedConfigIds.value.delete(config.id);
+      clearProviderFailed(config.id);
     } else {
       clearProviderVerified(config.id);
-      failedConfigIds.value.add(config.id);
+      markProviderFailed(config.id);
     }
   } catch (error) {
     testMessages.value[config.id] = error instanceof Error ? error.message : "连接测试失败";
     clearProviderVerified(config.id);
-    failedConfigIds.value.add(config.id);
+    markProviderFailed(config.id);
   }
 }
 
@@ -162,14 +172,14 @@ function connectionTestInputFor(config: ApiKeyProviderConfig): AiConnectionTestI
 
 function toggleProviderEnabled(config: ApiKeyProviderConfig) {
   clearProviderVerified(config.id);
-  failedConfigIds.value.delete(config.id);
+  clearProviderFailed(config.id);
   updateProviderConfig({ ...config, enabled: !config.enabled });
 }
 
 function deleteProvider(id: string) {
   if (window.confirm("确定删除该 Provider 配置？本地保存的 API Key 也会被移除。")) {
     clearProviderVerified(id);
-    failedConfigIds.value.delete(id);
+    clearProviderFailed(id);
     removeProviderConfig(id);
   }
 }

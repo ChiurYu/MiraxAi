@@ -180,6 +180,8 @@ describe("useAppSettings", () => {
       removeProviderConfig,
       markProviderVerified,
       isProviderVerified,
+      markProviderFailed,
+      isProviderFailed,
     } = useAppSettings();
 
     addProviderConfig({
@@ -192,21 +194,28 @@ describe("useAppSettings", () => {
     });
 
     markProviderVerified("p1");
+    markProviderFailed("p1");
     expect(isProviderVerified("p1")).toBe(true);
+    expect(isProviderFailed("p1")).toBe(true);
 
     updateProviderConfig({ ...providerConfigs.value[0], label: "A2" });
     expect(isProviderVerified("p1")).toBe(false);
+    expect(isProviderFailed("p1")).toBe(false);
 
     markProviderVerified("p1");
+    markProviderFailed("p1");
     removeProviderConfig("p1");
     expect(isProviderVerified("p1")).toBe(false);
+    expect(isProviderFailed("p1")).toBe(false);
   });
 
   it("clears verified provider status when provider configs are restored", () => {
-    const { restore, markProviderVerified, isProviderVerified } = useAppSettings();
+    const { restore, markProviderVerified, isProviderVerified, markProviderFailed, isProviderFailed } = useAppSettings();
 
     markProviderVerified("p1");
+    markProviderFailed("p1");
     expect(isProviderVerified("p1")).toBe(true);
+    expect(isProviderFailed("p1")).toBe(true);
 
     restore({
       providerConfigs: [
@@ -221,18 +230,31 @@ describe("useAppSettings", () => {
     });
 
     expect(isProviderVerified("p1")).toBe(false);
+    expect(isProviderFailed("p1")).toBe(false);
   });
 
-  it("does not persist verifiedProviderIds to storage", async () => {
+  it("tracks failed provider status as session-only state", () => {
+    const { markProviderFailed, clearProviderFailed, isProviderFailed } = useAppSettings();
+
+    markProviderFailed("p1");
+    expect(isProviderFailed("p1")).toBe(true);
+
+    clearProviderFailed("p1");
+    expect(isProviderFailed("p1")).toBe(false);
+  });
+
+  it("does not persist provider connection state to storage", async () => {
     const storage = createFakeStorage();
     storage.setItem("mirax-ai.app-settings.v1", JSON.stringify({}));
-    const { markProviderVerified } = useAppSettings({ storage });
+    const { markProviderVerified, markProviderFailed } = useAppSettings({ storage });
 
     markProviderVerified("p1");
+    markProviderFailed("p2");
     await nextTick();
 
     const raw = storage.getItem("mirax-ai.app-settings.v1")!;
     expect(raw).not.toContain("verifiedProviderIds");
+    expect(raw).not.toContain("failedProviderIds");
   });
 
   it("persists provider metadata without apiKey", async () => {

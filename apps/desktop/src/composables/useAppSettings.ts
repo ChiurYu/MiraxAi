@@ -98,6 +98,8 @@ function createState() {
     verifiedFfmpegPath: ref(""),
     // 当前 session 内测试连接成功的 provider id 集合；不进入持久化 snapshot。
     verifiedProviderIds: ref<Set<string>>(new Set()),
+    // 当前 session 内测试连接失败的 provider id 集合；不进入持久化 snapshot。
+    failedProviderIds: ref<Set<string>>(new Set()),
     loaded: false,
   };
 }
@@ -183,7 +185,7 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
   const persistSection = options.persistSection ?? false;
   const state = options.storage ? createState() : sharedState;
 
-  const { appSettings, sidecarConfig, providerConfigs, settingsSection, saveStatus, verifiedFfmpegPath, verifiedProviderIds } = state;
+  const { appSettings, sidecarConfig, providerConfigs, settingsSection, saveStatus, verifiedFfmpegPath, verifiedProviderIds, failedProviderIds } = state;
 
   if (!state.loaded) {
     load();
@@ -245,6 +247,7 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
 
     if (Array.isArray(snapshot.providerConfigs)) {
       verifiedProviderIds.value = new Set();
+      failedProviderIds.value = new Set();
       providerConfigs.value = snapshot.providerConfigs.map((config) =>
         createApiKeyProviderConfig({
           id: config.id ?? crypto.randomUUID(),
@@ -302,14 +305,16 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
     const index = providerConfigs.value.findIndex((item) => item.id === config.id);
     if (index >= 0) {
       providerConfigs.value[index] = config;
-      // 配置被修改后需要重新验证，清除已验证标记。
+      // 配置被修改后需要重新检测，清除当前 session 的连接状态。
       clearProviderVerified(config.id);
+      clearProviderFailed(config.id);
     }
   }
 
   function removeProviderConfig(id: string) {
     providerConfigs.value = providerConfigs.value.filter((config) => config.id !== id);
     clearProviderVerified(id);
+    clearProviderFailed(id);
   }
 
   function markProviderVerified(id: string) {
@@ -324,6 +329,20 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
 
   function isProviderVerified(id: string): boolean {
     return verifiedProviderIds.value.has(id);
+  }
+
+  function markProviderFailed(id: string) {
+    failedProviderIds.value = new Set([...failedProviderIds.value, id]);
+  }
+
+  function clearProviderFailed(id: string) {
+    const next = new Set(failedProviderIds.value);
+    next.delete(id);
+    failedProviderIds.value = next;
+  }
+
+  function isProviderFailed(id: string): boolean {
+    return failedProviderIds.value.has(id);
   }
 
   function setSettingsSection(section: SettingsSection) {
@@ -351,6 +370,7 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
     saveStatus,
     verifiedFfmpegPath,
     verifiedProviderIds,
+    failedProviderIds,
     load,
     persist,
     restore,
@@ -361,5 +381,8 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
     markProviderVerified,
     clearProviderVerified,
     isProviderVerified,
+    markProviderFailed,
+    clearProviderFailed,
+    isProviderFailed,
   };
 }
