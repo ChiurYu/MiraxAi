@@ -30,4 +30,9 @@ describe("LocalDependenciesSettings FFmpeg verified readiness", () => {
   it("labels configured-but-unprobed dependencies as pending detection", () => {
     expect(source).toContain('if (state === "configured") return "待检测";');
   });
+
+  it("only labels FFmpeg as a real re-detect action", () => {
+    expect(source).toContain('return key === "ffmpeg" ? "重新检测" : "查看说明";');
+    expect(source).toContain("@click=\"runLimitedAction(dep.key, actionLabelFor(dep.key))\"");
+  });
 });

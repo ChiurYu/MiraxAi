@@ -137,6 +137,10 @@ function dependencyOk(key: DependencyKey): boolean {
   return state === "ready";
 }
 
+function actionLabelFor(key: DependencyKey): string {
+  return key === "ffmpeg" ? "重新检测" : "查看说明";
+}
+
 async function runLimitedAction(key: DependencyKey, name: string) {
   if (key === "ffmpeg") {
     const trimmed = sidecarConfig.ffmpegPath.trim();
@@ -258,10 +262,10 @@ const filteredDependencies = computed(() => {
             <button
               type="button"
               class="ghost-button"
-              @click="runLimitedAction(dep.key, '重新检测')"
+              @click="runLimitedAction(dep.key, actionLabelFor(dep.key))"
             >
               <RefreshCw :size="14" />
-              重新检测
+              {{ actionLabelFor(dep.key) }}
             </button>
           </div>
           <p v-if="actionMessages[dep.key]" class="dependency-note">{{ actionMessages[dep.key] }}</p>
