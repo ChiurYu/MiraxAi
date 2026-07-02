@@ -2,6 +2,7 @@
 import { Check, FileVideo, Image, X } from "lucide-vue-next";
 import { computed, ref, watch } from "vue";
 import type { PublishMetadata, PublishPlatform, WorkflowStageStatus } from "@mirax/core";
+import { deriveContentReviewReadiness, fileName } from "./contentReviewReadiness.js";
 
 interface PlatformInfo {
   id: PublishPlatform;
@@ -108,27 +109,18 @@ const platformLabels = computed(() =>
   ) as Record<PublishPlatform, string>,
 );
 
-const readinessItems = computed(() => [
-  { id: "title", label: "标题已填写", ok: props.metadata.title.trim().length > 0 },
-  { id: "description", label: "描述已填写", ok: props.metadata.description.trim().length > 0 },
-  { id: "cover", label: "封面已选择", ok: Boolean(props.metadata.coverPath) },
-  { id: "video", label: "视频已生成", ok: Boolean(props.videoPath) },
-  { id: "platforms", label: "平台已选择", ok: props.targetPlatforms.length > 0 },
-  { id: "accounts", label: "账号状态正常", ok: props.targetPlatforms.length > 0 },
-  { id: "tags", label: "话题标签已设置", ok: props.metadata.tags.length > 0 },
-  { id: "mode", label: "发布模式已选择", ok: Boolean(props.metadata.mode) },
-]);
+const readinessItems = computed(() =>
+  deriveContentReviewReadiness({
+    metadata: props.metadata,
+    videoPath: props.videoPath,
+    targetPlatforms: props.targetPlatforms,
+    platformLabels: platformLabels.value,
+  }),
+);
 
 const allReady = computed(() => readinessItems.value.every((item) => item.ok));
 
 const confirmDisabled = computed(() => props.running || !allReady.value || !props.videoPath);
-
-function fileName(filePath: string): string {
-  const trimmed = filePath.trim();
-  if (!trimmed) return "";
-  const index = Math.max(trimmed.lastIndexOf("/"), trimmed.lastIndexOf("\\"));
-  return index >= 0 ? trimmed.slice(index + 1) : trimmed;
-}
 
 function handleTagKeydown(event: KeyboardEvent) {
   if (event.key === "Enter") {
@@ -315,25 +307,14 @@ function handleTagKeydown(event: KeyboardEvent) {
         </div>
 
         <div class="review-summary">
-          <div class="review-summary-row">
-            <strong>标题</strong>
-            <span>{{ metadata.title || "未填写" }}</span>
-          </div>
-          <div class="review-summary-row">
-            <strong>描述</strong>
-            <span>{{ metadata.description.slice(0, 80) || "未填写" }}{{ metadata.description.length > 80 ? "…" : "" }}</span>
-          </div>
-          <div class="review-summary-row">
-            <strong>平台</strong>
-            <span>{{ targetPlatforms.map((p) => platformLabels[p]).join("、") || "未选择" }}</span>
-          </div>
-          <div class="review-summary-row">
-            <strong>标签</strong>
-            <span>{{ metadata.tags.length > 0 ? metadata.tags.join("、") : "未设置" }}</span>
-          </div>
-          <div class="review-summary-row">
-            <strong>模式</strong>
-            <span>{{ metadata.mode === "direct" ? "直接发布" : "存为草稿" }}</span>
+          <div
+            v-for="item in readinessItems"
+            :key="item.id"
+            class="review-summary-row"
+            :data-summary="item.id"
+          >
+            <strong>{{ item.name }}</strong>
+            <span>{{ item.value }}</span>
           </div>
         </div>
       </div>
