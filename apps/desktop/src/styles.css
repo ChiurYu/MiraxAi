@@ -61,7 +61,7 @@
   --mx-shadow-lg: 0 8px 22px rgba(0, 0, 0, 0.28);
 
   /* Layout */
-  --mx-rail-width: 64px;
+  --mx-rail-width: 80px;
   /* macOS/Tauri Overlay 标题栏安全内边距；浏览器 dev:web 保持 0（见 html.is-tauri）。 */
   --mx-titlebar-inset: 0px;
   --mx-topbar-height: 48px;

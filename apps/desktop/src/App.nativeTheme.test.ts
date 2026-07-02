@@ -63,7 +63,7 @@ describe("macOS 原生标题栏 Overlay 主修复", () => {
     const parsed = JSON.parse(tauriConf) as {
       app?: { windows?: Array<{ trafficLightPosition?: { x?: number; y?: number } }> };
     };
-    expect(parsed.app?.windows?.[0]?.trafficLightPosition).toEqual({ x: 20, y: 16 });
+    expect(parsed.app?.windows?.[0]?.trafficLightPosition).toEqual({ x: 12, y: 16 });
   });
 
   it("Tauri 环境挂载时标记 is-tauri 以启用标题栏内边距", () => {
@@ -73,6 +73,7 @@ describe("macOS 原生标题栏 Overlay 主修复", () => {
 
   it("CSS 提供标题栏安全内边距，且仅在 is-tauri 下生效（dev:web 保持 0）", () => {
     expect(stylesSource).toContain("--mx-titlebar-inset: 0px;");
+    expect(stylesSource).toContain("--mx-rail-width: 80px;");
     expect(stylesSource).toMatch(/html\.is-tauri\s*\{[\s\S]*--mx-titlebar-inset:\s*28px;/);
     expect(stylesSource).toContain("var(--mx-titlebar-inset)");
   });
