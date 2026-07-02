@@ -128,6 +128,7 @@ function dependencyStatusLabel(key: DependencyKey): string {
   const state = resultByKey.value[key]?.state ?? "missing";
   if (state === "ready") return "已就绪";
   if (state === "missing") return "需配置";
+  if (state === "configured") return "待检测";
   return "未就绪";
 }
 
