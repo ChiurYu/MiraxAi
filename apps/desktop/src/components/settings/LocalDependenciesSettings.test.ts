@@ -22,4 +22,8 @@ describe("LocalDependenciesSettings FFmpeg verified readiness", () => {
     expect(source).toContain("checkSidecarDependencies");
     expect(source).toContain("dependencyResults");
   });
+
+  it("does not present Playwright manual install as verified readiness", () => {
+    expect(source).toContain("已手动安装 Playwright 浏览器（待检测）");
+  });
 });

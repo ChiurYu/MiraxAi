@@ -85,8 +85,8 @@ export function detectPlaywright(installed: boolean | undefined): DependencyChec
   return {
     key: "playwright",
     ok: true,
-    state: "ready",
-    message: "Playwright 浏览器已安装",
+    state: "configured",
+    message: "Playwright 浏览器已手动标记安装，尚未执行真实检测",
   };
 }
 

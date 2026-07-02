@@ -39,7 +39,7 @@ describe("sidecar dependency checks", () => {
 
     expect(results).toEqual([
       expect.objectContaining({ key: "ffmpeg", ok: true, state: "configured" }),
-      expect.objectContaining({ key: "playwright", ok: true, state: "ready" }),
+      expect.objectContaining({ key: "playwright", ok: true, state: "configured" }),
       expect.objectContaining({ key: "python", ok: true, state: "configured" }),
       expect.objectContaining({ key: "heygem", ok: true, state: "configured" }),
       expect.objectContaining({ key: "cosyvoice", ok: true, state: "configured" }),
@@ -110,6 +110,7 @@ describe("sidecar dependency checks", () => {
   it("exposes per-dependency detectors", () => {
     expect(detectFfmpeg("").state).toBe("missing");
     expect(detectPlaywright(false).state).toBe("missing");
+    expect(detectPlaywright(true).state).toBe("configured");
     expect(detectService("cosyvoice", "").state).toBe("missing");
     expect(detectService("python", "http://localhost:9000").state).toBe("configured");
     expect(detectService("heygem", "bad-url").state).toBe("unavailable");

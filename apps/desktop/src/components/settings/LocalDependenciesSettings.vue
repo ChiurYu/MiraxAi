@@ -222,7 +222,7 @@ const filteredDependencies = computed(() => {
               type="checkbox"
               @change="setValue(dep.key, ($event.target as HTMLInputElement).checked)"
             />
-            <span>已安装 Playwright 浏览器</span>
+            <span>已手动安装 Playwright 浏览器（待检测）</span>
           </label>
           <label v-else class="field"
           >
