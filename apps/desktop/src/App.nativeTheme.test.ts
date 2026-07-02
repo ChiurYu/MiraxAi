@@ -46,11 +46,24 @@ describe("原生标题栏主题同步", () => {
 describe("macOS 原生标题栏 Overlay 主修复", () => {
   it("窗口配置启用 Overlay 标题栏并隐藏标题文字", () => {
     const parsed = JSON.parse(tauriConf) as {
-      app?: { windows?: Array<{ titleBarStyle?: string; hiddenTitle?: boolean }> };
+      app?: {
+        windows?: Array<{
+          titleBarStyle?: string;
+          trafficLightPosition?: { x?: number; y?: number };
+          hiddenTitle?: boolean;
+        }>;
+      };
     };
     const primaryWindow = parsed.app?.windows?.[0];
     expect(primaryWindow?.titleBarStyle).toBe("Overlay");
     expect(primaryWindow?.hiddenTitle).toBe(true);
+  });
+
+  it("Overlay 标题栏下将 macOS traffic lights 放进预留区域", () => {
+    const parsed = JSON.parse(tauriConf) as {
+      app?: { windows?: Array<{ trafficLightPosition?: { x?: number; y?: number } }> };
+    };
+    expect(parsed.app?.windows?.[0]?.trafficLightPosition).toEqual({ x: 20, y: 16 });
   });
 
   it("Tauri 环境挂载时标记 is-tauri 以启用标题栏内边距", () => {
