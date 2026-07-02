@@ -23,10 +23,10 @@ describe("AiServicesSettings readiness display wiring", () => {
     expect(source).toContain("getProviderReadiness");
   });
 
-  it("renders disabled / needs-config / ready states", () => {
+  it("renders disabled / needs-config / untested states", () => {
     expect(source).toContain("已停用");
     expect(source).toContain("需要配置");
-    expect(source).toContain("已就绪");
+    expect(source).toContain("待测试");
   });
 
   it("filters needs-config from enabled providers with missing required fields", () => {
@@ -51,5 +51,11 @@ describe("AiServicesSettings connection-failed status", () => {
 
   it("clears the failed state on a successful retry", () => {
     expect(source).toContain("failedConfigIds.value.delete");
+  });
+
+  it("only labels providers connected after a successful test", () => {
+    expect(source).toContain("passedConfigIds");
+    expect(source).toContain("PASSED_META");
+    expect(source).toContain("连接正常");
   });
 });

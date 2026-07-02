@@ -32,7 +32,13 @@ const STATUS_META: Record<
 > = {
   disabled: { label: "已停用", icon: AlertCircle, className: "disabled" },
   "needs-config": { label: "需要配置", icon: AlertCircle, className: "needs-config" },
-  ready: { label: "已就绪", icon: CheckCircle2, className: "ready" },
+  ready: { label: "待测试", icon: AlertCircle, className: "configured" },
+};
+
+const PASSED_META: { label: string; icon: typeof CheckCircle2; className: string } = {
+  label: "连接正常",
+  icon: CheckCircle2,
+  className: "ready",
 };
 
 const FAILED_META: { label: string; icon: typeof AlertCircle; className: string } = {
@@ -46,11 +52,22 @@ const { providerConfigs, addProviderConfig, updateProviderConfig, removeProvider
 const drawerOpen = ref(false);
 const editingConfig = ref<ApiKeyProviderConfig | null>(null);
 const testMessages = ref<Record<string, string>>({});
+const passedConfigIds = ref<Set<string>>(new Set());
 const failedConfigIds = ref<Set<string>>(new Set());
 const filter = ref<"all" | "enabled" | "needs-config" | "failed">("all");
 
+function isConnectionPassed(config: ApiKeyProviderConfig): boolean {
+  return config.enabled && getProviderReadiness(config) === "ready" && passedConfigIds.value.has(config.id);
+}
+
 function isConnectionFailed(config: ApiKeyProviderConfig): boolean {
   return config.enabled && getProviderReadiness(config) === "ready" && failedConfigIds.value.has(config.id);
+}
+
+function statusMetaFor(config: ApiKeyProviderConfig) {
+  if (isConnectionFailed(config)) return FAILED_META;
+  if (isConnectionPassed(config)) return PASSED_META;
+  return STATUS_META[getProviderReadiness(config)];
 }
 
 const filteredConfigs = computed(() => {
@@ -98,6 +115,8 @@ function saveProvider() {
   } else {
     addProviderConfig(editingConfig.value);
   }
+  passedConfigIds.value.delete(editingConfig.value.id);
+  failedConfigIds.value.delete(editingConfig.value.id);
   closeDrawer();
 }
 
@@ -108,12 +127,15 @@ async function testProvider(config: ApiKeyProviderConfig) {
     const result = await testAiProviderConnection(connectionTestInputFor(config));
     testMessages.value[config.id] = result.ok ? "连接正常" : result.message;
     if (result.ok) {
+      passedConfigIds.value.add(config.id);
       failedConfigIds.value.delete(config.id);
     } else {
+      passedConfigIds.value.delete(config.id);
       failedConfigIds.value.add(config.id);
     }
   } catch (error) {
     testMessages.value[config.id] = error instanceof Error ? error.message : "连接测试失败";
+    passedConfigIds.value.delete(config.id);
     failedConfigIds.value.add(config.id);
   }
 }
@@ -140,11 +162,15 @@ function connectionTestInputFor(config: ApiKeyProviderConfig): AiConnectionTestI
 }
 
 function toggleProviderEnabled(config: ApiKeyProviderConfig) {
+  passedConfigIds.value.delete(config.id);
+  failedConfigIds.value.delete(config.id);
   updateProviderConfig({ ...config, enabled: !config.enabled });
 }
 
 function deleteProvider(id: string) {
   if (window.confirm("确定删除该 Provider 配置？本地保存的 API Key 也会被移除。")) {
+    passedConfigIds.value.delete(id);
+    failedConfigIds.value.delete(id);
     removeProviderConfig(id);
   }
 }
@@ -191,13 +217,13 @@ function deleteProvider(id: string) {
         <div class="provider-cell">
           <span
             class="provider-status"
-            :class="isConnectionFailed(config) ? FAILED_META.className : STATUS_META[getProviderReadiness(config)].className"
+            :class="statusMetaFor(config).className"
           >
             <component
-              :is="isConnectionFailed(config) ? FAILED_META.icon : STATUS_META[getProviderReadiness(config)].icon"
+              :is="statusMetaFor(config).icon"
               :size="12"
             />
-            {{ isConnectionFailed(config) ? FAILED_META.label : STATUS_META[getProviderReadiness(config)].label }}
+            {{ statusMetaFor(config).label }}
           </span>
         </div>
         <div class="provider-cell provider-actions">
