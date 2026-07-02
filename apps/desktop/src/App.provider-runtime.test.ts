@@ -11,16 +11,14 @@ describe("App provider runtime wiring", () => {
     expect(source).toContain("runtime.stageModes.value = modes;");
   });
 
-  it("only enables real provider stages for executable current-session configs", () => {
+  it("only enables real provider stages when config is ready and verified in the current session", () => {
     expect(source).toContain("function hasExecutableRewriteProvider()");
     expect(source).toContain("function hasExecutableTranscribeProvider()");
     expect(source).toContain("function hasExecutableSpeechProvider()");
     expect(source).toContain("function hasExecutableVoiceCloneProvider()");
     expect(source).toContain("function hasExecutableAvatarProvider()");
-    expect(source).toContain("sanitizeBaseUrlForStorage");
-    expect(source).toContain("config.apiKey.trim()");
-    expect(source).toContain("config.model?.trim()");
-    expect(source).toContain('config.provider === "custom"');
+    expect(source).toContain('getProviderReadiness(config) === "ready"');
+    expect(source).toContain("isProviderVerified(config.id)");
     expect(source).not.toContain('rewrite: findEnabledRewriteProviderConfig(providerConfigs.value) ? "real" : "mock"');
   });
 

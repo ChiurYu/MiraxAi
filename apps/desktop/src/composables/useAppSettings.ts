@@ -96,6 +96,8 @@ function createState() {
     settingsSection: ref<SettingsSection>("general"),
     saveStatus: ref("未保存"),
     verifiedFfmpegPath: ref(""),
+    // 当前 session 内测试连接成功的 provider id 集合；不进入持久化 snapshot。
+    verifiedProviderIds: ref<Set<string>>(new Set()),
     loaded: false,
   };
 }
@@ -181,7 +183,7 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
   const persistSection = options.persistSection ?? false;
   const state = options.storage ? createState() : sharedState;
 
-  const { appSettings, sidecarConfig, providerConfigs, settingsSection, saveStatus, verifiedFfmpegPath } = state;
+  const { appSettings, sidecarConfig, providerConfigs, settingsSection, saveStatus, verifiedFfmpegPath, verifiedProviderIds } = state;
 
   if (!state.loaded) {
     load();
@@ -242,6 +244,7 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
     }
 
     if (Array.isArray(snapshot.providerConfigs)) {
+      verifiedProviderIds.value = new Set();
       providerConfigs.value = snapshot.providerConfigs.map((config) =>
         createApiKeyProviderConfig({
           id: config.id ?? crypto.randomUUID(),
@@ -299,11 +302,28 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
     const index = providerConfigs.value.findIndex((item) => item.id === config.id);
     if (index >= 0) {
       providerConfigs.value[index] = config;
+      // 配置被修改后需要重新验证，清除已验证标记。
+      clearProviderVerified(config.id);
     }
   }
 
   function removeProviderConfig(id: string) {
     providerConfigs.value = providerConfigs.value.filter((config) => config.id !== id);
+    clearProviderVerified(id);
+  }
+
+  function markProviderVerified(id: string) {
+    verifiedProviderIds.value = new Set([...verifiedProviderIds.value, id]);
+  }
+
+  function clearProviderVerified(id: string) {
+    const next = new Set(verifiedProviderIds.value);
+    next.delete(id);
+    verifiedProviderIds.value = next;
+  }
+
+  function isProviderVerified(id: string): boolean {
+    return verifiedProviderIds.value.has(id);
   }
 
   function setSettingsSection(section: SettingsSection) {
@@ -330,6 +350,7 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
     settingsSection,
     saveStatus,
     verifiedFfmpegPath,
+    verifiedProviderIds,
     load,
     persist,
     restore,
@@ -337,5 +358,8 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
     updateProviderConfig,
     removeProviderConfig,
     setSettingsSection,
+    markProviderVerified,
+    clearProviderVerified,
+    isProviderVerified,
   };
 }

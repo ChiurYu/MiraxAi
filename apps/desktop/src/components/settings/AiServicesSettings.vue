@@ -47,17 +47,16 @@ const FAILED_META: { label: string; icon: typeof AlertCircle; className: string 
   className: "failed",
 };
 
-const { providerConfigs, addProviderConfig, updateProviderConfig, removeProviderConfig } = useAppSettings();
+const { providerConfigs, addProviderConfig, updateProviderConfig, removeProviderConfig, markProviderVerified, clearProviderVerified, isProviderVerified } = useAppSettings();
 
 const drawerOpen = ref(false);
 const editingConfig = ref<ApiKeyProviderConfig | null>(null);
 const testMessages = ref<Record<string, string>>({});
-const passedConfigIds = ref<Set<string>>(new Set());
 const failedConfigIds = ref<Set<string>>(new Set());
 const filter = ref<"all" | "enabled" | "needs-config" | "failed">("all");
 
 function isConnectionPassed(config: ApiKeyProviderConfig): boolean {
-  return config.enabled && getProviderReadiness(config) === "ready" && passedConfigIds.value.has(config.id);
+  return config.enabled && getProviderReadiness(config) === "ready" && isProviderVerified(config.id);
 }
 
 function isConnectionFailed(config: ApiKeyProviderConfig): boolean {
@@ -115,7 +114,7 @@ function saveProvider() {
   } else {
     addProviderConfig(editingConfig.value);
   }
-  passedConfigIds.value.delete(editingConfig.value.id);
+  clearProviderVerified(editingConfig.value.id);
   failedConfigIds.value.delete(editingConfig.value.id);
   closeDrawer();
 }
@@ -127,15 +126,15 @@ async function testProvider(config: ApiKeyProviderConfig) {
     const result = await testAiProviderConnection(connectionTestInputFor(config));
     testMessages.value[config.id] = result.ok ? "连接正常" : result.message;
     if (result.ok) {
-      passedConfigIds.value.add(config.id);
+      markProviderVerified(config.id);
       failedConfigIds.value.delete(config.id);
     } else {
-      passedConfigIds.value.delete(config.id);
+      clearProviderVerified(config.id);
       failedConfigIds.value.add(config.id);
     }
   } catch (error) {
     testMessages.value[config.id] = error instanceof Error ? error.message : "连接测试失败";
-    passedConfigIds.value.delete(config.id);
+    clearProviderVerified(config.id);
     failedConfigIds.value.add(config.id);
   }
 }
@@ -162,14 +161,14 @@ function connectionTestInputFor(config: ApiKeyProviderConfig): AiConnectionTestI
 }
 
 function toggleProviderEnabled(config: ApiKeyProviderConfig) {
-  passedConfigIds.value.delete(config.id);
+  clearProviderVerified(config.id);
   failedConfigIds.value.delete(config.id);
   updateProviderConfig({ ...config, enabled: !config.enabled });
 }
 
 function deleteProvider(id: string) {
   if (window.confirm("确定删除该 Provider 配置？本地保存的 API Key 也会被移除。")) {
-    passedConfigIds.value.delete(id);
+    clearProviderVerified(id);
     failedConfigIds.value.delete(id);
     removeProviderConfig(id);
   }

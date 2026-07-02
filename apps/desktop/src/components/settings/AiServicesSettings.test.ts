@@ -35,6 +35,23 @@ describe("AiServicesSettings readiness display wiring", () => {
   });
 });
 
+describe("AiServicesSettings connection-passed status", () => {
+  it("tracks verified status through useAppSettings", () => {
+    expect(source).toContain("markProviderVerified");
+    expect(source).toContain("clearProviderVerified");
+    expect(source).toContain("isProviderVerified");
+  });
+
+  it("only labels providers connected after a successful test", () => {
+    expect(source).toContain("isProviderVerified");
+    expect(source).toContain("连接正常");
+  });
+
+  it("clears verified state when a provider is saved, toggled or deleted", () => {
+    expect(source).toContain("clearProviderVerified");
+  });
+});
+
 describe("AiServicesSettings connection-failed status", () => {
   it("tracks failed connection test IDs separately from config readiness", () => {
     expect(source).toContain("failedConfigIds");
@@ -51,11 +68,5 @@ describe("AiServicesSettings connection-failed status", () => {
 
   it("clears the failed state on a successful retry", () => {
     expect(source).toContain("failedConfigIds.value.delete");
-  });
-
-  it("only labels providers connected after a successful test", () => {
-    expect(source).toContain("passedConfigIds");
-    expect(source).toContain("PASSED_META");
-    expect(source).toContain("连接正常");
   });
 });

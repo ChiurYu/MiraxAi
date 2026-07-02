@@ -162,6 +162,79 @@ describe("useAppSettings", () => {
     expect(verifiedFfmpegPath.value).toBe("");
   });
 
+  it("tracks provider verification as session-only state", () => {
+    const { markProviderVerified, clearProviderVerified, isProviderVerified } = useAppSettings();
+
+    markProviderVerified("p1");
+    expect(isProviderVerified("p1")).toBe(true);
+
+    clearProviderVerified("p1");
+    expect(isProviderVerified("p1")).toBe(false);
+  });
+
+  it("clears verified status when a provider config is updated or removed", () => {
+    const {
+      providerConfigs,
+      addProviderConfig,
+      updateProviderConfig,
+      removeProviderConfig,
+      markProviderVerified,
+      isProviderVerified,
+    } = useAppSettings();
+
+    addProviderConfig({
+      id: "p1",
+      label: "A",
+      provider: "openai",
+      apiKey: "sk-test",
+      model: "gpt-4",
+      enabled: true,
+    });
+
+    markProviderVerified("p1");
+    expect(isProviderVerified("p1")).toBe(true);
+
+    updateProviderConfig({ ...providerConfigs.value[0], label: "A2" });
+    expect(isProviderVerified("p1")).toBe(false);
+
+    markProviderVerified("p1");
+    removeProviderConfig("p1");
+    expect(isProviderVerified("p1")).toBe(false);
+  });
+
+  it("clears verified provider status when provider configs are restored", () => {
+    const { restore, markProviderVerified, isProviderVerified } = useAppSettings();
+
+    markProviderVerified("p1");
+    expect(isProviderVerified("p1")).toBe(true);
+
+    restore({
+      providerConfigs: [
+        {
+          id: "p1",
+          label: "Restored",
+          provider: "openai",
+          model: "gpt-4",
+          enabled: true,
+        },
+      ],
+    });
+
+    expect(isProviderVerified("p1")).toBe(false);
+  });
+
+  it("does not persist verifiedProviderIds to storage", async () => {
+    const storage = createFakeStorage();
+    storage.setItem("mirax-ai.app-settings.v1", JSON.stringify({}));
+    const { markProviderVerified } = useAppSettings({ storage });
+
+    markProviderVerified("p1");
+    await nextTick();
+
+    const raw = storage.getItem("mirax-ai.app-settings.v1")!;
+    expect(raw).not.toContain("verifiedProviderIds");
+  });
+
   it("persists provider metadata without apiKey", async () => {
     const storage = createFakeStorage();
     const { providerConfigs, addProviderConfig } = useAppSettings({ storage });

@@ -2,7 +2,6 @@
 import { Plus, Upload } from "lucide-vue-next";
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import {
-  sanitizeBaseUrlForStorage,
   type ProjectDraft,
   type PublishPlatform,
   type WorkflowStageId,
@@ -40,6 +39,7 @@ import {
   findEnabledSpeechProviderConfig,
   findEnabledTranscribeProviderConfig,
   findEnabledVoiceCloneProviderConfig,
+  getProviderReadiness,
   useAppSettings,
 } from "./composables/useAppSettings.js";
 import { useWorkbenchDraft } from "./composables/useWorkbenchDraft.js";
@@ -69,7 +69,7 @@ const mediaRenderer = createMockMediaRenderer({ artifactRoot: "/Users/Shared/Mir
 const publisher = createMockPublisher();
 
 const { draft, persist } = useWorkbenchDraft();
-const { appSettings, providerConfigs, sidecarConfig, verifiedFfmpegPath } = useAppSettings();
+const { appSettings, providerConfigs, sidecarConfig, verifiedFfmpegPath, isProviderVerified } = useAppSettings();
 
 const generatedVideoPath = ref("");
 const generatedCoverPath = ref("");
@@ -216,41 +216,29 @@ const prep = usePublishPreparation({
   publisher,
 });
 
-function hasValidProviderBaseUrl(baseUrl: string | undefined): boolean {
-  return Boolean(baseUrl?.trim() && sanitizeBaseUrlForStorage(baseUrl.trim()));
-}
-
 function hasExecutableRewriteProvider(): boolean {
   const config = findEnabledRewriteProviderConfig(providerConfigs.value);
-  if (!config || !config.apiKey.trim() || !config.model?.trim()) {
-    return false;
-  }
-
-  const sanitizedBaseUrl = config.baseUrl ? sanitizeBaseUrlForStorage(config.baseUrl.trim()) : undefined;
-  if (config.provider === "custom") {
-    return Boolean(sanitizedBaseUrl);
-  }
-  return config.baseUrl?.trim() ? Boolean(sanitizedBaseUrl) : true;
+  return Boolean(config && getProviderReadiness(config) === "ready" && isProviderVerified(config.id));
 }
 
 function hasExecutableTranscribeProvider(): boolean {
   const config = findEnabledTranscribeProviderConfig(providerConfigs.value);
-  return Boolean(config && hasValidProviderBaseUrl(config.baseUrl) && config.model?.trim());
+  return Boolean(config && getProviderReadiness(config) === "ready" && isProviderVerified(config.id));
 }
 
 function hasExecutableSpeechProvider(): boolean {
   const config = findEnabledSpeechProviderConfig(providerConfigs.value);
-  return Boolean(config && hasValidProviderBaseUrl(config.baseUrl));
+  return Boolean(config && getProviderReadiness(config) === "ready" && isProviderVerified(config.id));
 }
 
 function hasExecutableVoiceCloneProvider(): boolean {
   const config = findEnabledVoiceCloneProviderConfig(providerConfigs.value);
-  return Boolean(config && hasValidProviderBaseUrl(config.baseUrl));
+  return Boolean(config && getProviderReadiness(config) === "ready" && isProviderVerified(config.id));
 }
 
 function hasExecutableAvatarProvider(): boolean {
   const config = findEnabledAvatarProviderConfig(providerConfigs.value);
-  return Boolean(config && hasValidProviderBaseUrl(config.baseUrl));
+  return Boolean(config && getProviderReadiness(config) === "ready" && isProviderVerified(config.id));
 }
 
 const providerStageModes = computed<Record<WorkflowStageId, WorkflowStageRuntimeMode>>(() => {
