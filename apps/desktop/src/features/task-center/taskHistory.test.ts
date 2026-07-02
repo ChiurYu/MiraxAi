@@ -47,8 +47,32 @@ describe("task history", () => {
     });
 
     expect(item.title).toBe("发布任务 demo-project");
-    expect(item.status).toBe("success");
+    expect(item.status).toBe("pending");
     expect(item.taskIds).toEqual(["mock-publish-demo-project-douyin"]);
+  });
+
+  it("does not mark submitted draft publish tasks as success", () => {
+    const item = createPublishHistoryItem({
+      projectId: "demo-project",
+      taskIds: ["mock-publish-demo-project-douyin", "mock-publish-demo-project-xhs"],
+      taskStatuses: ["submitted", "submitted"],
+      videoPath: "/tmp/final.mp4",
+      platforms: ["douyin", "xiaohongshu"],
+    });
+
+    expect(item.status).toBe("submitted");
+  });
+
+  it("marks history completed only when all publish tasks complete", () => {
+    const item = createPublishHistoryItem({
+      projectId: "demo-project",
+      taskIds: ["mock-publish-demo-project-douyin"],
+      taskStatuses: ["completed"],
+      videoPath: "/tmp/final.mp4",
+      platforms: ["douyin"],
+    });
+
+    expect(item.status).toBe("completed");
   });
 
   it("lists newest items first", () => {

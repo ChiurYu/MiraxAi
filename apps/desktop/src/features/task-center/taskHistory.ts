@@ -1,4 +1,5 @@
 import type { PublishPlatform } from "@mirax/core";
+import type { PublishTaskStatus } from "@mirax/provider-publish";
 
 export const TASK_HISTORY_STORAGE_KEY = "mirax-ai.task-history.v1";
 
@@ -9,7 +10,7 @@ export interface PublishHistoryItem {
   taskIds: string[];
   videoPath: string;
   platforms: PublishPlatform[];
-  status: "success" | "failed";
+  status: PublishTaskStatus;
   createdAt: string;
 }
 
@@ -18,9 +19,11 @@ export function createPublishHistoryItem(input: {
   taskIds: string[];
   videoPath: string;
   platforms: PublishPlatform[];
+  taskStatuses?: PublishTaskStatus[];
   createdAt?: string;
 }): PublishHistoryItem {
   const createdAt = input.createdAt ?? new Date().toISOString();
+  const status = historyStatusFromTaskStatuses(input.taskStatuses);
 
   return {
     id: `${input.projectId}-${createdAt}`,
@@ -29,9 +32,20 @@ export function createPublishHistoryItem(input: {
     taskIds: input.taskIds,
     videoPath: input.videoPath,
     platforms: input.platforms,
-    status: "success",
+    status,
     createdAt,
   };
+}
+
+function historyStatusFromTaskStatuses(statuses: PublishTaskStatus[] = []): PublishTaskStatus {
+  if (statuses.length === 0) return "pending";
+  if (statuses.some((status) => status === "failed")) return "failed";
+  if (statuses.some((status) => status === "retryable")) return "retryable";
+  if (statuses.every((status) => status === "completed")) return "completed";
+  if (statuses.some((status) => status === "processing")) return "processing";
+  if (statuses.some((status) => status === "submitted")) return "submitted";
+  if (statuses.every((status) => status === "cancelled")) return "cancelled";
+  return "pending";
 }
 
 export function listLatestHistoryItems(items: PublishHistoryItem[]): PublishHistoryItem[] {

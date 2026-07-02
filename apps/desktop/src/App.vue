@@ -639,6 +639,7 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
         createPublishHistoryItem({
           projectId: runtime.workflow.value.projectId,
           taskIds: tasks.map((task) => task.id),
+          taskStatuses: tasks.map((task) => task.status),
           videoPath,
           platforms: project.value.targetPlatforms,
         }),

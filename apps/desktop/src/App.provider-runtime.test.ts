@@ -42,4 +42,8 @@ describe("App provider runtime wiring", () => {
     expect(source).toContain('avatarMode === "real" && selectedAvatarId.value === "presenter-a"');
     expect(source).toContain("请选择 HeyGem provider 可识别的真实形象。");
   });
+
+  it("passes publish task statuses into history instead of assuming success", () => {
+    expect(source).toContain("taskStatuses: tasks.map((task) => task.status)");
+  });
 });
