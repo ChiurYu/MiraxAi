@@ -73,3 +73,12 @@ describe("AiServicesSettings connection-failed status", () => {
     expect(source).toContain("clearProviderFailed(config.id)");
   });
 });
+
+describe("AiServicesSettings API key editing boundary", () => {
+  it("does not present restored empty API keys as reusable saved secrets", () => {
+    expect(source).toContain("apiKeyFieldName");
+    expect(source).toContain('autocomplete="new-password"');
+    expect(source).toContain("刷新后 API Key 不会保留");
+    expect(source).not.toContain('autocomplete="off"');
+  });
+});

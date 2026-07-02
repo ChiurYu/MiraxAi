@@ -65,6 +65,10 @@ const editingConfig = ref<ApiKeyProviderConfig | null>(null);
 const testMessages = ref<Record<string, string>>({});
 const filter = ref<"all" | "enabled" | "needs-config" | "failed">("all");
 
+const apiKeyFieldName = computed(() =>
+  editingConfig.value ? `mirax-provider-api-key-${editingConfig.value.id}` : "mirax-provider-api-key",
+);
+
 function isConnectionPassed(config: ApiKeyProviderConfig): boolean {
   return config.enabled && getProviderReadiness(config) === "ready" && isProviderVerified(config.id);
 }
@@ -279,9 +283,13 @@ function deleteProvider(id: string) {
           <input
             v-model="editingConfig.apiKey"
             type="password"
-            autocomplete="off"
+            :name="apiKeyFieldName"
+            autocomplete="new-password"
             placeholder="本地填写，不进入持久化 snapshot"
           />
+          <span v-if="!editingConfig.apiKey.trim()" class="field-hint">
+            刷新后 API Key 不会保留，请重新输入后保存并测试。
+          </span>
         </label>
       </form>
 
@@ -474,5 +482,11 @@ function deleteProvider(id: string) {
   font-size: 12px;
   font-weight: 500;
   color: var(--mx-text-secondary);
+}
+
+.field-hint {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--mx-text-tertiary);
 }
 </style>
