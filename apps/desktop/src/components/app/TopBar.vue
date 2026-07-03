@@ -24,6 +24,33 @@ const emit = defineEmits<{
 
 const isWorkbench = computed(() => props.activeView === "workbench");
 
+function isTauriAvailable(): boolean {
+  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+}
+
+function isInteractiveDragTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  const tag = target.tagName.toLowerCase();
+  if (["button", "input", "select", "textarea", "a"].includes(tag)) return true;
+  return target.closest("button, input, select, textarea, a") !== null;
+}
+
+async function startDragging(event: PointerEvent) {
+  // 只响应鼠标左键；交互元素不触发拖动；非 Tauri 环境跳过。
+  if (event.button !== 0) return;
+  if (isInteractiveDragTarget(event.target)) return;
+  if (!isTauriAvailable()) return;
+
+  try {
+    const { getCurrentWindow } = await import("@tauri-apps/api/window");
+    await getCurrentWindow().startDragging();
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.warn("[mirax] 窗口拖动调用失败", error);
+    }
+  }
+}
+
 const pageTitle = computed(() => {
   switch (props.activeView) {
     case "workbench":
@@ -48,8 +75,8 @@ const pageTitle = computed(() => {
 
 <template>
   <header class="window-bar">
-    <span class="window-drag-strip" data-tauri-drag-region aria-hidden="true"></span>
-    <div class="project-overview" data-tauri-drag-region>
+    <span class="window-drag-strip" data-tauri-drag-region aria-hidden="true" @pointerdown="startDragging"></span>
+    <div class="project-overview" data-tauri-drag-region @pointerdown="startDragging">
       <div class="project-title" :class="{ 'workbench-title': isWorkbench }">
         <strong>{{ pageTitle }}</strong>
       </div>

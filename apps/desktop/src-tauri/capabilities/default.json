@@ -3,5 +3,5 @@
   "identifier": "default",
   "description": "Default capabilities for Mirax AI desktop app",
   "windows": ["main"],
-  "permissions": ["core:default", "dialog:default", "core:window:allow-set-theme", "sql:default", "sql:allow-execute", "sql:allow-select"]
+  "permissions": ["core:default", "dialog:default", "core:window:allow-set-theme", "core:window:allow-start-dragging", "sql:default", "sql:allow-execute", "sql:allow-select"]
 }

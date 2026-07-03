@@ -41,6 +41,10 @@ describe("原生标题栏主题同步", () => {
   it("capability 声明最小 set-theme 权限", () => {
     expect(capabilities).toContain("core:window:allow-set-theme");
   });
+
+  it("capability 声明最小 start-dragging 权限", () => {
+    expect(capabilities).toContain("core:window:allow-start-dragging");
+  });
 });
 
 describe("macOS 原生标题栏 Overlay 主修复", () => {
@@ -83,6 +87,19 @@ describe("macOS 原生标题栏 Overlay 主修复", () => {
     expect(topBarSource).toContain('class="project-overview" data-tauri-drag-region');
     expect(topBarSource).not.toContain('<header class="window-bar" data-tauri-drag-region>');
     expect(stylesSource).toMatch(/html\.is-tauri \.window-drag-strip\s*\{[\s\S]*height:\s*var\(--mx-titlebar-inset\);/);
+  });
+
+  it("Overlay 标题栏下通过 startDragging API 实现拖动，保留 data-tauri-drag-region 作为兜底", () => {
+    expect(topBarSource).toContain('@pointerdown="startDragging"');
+    expect(topBarSource).toContain("async function startDragging(event: PointerEvent)");
+    expect(topBarSource).toContain('await import("@tauri-apps/api/window")');
+    expect(topBarSource).toContain("getCurrentWindow().startDragging()");
+  });
+
+  it("startDragging 仅响应鼠标左键并跳过交互元素", () => {
+    expect(topBarSource).toContain("event.button !== 0");
+    expect(topBarSource).toContain('target.closest("button, input, select, textarea, a")');
+    expect(topBarSource).toContain("if (!isTauriAvailable()) return;");
   });
 
   it("系统外观变化时显式通知 Tauri 窗口，确保 WKWebView prefers-color-scheme 同步", () => {
