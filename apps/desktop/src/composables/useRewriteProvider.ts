@@ -1,11 +1,12 @@
 import { sanitizeBaseUrlForStorage, type ApiKeyProviderConfig, type WorkflowStageRuntimeMode } from "@mirax/core";
 import { AiProviderError, createOpenAiCompatibleProvider, type AiProvider } from "@mirax/provider-ai";
-import { findEnabledRewriteProviderConfig } from "./useAppSettings.js";
+import { findActiveRewriteProviderConfig } from "./useAppSettings.js";
 
 export interface RewriteProviderSelectionInput {
   stageMode: WorkflowStageRuntimeMode;
   providerConfigs: ApiKeyProviderConfig[];
   mockProvider: AiProvider;
+  rewriteProviderConfigId?: string;
 }
 
 export type RewriteProviderSelectionResult =
@@ -33,15 +34,11 @@ export function selectRewriteProvider(input: RewriteProviderSelectionInput): Rew
     };
   }
 
-  const config = findEnabledRewriteProviderConfig(input.providerConfigs);
+  const config = findActiveRewriteProviderConfig(input.providerConfigs, input.rewriteProviderConfigId);
   if (!config) {
-    const hasEnabled = input.providerConfigs.some((c) => c.enabled);
     return {
       ok: false,
-      error: new AiProviderError(
-        "not-configured",
-        hasEnabled ? "当前启用的 provider 不适用于文案改写，请启用 openai 或 custom。" : "未启用任何 LLM provider。",
-      ),
+      error: new AiProviderError("not-configured", "请在设置中选择用于文案改写的 Provider。"),
     };
   }
 

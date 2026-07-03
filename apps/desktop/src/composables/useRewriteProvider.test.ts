@@ -50,6 +50,7 @@ describe("selectRewriteProvider", () => {
       stageMode: "real",
       providerConfigs: [makeConfig()],
       mockProvider,
+      rewriteProviderConfigId: "test",
     });
 
     expect(result.ok).toBe(true);
@@ -60,6 +61,7 @@ describe("selectRewriteProvider", () => {
       stageMode: "real",
       providerConfigs: [makeConfig({ provider: "custom", baseUrl: "https://custom.example.com/v1" })],
       mockProvider,
+      rewriteProviderConfigId: "test",
     });
 
     expect(result.ok).toBe(true);
@@ -75,6 +77,7 @@ describe("selectRewriteProvider", () => {
         }),
       ],
       mockProvider,
+      rewriteProviderConfigId: "test",
     });
 
     expect(result.ok).toBe(true);
@@ -89,6 +92,7 @@ describe("selectRewriteProvider", () => {
       stageMode: "real",
       providerConfigs: [makeConfig({ provider: "custom", baseUrl: "not-a-url" })],
       mockProvider,
+      rewriteProviderConfigId: "test",
     });
 
     expect(result.ok).toBe(false);
@@ -102,6 +106,7 @@ describe("selectRewriteProvider", () => {
       stageMode: "real",
       providerConfigs: [makeConfig({ baseUrl: "https://api.openai.com/v1?token=secret#/hash" })],
       mockProvider,
+      rewriteProviderConfigId: "test",
     });
 
     expect(result.ok).toBe(true);
@@ -116,6 +121,7 @@ describe("selectRewriteProvider", () => {
       stageMode: "real",
       providerConfigs: [makeConfig({ provider: "custom", baseUrl: undefined })],
       mockProvider,
+      rewriteProviderConfigId: "test",
     });
 
     expect(result.ok).toBe(false);
@@ -129,6 +135,7 @@ describe("selectRewriteProvider", () => {
       stageMode: "real",
       providerConfigs: [makeConfig({ enabled: false })],
       mockProvider,
+      rewriteProviderConfigId: "test",
     });
 
     expect(result.ok).toBe(false);
@@ -142,6 +149,7 @@ describe("selectRewriteProvider", () => {
       stageMode: "real",
       providerConfigs: [makeConfig({ provider: "whisper" })],
       mockProvider,
+      rewriteProviderConfigId: "test",
     });
 
     expect(result.ok).toBe(false);
@@ -155,6 +163,7 @@ describe("selectRewriteProvider", () => {
       stageMode: "real",
       providerConfigs: [makeConfig({ provider: "cosyvoice" })],
       mockProvider,
+      rewriteProviderConfigId: "test",
     });
 
     expect(result.ok).toBe(false);
@@ -168,6 +177,7 @@ describe("selectRewriteProvider", () => {
       stageMode: "real",
       providerConfigs: [makeConfig({ provider: "heygem" })],
       mockProvider,
+      rewriteProviderConfigId: "test",
     });
 
     expect(result.ok).toBe(false);
@@ -181,6 +191,7 @@ describe("selectRewriteProvider", () => {
       stageMode: "real",
       providerConfigs: [makeConfig({ apiKey: "" })],
       mockProvider,
+      rewriteProviderConfigId: "test",
     });
 
     expect(result.ok).toBe(false);
@@ -194,6 +205,7 @@ describe("selectRewriteProvider", () => {
       stageMode: "real",
       providerConfigs: [makeConfig({ model: "" })],
       mockProvider,
+      rewriteProviderConfigId: "test",
     });
 
     expect(result.ok).toBe(false);
@@ -202,7 +214,7 @@ describe("selectRewriteProvider", () => {
     }
   });
 
-  it("selects first enabled openai/custom provider when other providers are enabled earlier", () => {
+  it("selects the config matching rewriteProviderConfigId", () => {
     const result = selectRewriteProvider({
       stageMode: "real",
       providerConfigs: [
@@ -210,9 +222,33 @@ describe("selectRewriteProvider", () => {
         makeConfig({ id: "o", provider: "openai", enabled: true }),
       ],
       mockProvider,
+      rewriteProviderConfigId: "o",
     });
 
     expect(result.ok).toBe(true);
+  });
+
+  it("returns not-configured when rewriteProviderConfigId is not set", () => {
+    const result = selectRewriteProvider({
+      stageMode: "real",
+      providerConfigs: [makeConfig()],
+      mockProvider,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe("not-configured");
+  });
+
+  it("returns not-configured when rewriteProviderConfigId does not match any config", () => {
+    const result = selectRewriteProvider({
+      stageMode: "real",
+      providerConfigs: [makeConfig({ id: "other" })],
+      mockProvider,
+      rewriteProviderConfigId: "test",
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe("not-configured");
   });
 
   it("returns not-configured when only non-rewrite providers are enabled", () => {
@@ -223,6 +259,7 @@ describe("selectRewriteProvider", () => {
         makeConfig({ id: "h", provider: "heygem", enabled: true }),
       ],
       mockProvider,
+      rewriteProviderConfigId: "test",
     });
 
     expect(result.ok).toBe(false);
@@ -236,6 +273,7 @@ describe("selectRewriteProvider", () => {
       stageMode: "real",
       providerConfigs: [],
       mockProvider,
+      rewriteProviderConfigId: "test",
     });
 
     expect(result.ok).toBe(false);

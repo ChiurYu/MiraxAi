@@ -35,8 +35,8 @@ import VoiceCloningStage from "./components/workbench/stages/VoiceCloningStage.v
 import WorkbenchStagePlaceholder from "./components/workbench/stages/WorkbenchStagePlaceholder.vue";
 import { usePublishPreparation } from "./composables/usePublishPreparation.js";
 import {
+  findActiveRewriteProviderConfig,
   findEnabledAvatarProviderConfig,
-  findEnabledRewriteProviderConfig,
   findEnabledSpeechProviderConfig,
   findEnabledTranscribeProviderConfig,
   findEnabledVoiceCloneProviderConfig,
@@ -222,8 +222,11 @@ const prep = usePublishPreparation({
 });
 
 function hasExecutableRewriteProvider(): boolean {
-  const config = findEnabledRewriteProviderConfig(providerConfigs.value);
-  return Boolean(config && getProviderReadiness(config) === "ready" && isProviderVerified(config.id));
+  const config = findActiveRewriteProviderConfig(
+    providerConfigs.value,
+    appSettings.rewriteProviderConfigId,
+  );
+  return Boolean(config && isProviderVerified(config.id));
 }
 
 function hasExecutableTranscribeProvider(): boolean {
@@ -254,10 +257,18 @@ const providerStageModes = computed<Record<WorkflowStageId, WorkflowStageRuntime
       : trimmedFfmpegPath
         ? "not-connected"
         : "mock";
+  const hasEnabledRewrite = providerConfigs.value.some(
+    (c) => c.enabled && (c.provider === "openai" || c.provider === "custom"),
+  );
+  const rewriteMode: WorkflowStageRuntimeMode = hasExecutableRewriteProvider()
+    ? "real"
+    : hasEnabledRewrite || appSettings.rewriteProviderConfigId
+      ? "not-connected"
+      : "mock";
 
   return {
     transcribe: hasExecutableTranscribeProvider() ? "real" : "mock",
-    rewrite: hasExecutableRewriteProvider() ? "real" : "mock",
+    rewrite: rewriteMode,
     "voice-clone": hasExecutableVoiceCloneProvider() ? "real" : "mock",
     speech: hasExecutableSpeechProvider() ? "real" : "mock",
     avatar: hasExecutableAvatarProvider() ? "real" : "mock",
@@ -305,6 +316,29 @@ const voiceCloneMode = computed(() => runtime.getStageMode("voice-clone"));
 const speechMode = computed(() => runtime.getStageMode("speech"));
 const avatarMode = computed(() => runtime.getStageMode("avatar"));
 const composeMode = computed(() => runtime.getStageMode("compose"));
+
+const rewriteProviderHint = computed(() => {
+  const activeId = appSettings.rewriteProviderConfigId;
+  if (!activeId) {
+    const hasEnabledRewrite = providerConfigs.value.some(
+      (c) => c.enabled && (c.provider === "openai" || c.provider === "custom"),
+    );
+    return hasEnabledRewrite
+      ? "未选择文案改写 Provider，请前往设置 → AI 服务选择。"
+      : "真实 LLM 未连接。请在设置中配置并启用 OpenAI-compatible provider 后再试。";
+  }
+  const config = providerConfigs.value.find((c) => c.id === activeId);
+  if (!config || !config.enabled) {
+    return "选中的文案改写 Provider 已停用或被删除，请重新选择。";
+  }
+  if (getProviderReadiness(config) !== "ready") {
+    return "选中的文案改写 Provider 配置不完整，请检查 API Key、模型与 Base URL。";
+  }
+  if (!isProviderVerified(config.id)) {
+    return "选中的文案改写 Provider 尚未通过连接测试，请先测试连接。";
+  }
+  return "";
+});
 
 onMounted(async () => {
   // Tauri 原生窗口标记：启用 CSS 标题栏安全内边距（Overlay 标题栏下移品牌/顶栏内容）。
@@ -431,6 +465,7 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
         stageMode: runtime.getStageMode("rewrite"),
         providerConfigs: providerConfigs.value,
         mockProvider: aiProvider,
+        rewriteProviderConfigId: appSettings.rewriteProviderConfigId,
       });
       if (!selection.ok) {
         rewriteErrorMessage.value = selection.error.message;
@@ -857,7 +892,7 @@ function stagePreviewLabel(stageId: WorkflowStageId): string {
           :running="runtime.running.value"
           :status="stage.status"
           :mode="rewriteMode"
-          :error-message="rewriteErrorMessage"
+          :error-message="rewriteErrorMessage || rewriteProviderHint"
           @update:transcript-text="transcriptText = $event"
           @run="runtime.runStage('rewrite')"
         />

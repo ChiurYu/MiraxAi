@@ -255,7 +255,7 @@ function handleRegenerate() {
 
       <div v-if="isNotConnected" class="status-banner status-warning">
         <AlertCircle :size="14" />
-        <span>真实 LLM 未连接。请在设置中配置并启用 OpenAI-compatible provider 后再试。</span>
+        <span>{{ errorMessage || "真实 LLM 未连接。请在设置中配置并启用 OpenAI-compatible provider 后再试。" }}</span>
       </div>
 
       <div v-else-if="isReal && hasError" class="status-banner status-error">
