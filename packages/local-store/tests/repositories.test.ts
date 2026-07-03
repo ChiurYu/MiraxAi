@@ -31,12 +31,13 @@ describe("createAppSettingsRepository", () => {
   it("maps select rows to camelCase records", async () => {
     const db = new FakeLocalStoreDb();
     db.whenSelect(
-      `SELECT id, theme, output_paths_json as outputPathsJson, created_at as createdAt, updated_at as updatedAt FROM app_settings WHERE id = ?`,
+      `SELECT id, theme, output_paths_json as outputPathsJson, rewrite_provider_config_id as rewriteProviderConfigId, created_at as createdAt, updated_at as updatedAt FROM app_settings WHERE id = ?`,
       [
         {
           id: "default",
           theme: "light",
           outputPathsJson: "{}",
+          rewriteProviderConfigId: "openai-1",
           createdAt: "2026-01-01T00:00:00.000Z",
           updatedAt: "2026-01-01T00:00:00.000Z",
         },
@@ -47,6 +48,7 @@ describe("createAppSettingsRepository", () => {
 
     expect(record?.theme).toBe("light");
     expect(record?.outputPathsJson).toBe("{}");
+    expect(record?.rewriteProviderConfigId).toBe("openai-1");
   });
 });
 

@@ -73,6 +73,7 @@ export const LOCAL_STORE_MIGRATIONS = [
     id TEXT PRIMARY KEY,
     theme TEXT NOT NULL,
     output_paths_json TEXT NOT NULL,
+    rewrite_provider_config_id TEXT,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
   );`,
@@ -119,6 +120,7 @@ export const LOCAL_STORE_MIGRATIONS = [
     status TEXT NOT NULL,
     created_at TEXT NOT NULL
   );`,
+  `ALTER TABLE app_settings ADD COLUMN rewrite_provider_config_id TEXT;`,
 ] as const;
 
 export function createLocalStoreMigrationSql(): string {

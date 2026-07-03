@@ -328,6 +328,7 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
         id: "default",
         theme: appSettings.theme,
         outputPathsJson: JSON.stringify(appSettings.outputPaths),
+        rewriteProviderConfigId: appSettings.rewriteProviderConfigId,
         createdAt: now,
         updatedAt: now,
       });

@@ -100,6 +100,7 @@ export function createDefaultAppSettings(id = "default"): AppSettings {
       exportOutput: "/Users/Shared/MiraxAI/export",
       thumbsOutput: "/Users/Shared/MiraxAI/thumbs",
     },
+    rewriteProviderConfigId: undefined,
   };
 }
 

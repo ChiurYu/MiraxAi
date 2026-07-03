@@ -97,6 +97,7 @@ export interface AppSettingsRecord {
   id: string;
   theme: string;
   outputPathsJson: string;
+  rewriteProviderConfigId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -161,7 +162,7 @@ export function createAppSettingsRepository(db: LocalStoreDb): AppSettingsReposi
   return {
     async getById(id: string): Promise<AppSettingsRecord | undefined> {
       const rows = await db.select<AppSettingsRecord>(
-        `SELECT id, theme, output_paths_json as outputPathsJson, created_at as createdAt, updated_at as updatedAt FROM app_settings WHERE id = ?`,
+        `SELECT id, theme, output_paths_json as outputPathsJson, rewrite_provider_config_id as rewriteProviderConfigId, created_at as createdAt, updated_at as updatedAt FROM app_settings WHERE id = ?`,
         [id],
       );
       return rows[0];
@@ -169,13 +170,13 @@ export function createAppSettingsRepository(db: LocalStoreDb): AppSettingsReposi
     async save(record: AppSettingsRecord): Promise<void> {
       const t = nowIso();
       await db.execute(
-        `INSERT OR REPLACE INTO app_settings (id, theme, output_paths_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`,
-        [record.id, record.theme, record.outputPathsJson, record.createdAt ?? t, record.updatedAt ?? t],
+        `INSERT OR REPLACE INTO app_settings (id, theme, output_paths_json, rewrite_provider_config_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`,
+        [record.id, record.theme, record.outputPathsJson, record.rewriteProviderConfigId ?? null, record.createdAt ?? t, record.updatedAt ?? t],
       );
     },
     async list(): Promise<AppSettingsRecord[]> {
       return db.select<AppSettingsRecord>(
-        `SELECT id, theme, output_paths_json as outputPathsJson, created_at as createdAt, updated_at as updatedAt FROM app_settings`,
+        `SELECT id, theme, output_paths_json as outputPathsJson, rewrite_provider_config_id as rewriteProviderConfigId, created_at as createdAt, updated_at as updatedAt FROM app_settings`,
       );
     },
   };

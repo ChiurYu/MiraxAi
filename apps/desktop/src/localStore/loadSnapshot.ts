@@ -45,6 +45,7 @@ export async function loadAppSettingsSnapshotFromDb(
         id: appSettingsRecord.id,
         theme: appSettingsRecord.theme as AppSettings["theme"],
         outputPaths: JSON.parse(appSettingsRecord.outputPathsJson) as AppSettings["outputPaths"],
+        rewriteProviderConfigId: appSettingsRecord.rewriteProviderConfigId,
       };
     } catch {
       // ignore corrupted output paths

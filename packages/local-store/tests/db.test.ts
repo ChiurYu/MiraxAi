@@ -7,7 +7,7 @@ describe("migrateLocalStore", () => {
     const db = new FakeLocalStoreDb();
     await migrateLocalStore(db);
 
-    const executeCalls = db.calls.filter((c) => c.sql.startsWith("CREATE TABLE"));
+    const executeCalls = db.calls.filter((c) => c.sql.startsWith("CREATE TABLE") || c.sql.startsWith("ALTER TABLE"));
     expect(executeCalls).toHaveLength(LOCAL_STORE_MIGRATIONS.length);
   });
 

@@ -109,6 +109,7 @@ export interface AppSettings {
   id: string;
   theme: AppTheme;
   outputPaths: AppOutputPaths;
+  rewriteProviderConfigId?: string;
 }
 
 export interface PublishMetadata {
