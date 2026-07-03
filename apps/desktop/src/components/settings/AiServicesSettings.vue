@@ -48,10 +48,12 @@ const FAILED_META: { label: string; icon: typeof AlertCircle; className: string 
 };
 
 const {
+  appSettings,
   providerConfigs,
   addProviderConfig,
   updateProviderConfig,
   removeProviderConfig,
+  setRewriteProviderConfigId,
   markProviderVerified,
   clearProviderVerified,
   isProviderVerified,
@@ -69,6 +71,14 @@ const filter = ref<"all" | "enabled" | "needs-config" | "failed">("all");
 const apiKeyFieldName = computed(() =>
   editingConfig.value ? `mirax-provider-api-key-${editingConfig.value.id}` : "mirax-provider-api-key",
 );
+
+function isRewriteProvider(config: ApiKeyProviderConfig): boolean {
+  return config.provider === "openai" || config.provider === "custom";
+}
+
+function isActiveRewriteProvider(config: ApiKeyProviderConfig): boolean {
+  return isRewriteProvider(config) && appSettings.rewriteProviderConfigId === config.id;
+}
 
 function isConnectionPassed(config: ApiKeyProviderConfig): boolean {
   return config.enabled && getProviderReadiness(config) === "ready" && isProviderVerified(config.id);
@@ -247,6 +257,21 @@ function deleteProvider(id: string) {
           </span>
         </div>
         <div class="provider-cell provider-actions">
+          <button
+            v-if="isRewriteProvider(config) && !isActiveRewriteProvider(config)"
+            type="button"
+            class="ghost-button"
+            @click="setRewriteProviderConfigId(config.id)"
+          >
+            设为文案改写
+          </button>
+          <span
+            v-if="isActiveRewriteProvider(config)"
+            class="provider-status ready"
+          >
+            <CheckCircle2 :size="12" />
+            文案改写使用中
+          </span>
           <button type="button" class="ghost-button" @click="toggleProviderEnabled(config)">
             {{ config.enabled ? "停用" : "启用" }}
           </button>

@@ -82,3 +82,17 @@ describe("AiServicesSettings API key editing boundary", () => {
     expect(source).not.toContain('autocomplete="off"');
   });
 });
+
+describe("rewrite provider selection UI", () => {
+  it("shows '设为文案改写' action for openai/custom providers", () => {
+    expect(source).toContain("设为文案改写");
+  });
+
+  it("shows active rewrite provider badge", () => {
+    expect(source).toContain("文案改写使用中");
+  });
+
+  it("calls setRewriteProviderConfigId when selecting", () => {
+    expect(source).toContain("setRewriteProviderConfigId(config.id)");
+  });
+});
