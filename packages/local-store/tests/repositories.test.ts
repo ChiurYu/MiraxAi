@@ -6,6 +6,7 @@ import {
   createProviderSecretsRepository,
   createSidecarConfigRepository,
   createWorkbenchDraftRepository,
+  createTaskHistoryRepository,
 } from "../src/index.js";
 
 describe("createAppSettingsRepository", () => {
@@ -216,5 +217,63 @@ describe("createWorkbenchDraftRepository", () => {
     const call = db.calls[0];
     expect(call.sql).toContain("DELETE FROM workbench_drafts");
     expect(call.bind).toEqual(["default"]);
+  });
+});
+
+describe("createTaskHistoryRepository", () => {
+  it("saves history with correct SQL and bind parameters", async () => {
+    const db = new FakeLocalStoreDb();
+    const repo = createTaskHistoryRepository(db);
+
+    await repo.save({
+      id: "h1",
+      projectId: "p1",
+      title: "发布任务 p1",
+      taskIdsJson: JSON.stringify(["t1"]),
+      videoPath: "/tmp/final.mp4",
+      platformsJson: JSON.stringify(["douyin"]),
+      status: "submitted",
+      createdAt: "2026-01-01T00:00:00.000Z",
+    });
+
+    const call = db.calls[0];
+    expect(call.sql).toContain("INSERT OR REPLACE INTO task_history");
+    expect(call.bind).toContain("h1");
+    expect(call.bind).toContain("submitted");
+  });
+
+  it("maps list rows to camelCase records", async () => {
+    const db = new FakeLocalStoreDb();
+    db.whenSelect(
+      `SELECT id, project_id as projectId, title, task_ids_json as taskIdsJson, video_path as videoPath, platforms_json as platformsJson, status, created_at as createdAt FROM task_history ORDER BY created_at DESC`,
+      [
+        {
+          id: "h1",
+          projectId: "p1",
+          title: "发布任务 p1",
+          taskIdsJson: JSON.stringify(["t1"]),
+          videoPath: "/tmp/final.mp4",
+          platformsJson: JSON.stringify(["douyin"]),
+          status: "submitted",
+          createdAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+    );
+    const repo = createTaskHistoryRepository(db);
+    const records = await repo.list();
+
+    expect(records[0]?.id).toBe("h1");
+    expect(records[0]?.status).toBe("submitted");
+  });
+
+  it("deletes history by id", async () => {
+    const db = new FakeLocalStoreDb();
+    const repo = createTaskHistoryRepository(db);
+
+    await repo.deleteById("h1");
+
+    const call = db.calls[0];
+    expect(call.sql).toContain("DELETE FROM task_history");
+    expect(call.bind).toEqual(["h1"]);
   });
 });

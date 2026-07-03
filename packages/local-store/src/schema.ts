@@ -9,6 +9,7 @@ export const LOCAL_STORE_SCHEMA_TABLES = [
   "sidecar_configs",
   "publish_tasks",
   "workbench_drafts",
+  "task_history",
 ] as const;
 
 export const LOCAL_STORE_MIGRATIONS = [
@@ -107,6 +108,16 @@ export const LOCAL_STORE_MIGRATIONS = [
     id TEXT PRIMARY KEY,
     payload_json TEXT NOT NULL,
     updated_at TEXT NOT NULL
+  );`,
+  `CREATE TABLE IF NOT EXISTS task_history (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    task_ids_json TEXT NOT NULL,
+    video_path TEXT NOT NULL,
+    platforms_json TEXT NOT NULL,
+    status TEXT NOT NULL,
+    created_at TEXT NOT NULL
   );`,
 ] as const;
 

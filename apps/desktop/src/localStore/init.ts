@@ -4,6 +4,8 @@ import {
   setLocalStoreDb as setAppSettingsLocalStoreDb,
 } from "../composables/useAppSettings.js";
 import { setWorkbenchDraftDb } from "../composables/useWorkbenchDraft.js";
+import { setPublishTaskStoreDb } from "../features/task-center/publishTaskStore.js";
+import { setTaskHistoryDb } from "../features/task-center/taskHistory.js";
 import { TauriLocalStoreDb } from "./adapter.js";
 import { loadAppSettingsSnapshotFromDb } from "./loadSnapshot.js";
 
@@ -26,6 +28,8 @@ export async function initLocalStore(): Promise<LocalStoreDb | undefined> {
 
     setAppSettingsLocalStoreDb(db);
     setWorkbenchDraftDb(db);
+    setPublishTaskStoreDb(db);
+    setTaskHistoryDb(db);
     return db;
   } catch (error) {
     // eslint-disable-next-line no-console

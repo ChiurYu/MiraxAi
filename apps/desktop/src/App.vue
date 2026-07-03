@@ -661,8 +661,8 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
         throw new Error("发布校验失败，未创建任务");
       }
 
-      appendPublishTasks(tasks);
-      appendPublishHistoryItem(
+      await appendPublishTasks(tasks);
+      await appendPublishHistoryItem(
         createPublishHistoryItem({
           projectId: runtime.workflow.value.projectId,
           taskIds: tasks.map((task) => task.id),

@@ -56,6 +56,17 @@ export interface WorkbenchDraftRecord {
   updatedAt: string;
 }
 
+export interface TaskHistoryRecord {
+  id: string;
+  projectId: string;
+  title: string;
+  taskIdsJson: string;
+  videoPath: string;
+  platformsJson: string;
+  status: string;
+  createdAt: string;
+}
+
 export interface Repository<TRecord extends { id: string }> {
   getById(id: string): Promise<TRecord | undefined>;
   save(record: TRecord): Promise<void>;
@@ -73,6 +84,12 @@ export type WorkflowTaskRepository = Repository<WorkflowTaskRecord>;
 export interface WorkbenchDraftRepository {
   getById(id: string): Promise<WorkbenchDraftRecord | undefined>;
   save(record: WorkbenchDraftRecord): Promise<void>;
+  deleteById(id: string): Promise<void>;
+}
+
+export interface TaskHistoryRepository {
+  list(): Promise<TaskHistoryRecord[]>;
+  save(record: TaskHistoryRecord): Promise<void>;
   deleteById(id: string): Promise<void>;
 }
 
@@ -117,7 +134,9 @@ export interface PublishTaskRecord {
   updatedAt: string;
 }
 
-export type PublishTaskRepository = Repository<PublishTaskRecord>;
+export interface PublishTaskRepository extends Repository<PublishTaskRecord> {
+  deleteById(id: string): Promise<void>;
+}
 
 export interface ProviderSecretsRecord {
   credentialRef: string;
@@ -254,6 +273,50 @@ export function createProviderSecretsRepository(db: LocalStoreDb): ProviderSecre
   };
 }
 
+export function createPublishTaskRepository(db: LocalStoreDb): PublishTaskRepository {
+  return {
+    async getById(id: string): Promise<PublishTaskRecord | undefined> {
+      const rows = await db.select<PublishTaskRecord>(
+        `SELECT id, project_id as projectId, platform_id as platformId, account_id as accountId, status, video_path as videoPath, title, description, tags_json as tagsJson, mode, error_code as errorCode, error_message as errorMessage, failed_at as failedAt, retry_count as retryCount, created_at as createdAt, updated_at as updatedAt FROM publish_tasks WHERE id = ?`,
+        [id],
+      );
+      return rows[0];
+    },
+    async save(record: PublishTaskRecord): Promise<void> {
+      const t = nowIso();
+      await db.execute(
+        `INSERT OR REPLACE INTO publish_tasks (id, project_id, platform_id, account_id, status, video_path, title, description, tags_json, mode, error_code, error_message, failed_at, retry_count, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          record.id,
+          record.projectId,
+          record.platformId,
+          record.accountId,
+          record.status,
+          record.videoPath,
+          record.title,
+          record.description,
+          record.tagsJson,
+          record.mode,
+          record.errorCode ?? null,
+          record.errorMessage ?? null,
+          record.failedAt ?? null,
+          record.retryCount ?? 0,
+          record.createdAt ?? t,
+          record.updatedAt ?? t,
+        ],
+      );
+    },
+    async list(): Promise<PublishTaskRecord[]> {
+      return db.select<PublishTaskRecord>(
+        `SELECT id, project_id as projectId, platform_id as platformId, account_id as accountId, status, video_path as videoPath, title, description, tags_json as tagsJson, mode, error_code as errorCode, error_message as errorMessage, failed_at as failedAt, retry_count as retryCount, created_at as createdAt, updated_at as updatedAt FROM publish_tasks`,
+      );
+    },
+    async deleteById(id: string): Promise<void> {
+      await db.execute(`DELETE FROM publish_tasks WHERE id = ?`, [id]);
+    },
+  };
+}
+
 export function createWorkbenchDraftRepository(db: LocalStoreDb): WorkbenchDraftRepository {
   return {
     async getById(id: string): Promise<WorkbenchDraftRecord | undefined> {
@@ -272,6 +335,35 @@ export function createWorkbenchDraftRepository(db: LocalStoreDb): WorkbenchDraft
     },
     async deleteById(id: string): Promise<void> {
       await db.execute(`DELETE FROM workbench_drafts WHERE id = ?`, [id]);
+    },
+  };
+}
+
+export function createTaskHistoryRepository(db: LocalStoreDb): TaskHistoryRepository {
+  return {
+    async list(): Promise<TaskHistoryRecord[]> {
+      return db.select<TaskHistoryRecord>(
+        `SELECT id, project_id as projectId, title, task_ids_json as taskIdsJson, video_path as videoPath, platforms_json as platformsJson, status, created_at as createdAt FROM task_history ORDER BY created_at DESC`,
+      );
+    },
+    async save(record: TaskHistoryRecord): Promise<void> {
+      const t = nowIso();
+      await db.execute(
+        `INSERT OR REPLACE INTO task_history (id, project_id, title, task_ids_json, video_path, platforms_json, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          record.id,
+          record.projectId,
+          record.title,
+          record.taskIdsJson,
+          record.videoPath,
+          record.platformsJson,
+          record.status,
+          record.createdAt ?? t,
+        ],
+      );
+    },
+    async deleteById(id: string): Promise<void> {
+      await db.execute(`DELETE FROM task_history WHERE id = ?`, [id]);
     },
   };
 }

@@ -1,7 +1,18 @@
 import type { PublishPlatform } from "@mirax/core";
+import { createTaskHistoryRepository, type LocalStoreDb, type TaskHistoryRecord } from "@mirax/local-store";
 import type { PublishTaskStatus } from "@mirax/provider-publish";
 
 export const TASK_HISTORY_STORAGE_KEY = "mirax-ai.task-history.v1";
+
+let sharedDb: LocalStoreDb | undefined;
+
+export function setTaskHistoryDb(db: LocalStoreDb | undefined): void {
+  sharedDb = db;
+}
+
+export function getTaskHistoryDb(): LocalStoreDb | undefined {
+  return sharedDb;
+}
 
 export interface PublishHistoryItem {
   id: string;
@@ -52,6 +63,32 @@ export function listLatestHistoryItems(items: PublishHistoryItem[]): PublishHist
   return [...items].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
+function historyItemToRecord(item: PublishHistoryItem): TaskHistoryRecord {
+  return {
+    id: item.id,
+    projectId: item.projectId,
+    title: item.title,
+    taskIdsJson: JSON.stringify(item.taskIds),
+    videoPath: item.videoPath,
+    platformsJson: JSON.stringify(item.platforms),
+    status: item.status,
+    createdAt: item.createdAt,
+  };
+}
+
+function recordToHistoryItem(record: TaskHistoryRecord): PublishHistoryItem {
+  return {
+    id: record.id,
+    projectId: record.projectId,
+    title: record.title,
+    taskIds: JSON.parse(record.taskIdsJson) as string[],
+    videoPath: record.videoPath,
+    platforms: JSON.parse(record.platformsJson) as PublishPlatform[],
+    status: record.status as PublishTaskStatus,
+    createdAt: record.createdAt,
+  };
+}
+
 function getStorage(): Storage | undefined {
   if (typeof window !== "undefined" && window.localStorage) {
     return window.localStorage;
@@ -64,7 +101,46 @@ function getStorage(): Storage | undefined {
   return undefined;
 }
 
-export function loadTaskHistory(): PublishHistoryItem[] {
+async function loadTaskHistoryFromDb(db: LocalStoreDb): Promise<PublishHistoryItem[] | undefined> {
+  try {
+    const repo = createTaskHistoryRepository(db);
+    const records = await repo.list();
+    return records.map(recordToHistoryItem);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.warn("SQLite 任务历史读取失败，回退 localStorage", error);
+    return undefined;
+  }
+}
+
+async function saveTaskHistoryToDb(db: LocalStoreDb, items: PublishHistoryItem[]): Promise<boolean> {
+  try {
+    const repo = createTaskHistoryRepository(db);
+    const nextIds = new Set(items.map((item) => item.id));
+    for (const item of items) {
+      await repo.save(historyItemToRecord(item));
+    }
+    for (const existing of await repo.list()) {
+      if (!nextIds.has(existing.id)) {
+        await repo.deleteById(existing.id);
+      }
+    }
+    return true;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.warn("SQLite 任务历史保存失败，回退 localStorage", error);
+    return false;
+  }
+}
+
+export async function loadTaskHistory(): Promise<PublishHistoryItem[]> {
+  if (sharedDb) {
+    const fromDb = await loadTaskHistoryFromDb(sharedDb);
+    if (fromDb !== undefined) {
+      return fromDb;
+    }
+  }
+
   const storage = getStorage();
   if (!storage) {
     return [];
@@ -87,7 +163,12 @@ export function loadTaskHistory(): PublishHistoryItem[] {
   }
 }
 
-export function saveTaskHistory(items: PublishHistoryItem[]): void {
+export async function saveTaskHistory(items: PublishHistoryItem[]): Promise<void> {
+  if (sharedDb) {
+    const saved = await saveTaskHistoryToDb(sharedDb, items);
+    if (saved) return;
+  }
+
   const storage = getStorage();
   if (!storage) {
     return;
@@ -96,8 +177,8 @@ export function saveTaskHistory(items: PublishHistoryItem[]): void {
   storage.setItem(TASK_HISTORY_STORAGE_KEY, JSON.stringify(items));
 }
 
-export function appendPublishHistoryItem(item: PublishHistoryItem): void {
-  const history = loadTaskHistory();
+export async function appendPublishHistoryItem(item: PublishHistoryItem): Promise<void> {
+  const history = await loadTaskHistory();
   history.unshift(item);
-  saveTaskHistory(history);
+  await saveTaskHistory(history);
 }

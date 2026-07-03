@@ -13,15 +13,17 @@ export interface UseTaskCenterPreviewOptions {
 
 export function useTaskCenterPreview(options: UseTaskCenterPreviewOptions = {}) {
   const limit = options.limit ?? 5;
-  const items = ref<PublishHistoryItem[]>(loadTaskHistory());
-  const tasks = ref<PublishTask[]>(loadPublishTasks());
+  const items = ref<PublishHistoryItem[]>([]);
+  const tasks = ref<PublishTask[]>([]);
 
   const latestItems = computed(() => listLatestHistoryItems(items.value).slice(0, limit));
 
-  function refresh() {
-    items.value = loadTaskHistory();
-    tasks.value = loadPublishTasks();
+  async function refresh() {
+    items.value = await loadTaskHistory();
+    tasks.value = await loadPublishTasks();
   }
+
+  refresh();
 
   return {
     items,

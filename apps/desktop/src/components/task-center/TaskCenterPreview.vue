@@ -35,10 +35,10 @@ const statusMap: Record<PublishTask["status"], { label: string; icon: typeof Clo
   cancelled: { label: "取消", icon: XCircle },
 };
 
-function retryTask(task: PublishTask) {
+async function retryTask(task: PublishTask) {
   const next = tasks.value.map((item) => (item.id === task.id ? { ...item, status: "pending" as const } : item));
-  savePublishTasks(next);
-  refresh();
+  await savePublishTasks(next);
+  await refresh();
   emit("retry", task);
 }
 
