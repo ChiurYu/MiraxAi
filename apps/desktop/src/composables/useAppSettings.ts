@@ -76,6 +76,29 @@ export function findEnabledRewriteProviderConfig(
 }
 
 /**
+ * 根据显式选中的 active id 返回对应 rewrite provider 配置。
+ *
+ * 规则：
+ * - `activeId` 必须存在且命中某一配置；
+ * - 该配置必须 `enabled === true`；
+ * - `provider` 必须是 `"openai"` 或 `"custom"`；
+ * - `getProviderReadiness(config)` 必须返回 `"ready"`；
+ * - 任一条件不满足即返回 `undefined`，不降级到其他 provider。
+ */
+export function findActiveRewriteProviderConfig(
+  configs: ApiKeyProviderConfig[],
+  activeId: string | undefined,
+): ApiKeyProviderConfig | undefined {
+  if (!activeId) return undefined;
+  const config = configs.find((c) => c.id === activeId);
+  if (!config) return undefined;
+  if (!config.enabled) return undefined;
+  if (config.provider !== "openai" && config.provider !== "custom") return undefined;
+  if (getProviderReadiness(config) !== "ready") return undefined;
+  return config;
+}
+
+/**
  * 从 provider 配置数组中选出当前可用于 transcribe 真实转写的配置。
  */
 export function findEnabledTranscribeProviderConfig(
@@ -413,6 +436,10 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
     clearProviderVerified(id);
     clearProviderFailed(id);
 
+    if (appSettings.rewriteProviderConfigId === id) {
+      appSettings.rewriteProviderConfigId = undefined;
+    }
+
     if (db) {
       const providerRepo = createProviderConfigRepository(db);
       const secretsRepo = createProviderSecretsRepository(db);
@@ -454,6 +481,10 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
     settingsSection.value = section;
   }
 
+  function setRewriteProviderConfigId(id: string) {
+    appSettings.rewriteProviderConfigId = id;
+  }
+
   watch(
     () => sidecarConfig.ffmpegPath,
     () => {
@@ -483,6 +514,7 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
     updateProviderConfig,
     removeProviderConfig,
     setSettingsSection,
+    setRewriteProviderConfigId,
     markProviderVerified,
     clearProviderVerified,
     isProviderVerified,

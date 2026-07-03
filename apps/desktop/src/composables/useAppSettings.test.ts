@@ -3,6 +3,7 @@ import { nextTick } from "vue";
 import type { ApiKeyProviderConfig } from "@mirax/core";
 import { FakeLocalStoreDb } from "@mirax/local-store";
 import {
+  findActiveRewriteProviderConfig,
   findEnabledAvatarProviderConfig,
   findEnabledRewriteProviderConfig,
   findEnabledSpeechProviderConfig,
@@ -94,6 +95,32 @@ describe("useAppSettings", () => {
 
     removeProviderConfig("p1");
     expect(providerConfigs.value).toHaveLength(0);
+  });
+
+  it("clears rewriteProviderConfigId when the active provider is removed", () => {
+    const {
+      appSettings,
+      providerConfigs,
+      addProviderConfig,
+      removeProviderConfig,
+      setRewriteProviderConfigId,
+    } = useAppSettings();
+
+    addProviderConfig({
+      id: "p-active",
+      label: "Active",
+      provider: "openai",
+      apiKey: "sk-active",
+      model: "gpt-4",
+      enabled: true,
+    });
+
+    setRewriteProviderConfigId("p-active");
+    expect(appSettings.rewriteProviderConfigId).toBe("p-active");
+
+    removeProviderConfig("p-active");
+    expect(providerConfigs.value).toHaveLength(0);
+    expect(appSettings.rewriteProviderConfigId).toBeUndefined();
   });
 
   it("does not persist provider apiKey to storage", async () => {
@@ -458,6 +485,71 @@ describe("findEnabledRewriteProviderConfig", () => {
     // This assertion documents that the returned object still carries the in-memory apiKey,
     // which is acceptable because it never leaves the memory boundary.
     expect(found!.baseUrl).toBe("https://user:pass@api.example.com/v1?token=secret#/hash");
+  });
+});
+
+describe("findActiveRewriteProviderConfig", () => {
+  function makeConfig(overrides: Partial<ApiKeyProviderConfig> = {}): ApiKeyProviderConfig {
+    return {
+      id: "test",
+      label: "Test",
+      provider: "openai",
+      apiKey: "sk-test",
+      baseUrl: "https://api.openai.com/v1",
+      model: "gpt-4",
+      enabled: true,
+      ...overrides,
+    };
+  }
+
+  it("returns the config when active id matches a ready openai provider", () => {
+    const configs = [makeConfig({ id: "active" })];
+    const found = findActiveRewriteProviderConfig(configs, "active");
+    expect(found).toBeDefined();
+    expect(found!.id).toBe("active");
+  });
+
+  it("returns the config when active id matches a ready custom provider", () => {
+    const configs = [
+      makeConfig({ id: "active", provider: "custom", baseUrl: "https://api.example.com/v1" }),
+    ];
+    const found = findActiveRewriteProviderConfig(configs, "active");
+    expect(found).toBeDefined();
+    expect(found!.id).toBe("active");
+    expect(found!.provider).toBe("custom");
+  });
+
+  it("returns undefined when active id does not match any config", () => {
+    const configs = [makeConfig({ id: "other" })];
+    expect(findActiveRewriteProviderConfig(configs, "active")).toBeUndefined();
+  });
+
+  it("returns undefined when active id matches a disabled config", () => {
+    const configs = [makeConfig({ id: "active", enabled: false })];
+    expect(findActiveRewriteProviderConfig(configs, "active")).toBeUndefined();
+  });
+
+  it("returns undefined when active id matches a whisper provider", () => {
+    const configs = [
+      makeConfig({
+        id: "active",
+        provider: "whisper",
+        baseUrl: "https://whisper.example.com",
+        model: "whisper-v3",
+      }),
+    ];
+    expect(findActiveRewriteProviderConfig(configs, "active")).toBeUndefined();
+  });
+
+  it("returns undefined when active id matches a config that is not ready", () => {
+    const configs = [makeConfig({ id: "active", apiKey: "" })];
+    expect(findActiveRewriteProviderConfig(configs, "active")).toBeUndefined();
+  });
+
+  it("returns undefined when active id is empty", () => {
+    const configs = [makeConfig({ id: "active" })];
+    expect(findActiveRewriteProviderConfig(configs, "")).toBeUndefined();
+    expect(findActiveRewriteProviderConfig(configs, undefined)).toBeUndefined();
   });
 });
 
