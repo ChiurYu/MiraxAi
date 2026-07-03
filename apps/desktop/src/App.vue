@@ -68,7 +68,7 @@ const aiProvider = createMockAiProvider({ artifactRoot: "/Users/Shared/MiraxAI" 
 const mediaRenderer = createMockMediaRenderer({ artifactRoot: "/Users/Shared/MiraxAI" });
 const publisher = createMockPublisher();
 
-const { draft, persist } = useWorkbenchDraft();
+const { draft, persist, ready: draftReady } = useWorkbenchDraft();
 const { appSettings, providerConfigs, sidecarConfig, verifiedFfmpegPath, isProviderVerified } = useAppSettings();
 
 const generatedVideoPath = ref("");
@@ -274,8 +274,13 @@ const runtime = useWorkflowRuntime({
 });
 
 // 恢复草稿中保存的 workflow 状态与当前阶段，使刷新后仍停留在原阶段。
-runtime.workflow.value = draft.workflow;
-runtime.activeStageId.value = draft.activeStageId ?? "transcribe";
+function syncRuntimeFromDraft() {
+  runtime.workflow.value = draft.workflow;
+  runtime.activeStageId.value = draft.activeStageId ?? "transcribe";
+}
+
+syncRuntimeFromDraft();
+void draftReady.then(syncRuntimeFromDraft);
 watch(
   () => runtime.activeStageId.value,
   (stageId) => {

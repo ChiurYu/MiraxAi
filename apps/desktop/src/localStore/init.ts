@@ -3,6 +3,7 @@ import {
   setInitialAppSettingsSnapshot,
   setLocalStoreDb as setAppSettingsLocalStoreDb,
 } from "../composables/useAppSettings.js";
+import { setWorkbenchDraftDb } from "../composables/useWorkbenchDraft.js";
 import { TauriLocalStoreDb } from "./adapter.js";
 import { loadAppSettingsSnapshotFromDb } from "./loadSnapshot.js";
 
@@ -24,6 +25,7 @@ export async function initLocalStore(): Promise<LocalStoreDb | undefined> {
     }
 
     setAppSettingsLocalStoreDb(db);
+    setWorkbenchDraftDb(db);
     return db;
   } catch (error) {
     // eslint-disable-next-line no-console

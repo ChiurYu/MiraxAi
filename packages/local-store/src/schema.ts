@@ -8,6 +8,7 @@ export const LOCAL_STORE_SCHEMA_TABLES = [
   "app_settings",
   "sidecar_configs",
   "publish_tasks",
+  "workbench_drafts",
 ] as const;
 
 export const LOCAL_STORE_MIGRATIONS = [
@@ -100,6 +101,11 @@ export const LOCAL_STORE_MIGRATIONS = [
     failed_at TEXT,
     retry_count INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );`,
+  `CREATE TABLE IF NOT EXISTS workbench_drafts (
+    id TEXT PRIMARY KEY,
+    payload_json TEXT NOT NULL,
     updated_at TEXT NOT NULL
   );`,
 ] as const;

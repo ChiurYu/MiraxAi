@@ -59,4 +59,10 @@ describe("App provider runtime wiring", () => {
     expect(source).toContain('@update:transcript-text=');
     expect(source).toContain("draft.transcriptText");
   });
+
+  it("syncs async restored draft state into workflow runtime", () => {
+    expect(source).toContain("ready: draftReady");
+    expect(source).toContain("function syncRuntimeFromDraft()");
+    expect(source).toContain("void draftReady.then(syncRuntimeFromDraft)");
+  });
 });

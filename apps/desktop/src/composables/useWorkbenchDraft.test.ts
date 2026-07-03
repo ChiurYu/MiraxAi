@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { nextTick } from "vue";
-import { useWorkbenchDraft } from "./useWorkbenchDraft.js";
+import { FakeLocalStoreDb, createWorkbenchDraftRepository } from "@mirax/local-store";
+import { useWorkbenchDraft, setWorkbenchDraftDb } from "./useWorkbenchDraft.js";
 import { DESKTOP_DRAFT_STORAGE_KEY } from "../runtime/desktopDraft.js";
 
 function createFakeStorage(): Storage {
@@ -32,9 +33,10 @@ function createFakeStorage(): Storage {
 describe("useWorkbenchDraft", () => {
   beforeEach(() => {
     (globalThis as unknown as { localStorage?: Storage }).localStorage = createFakeStorage();
+    setWorkbenchDraftDb(undefined);
   });
 
-  it("restores saved project and provider config from storage", () => {
+  it("restores saved project and provider config from storage", async () => {
     const storage = createFakeStorage();
     storage.setItem(
       DESKTOP_DRAFT_STORAGE_KEY,
@@ -57,7 +59,8 @@ describe("useWorkbenchDraft", () => {
       }),
     );
 
-    const { draft, saveStatus } = useWorkbenchDraft({ storage });
+    const { draft, saveStatus, ready } = useWorkbenchDraft({ storage });
+    await ready;
 
     expect(saveStatus.value).toBe("已恢复草稿");
     expect(draft.project.name).toBe("测试项目");
@@ -91,16 +94,17 @@ describe("useWorkbenchDraft", () => {
     expect(parsed.project.name).toBe("新项目");
   });
 
-  it("handles invalid storage gracefully", () => {
+  it("handles invalid storage gracefully", async () => {
     const storage = createFakeStorage();
     storage.setItem(DESKTOP_DRAFT_STORAGE_KEY, "not-json");
 
-    const { saveStatus } = useWorkbenchDraft({ storage });
+    const { saveStatus, ready } = useWorkbenchDraft({ storage });
+    await ready;
 
     expect(saveStatus.value).toBe("草稿读取失败");
   });
 
-  it("restores activeStageId from storage", () => {
+  it("restores activeStageId from storage", async () => {
     const storage = createFakeStorage();
     storage.setItem(
       DESKTOP_DRAFT_STORAGE_KEY,
@@ -124,7 +128,8 @@ describe("useWorkbenchDraft", () => {
       }),
     );
 
-    const { draft } = useWorkbenchDraft({ storage });
+    const { draft, ready } = useWorkbenchDraft({ storage });
+    await ready;
 
     expect(draft.activeStageId).toBe("voice-clone");
   });
@@ -142,7 +147,7 @@ describe("useWorkbenchDraft", () => {
     expect(parsed.activeStageId).toBe("speech");
   });
 
-  it("restores workflow stage statuses from storage", () => {
+  it("restores workflow stage statuses from storage", async () => {
     const storage = createFakeStorage();
     const draft = useWorkbenchDraft({ storage }).draft;
     draft.workflow.stages[0].status = "completed";
@@ -172,7 +177,8 @@ describe("useWorkbenchDraft", () => {
       }),
     );
 
-    const { draft: restoredDraft } = useWorkbenchDraft({ storage });
+    const { draft: restoredDraft, ready } = useWorkbenchDraft({ storage });
+    await ready;
 
     expect(restoredDraft.activeStageId).toBe("speech");
     expect(restoredDraft.workflow.stages[0].status).toBe("completed");
@@ -193,7 +199,7 @@ describe("useWorkbenchDraft", () => {
     expect(parsed.transcriptText).toBe("手动输入的真实商品口播文案");
   });
 
-  it("restores transcriptText from storage", () => {
+  it("restores transcriptText from storage", async () => {
     const storage = createFakeStorage();
     storage.setItem(
       DESKTOP_DRAFT_STORAGE_KEY,
@@ -217,8 +223,151 @@ describe("useWorkbenchDraft", () => {
       }),
     );
 
-    const { draft } = useWorkbenchDraft({ storage });
+    const { draft, ready } = useWorkbenchDraft({ storage });
+    await ready;
 
     expect(draft.transcriptText).toBe("恢复后的真实文案");
+  });
+
+  it("prefers SQLite over localStorage when db is available", async () => {
+    const db = new FakeLocalStoreDb();
+    db.whenSelect(
+      `SELECT id, payload_json as payloadJson, updated_at as updatedAt FROM workbench_drafts WHERE id = ?`,
+      [
+        {
+          id: "default",
+          payloadJson: JSON.stringify({
+            project: {
+              name: "SQLite 项目",
+              sourceVideoPath: "",
+              voiceSamplePath: "",
+              notes: "",
+              targetPlatforms: ["douyin"],
+            },
+            providerConfig: {
+              id: "main-ai",
+              label: "主模型配置",
+              provider: "openai",
+              baseUrl: "https://api.openai.com/v1",
+              model: "gpt-4.1",
+              enabled: true,
+            },
+            activeStageId: "rewrite",
+            transcriptText: "SQLite 文案",
+          }),
+          updatedAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+    );
+
+    const storage = createFakeStorage();
+    storage.setItem(
+      DESKTOP_DRAFT_STORAGE_KEY,
+      JSON.stringify({
+        project: {
+          name: "LocalStorage 项目",
+          sourceVideoPath: "",
+          voiceSamplePath: "",
+          notes: "",
+          targetPlatforms: ["douyin"],
+        },
+        providerConfig: {
+          id: "main-ai",
+          label: "主模型配置",
+          provider: "openai",
+          baseUrl: "https://api.openai.com/v1",
+          model: "gpt-4.1",
+          enabled: true,
+        },
+      }),
+    );
+
+    const { draft, saveStatus, ready } = useWorkbenchDraft({ storage, db });
+    await ready;
+
+    expect(saveStatus.value).toBe("已恢复草稿");
+    expect(draft.project.name).toBe("SQLite 项目");
+    expect(draft.activeStageId).toBe("rewrite");
+    expect(draft.transcriptText).toBe("SQLite 文案");
+  });
+
+  it("persists changes to SQLite when db is available", async () => {
+    const db = new FakeLocalStoreDb();
+    const storage = createFakeStorage();
+    const { draft, ready } = useWorkbenchDraft({ storage, db });
+    await ready;
+    db.clear();
+
+    draft.project.name = "SQLite 新项目";
+    await nextTick();
+
+    const call = db.calls.find((c) => c.sql.includes("INSERT OR REPLACE INTO workbench_drafts"));
+    expect(call).toBeTruthy();
+    const payloadJson = call?.bind?.find((b) => typeof b === "string" && b.includes("SQLite 新项目"));
+    expect(payloadJson).toBeTruthy();
+  });
+
+  it("falls back to localStorage when SQLite is unavailable", async () => {
+    const storage = createFakeStorage();
+    storage.setItem(
+      DESKTOP_DRAFT_STORAGE_KEY,
+      JSON.stringify({
+        project: {
+          name: "LocalStorage 项目",
+          sourceVideoPath: "",
+          voiceSamplePath: "",
+          notes: "",
+          targetPlatforms: ["douyin"],
+        },
+        providerConfig: {
+          id: "main-ai",
+          label: "主模型配置",
+          provider: "openai",
+          baseUrl: "https://api.openai.com/v1",
+          model: "gpt-4.1",
+          enabled: true,
+        },
+        activeStageId: "avatar",
+        transcriptText: "LocalStorage 文案",
+      }),
+    );
+
+    const { draft, saveStatus, ready } = useWorkbenchDraft({ storage });
+    await ready;
+
+    expect(saveStatus.value).toBe("已恢复草稿");
+    expect(draft.project.name).toBe("LocalStorage 项目");
+    expect(draft.activeStageId).toBe("avatar");
+    expect(draft.transcriptText).toBe("LocalStorage 文案");
+  });
+
+  it("does not persist apiKey to SQLite", async () => {
+    const db = new FakeLocalStoreDb();
+    const { draft, ready } = useWorkbenchDraft({ db });
+    await ready;
+    db.clear();
+
+    draft.providerConfig.apiKey = "sk-secret";
+    await nextTick();
+
+    const call = db.calls.find((c) => c.sql.includes("INSERT OR REPLACE INTO workbench_drafts"));
+    expect(call).toBeTruthy();
+    const payloadJson = call?.bind?.find((b) => typeof b === "string" && b.startsWith("{"));
+    expect(payloadJson).toBeTruthy();
+    const parsed = JSON.parse(payloadJson as string);
+    expect(parsed.providerConfig).not.toHaveProperty("apiKey");
+  });
+
+  it("does not persist apiKey to localStorage when db is unavailable", async () => {
+    const storage = createFakeStorage();
+    const { draft } = useWorkbenchDraft({ storage });
+
+    draft.providerConfig.apiKey = "sk-secret";
+    await nextTick();
+
+    const raw = storage.getItem(DESKTOP_DRAFT_STORAGE_KEY);
+    expect(raw).toBeTruthy();
+    const parsed = JSON.parse(raw!);
+    expect(parsed.providerConfig).not.toHaveProperty("apiKey");
   });
 });

@@ -50,6 +50,12 @@ export interface WorkflowTaskRecord {
   updatedAt: string;
 }
 
+export interface WorkbenchDraftRecord {
+  id: string;
+  payloadJson: string;
+  updatedAt: string;
+}
+
 export interface Repository<TRecord extends { id: string }> {
   getById(id: string): Promise<TRecord | undefined>;
   save(record: TRecord): Promise<void>;
@@ -63,6 +69,12 @@ export type ContentDraftRepository = Repository<ContentDraftRecord>;
 export type VideoProjectRepository = Repository<VideoProjectRecord>;
 export type PublishAccountRepository = Repository<PublishAccountRecord>;
 export type WorkflowTaskRepository = Repository<WorkflowTaskRecord>;
+
+export interface WorkbenchDraftRepository {
+  getById(id: string): Promise<WorkbenchDraftRecord | undefined>;
+  save(record: WorkbenchDraftRecord): Promise<void>;
+  deleteById(id: string): Promise<void>;
+}
 
 export interface AppSettingsRecord {
   id: string;
@@ -238,6 +250,28 @@ export function createProviderSecretsRepository(db: LocalStoreDb): ProviderSecre
     },
     async deleteByCredentialRef(credentialRef: string): Promise<void> {
       await db.execute(`DELETE FROM provider_secrets WHERE credential_ref = ?`, [credentialRef]);
+    },
+  };
+}
+
+export function createWorkbenchDraftRepository(db: LocalStoreDb): WorkbenchDraftRepository {
+  return {
+    async getById(id: string): Promise<WorkbenchDraftRecord | undefined> {
+      const rows = await db.select<WorkbenchDraftRecord>(
+        `SELECT id, payload_json as payloadJson, updated_at as updatedAt FROM workbench_drafts WHERE id = ?`,
+        [id],
+      );
+      return rows[0];
+    },
+    async save(record: WorkbenchDraftRecord): Promise<void> {
+      const t = nowIso();
+      await db.execute(
+        `INSERT OR REPLACE INTO workbench_drafts (id, payload_json, updated_at) VALUES (?, ?, ?)`,
+        [record.id, record.payloadJson, record.updatedAt ?? t],
+      );
+    },
+    async deleteById(id: string): Promise<void> {
+      await db.execute(`DELETE FROM workbench_drafts WHERE id = ?`, [id]);
     },
   };
 }

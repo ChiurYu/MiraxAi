@@ -5,6 +5,7 @@ import {
   createProviderConfigRepository,
   createProviderSecretsRepository,
   createSidecarConfigRepository,
+  createWorkbenchDraftRepository,
 } from "../src/index.js";
 
 describe("createAppSettingsRepository", () => {
@@ -167,5 +168,53 @@ describe("createProviderSecretsRepository", () => {
     const record = await repo.getByCredentialRef("p1");
 
     expect(record?.apiKey).toBe("sk-secret");
+  });
+});
+
+describe("createWorkbenchDraftRepository", () => {
+  it("saves draft payload with correct SQL and bind parameters", async () => {
+    const db = new FakeLocalStoreDb();
+    const repo = createWorkbenchDraftRepository(db);
+
+    await repo.save({
+      id: "default",
+      payloadJson: JSON.stringify({ project: { name: "测试" } }),
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    });
+
+    const call = db.calls[0];
+    expect(call.sql).toContain("INSERT OR REPLACE INTO workbench_drafts");
+    expect(call.bind).toContain("default");
+    expect(call.bind).toContain(JSON.stringify({ project: { name: "测试" } }));
+  });
+
+  it("maps select rows to camelCase record", async () => {
+    const db = new FakeLocalStoreDb();
+    db.whenSelect(
+      `SELECT id, payload_json as payloadJson, updated_at as updatedAt FROM workbench_drafts WHERE id = ?`,
+      [
+        {
+          id: "default",
+          payloadJson: "{}",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+    );
+    const repo = createWorkbenchDraftRepository(db);
+    const record = await repo.getById("default");
+
+    expect(record?.id).toBe("default");
+    expect(record?.payloadJson).toBe("{}");
+  });
+
+  it("deletes draft by id", async () => {
+    const db = new FakeLocalStoreDb();
+    const repo = createWorkbenchDraftRepository(db);
+
+    await repo.deleteById("default");
+
+    const call = db.calls[0];
+    expect(call.sql).toContain("DELETE FROM workbench_drafts");
+    expect(call.bind).toEqual(["default"]);
   });
 });
