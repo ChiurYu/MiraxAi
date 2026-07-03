@@ -18,6 +18,16 @@
 
 验收通过且步骤对应 gap-list 行时，更新 `legacy-ui-gap-list.md` 的「状态」列。
 
+## 进度管理
+
+Codex 作为总控给出 Claude / cmux 提示词、收到 worker 完成报告或完成本地提交后，必须同步项目进度文档，避免遗忘已完成与未完成事项：
+
+- 更新 `docs/superpowers/PROJECT-STATE.md`，明确区分「已完成」「当前阶段」「下一步」「仍需规划」。
+- 已完成的能力不要继续作为下一步安排；例如 SQLite、rewrite provider selection、已验收的 mock 链路等完成后应从待办中移除或标记为已完成。
+- 新发现但未实现的能力缺口，只记录为待规划/下一步候选；不要写成已完成。
+- 给用户下一段提示词前，先确认提示词对应的任务是否已在 `PROJECT-STATE.md` 中有状态记录。
+- 只在验收证据明确时更新 `legacy-ui-gap-list.md` 状态列；不确定时保留原状态。
+
 ## cmux Claude Code 终端路由
 
 Mirax AI 的 cmux 工位默认使用 **普通终端里的 Claude Code**，不要使用

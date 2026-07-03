@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Plus, Upload } from "lucide-vue-next";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { invoke as tauriInvoke } from "@tauri-apps/api/core";
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import {
   type ProjectDraft,
@@ -9,7 +10,7 @@ import {
   type WorkflowStageRuntimeMode,
 } from "@mirax/core";
 import { createMockMediaRenderer, MediaRendererError } from "@mirax/media-pipeline";
-import { AiProviderError, createMockAiProvider } from "@mirax/provider-ai";
+import { AiProviderError, createMockAiProvider, type TranscribeInput } from "@mirax/provider-ai";
 import { SUPPORTED_PLATFORM_PROFILES, createMockPublisher, type PublishAccount } from "@mirax/provider-publish";
 import {
   createNavigationState,
@@ -47,6 +48,7 @@ import { useWorkbenchDraft } from "./composables/useWorkbenchDraft.js";
 import { useWorkflowRuntime } from "./composables/useWorkflowRuntime.js";
 import { buildAvatarOutputPath, selectAvatarProvider } from "./composables/useAvatarProvider.js";
 import { selectComposeRenderer } from "./composables/useComposeRenderer.js";
+import { selectAudioExtractor } from "./composables/useAudioExtractor.js";
 import { selectRewriteProvider } from "./composables/useRewriteProvider.js";
 import { buildSpeechOutputPath, selectSpeechProvider } from "./composables/useSpeechProvider.js";
 import { selectTranscribeProvider } from "./composables/useTranscribeProvider.js";
@@ -250,6 +252,22 @@ function hasExecutableAvatarProvider(): boolean {
   return Boolean(config && getProviderReadiness(config) === "ready" && isProviderVerified(config.id));
 }
 
+function hasEnabledTranscribeProvider(): boolean {
+  return providerConfigs.value.some((c) => c.enabled && c.provider === "whisper");
+}
+
+function hasEnabledSpeechProvider(): boolean {
+  return providerConfigs.value.some((c) => c.enabled && c.provider === "cosyvoice");
+}
+
+function hasEnabledVoiceCloneProvider(): boolean {
+  return hasEnabledSpeechProvider();
+}
+
+function hasEnabledAvatarProvider(): boolean {
+  return providerConfigs.value.some((c) => c.enabled && c.provider === "heygem");
+}
+
 const providerStageModes = computed<Record<WorkflowStageId, WorkflowStageRuntimeMode>>(() => {
   const trimmedFfmpegPath = sidecarConfig.ffmpegPath.trim();
   const composeMode: WorkflowStageRuntimeMode =
@@ -268,11 +286,27 @@ const providerStageModes = computed<Record<WorkflowStageId, WorkflowStageRuntime
       : "mock";
 
   return {
-    transcribe: hasExecutableTranscribeProvider() ? "real" : "mock",
+    transcribe: hasExecutableTranscribeProvider()
+      ? "real"
+      : hasEnabledTranscribeProvider()
+        ? "not-connected"
+        : "mock",
     rewrite: rewriteMode,
-    "voice-clone": hasExecutableVoiceCloneProvider() ? "real" : "mock",
-    speech: hasExecutableSpeechProvider() ? "real" : "mock",
-    avatar: hasExecutableAvatarProvider() ? "real" : "mock",
+    "voice-clone": hasExecutableVoiceCloneProvider()
+      ? "real"
+      : hasEnabledVoiceCloneProvider()
+        ? "not-connected"
+        : "mock",
+    speech: hasExecutableSpeechProvider()
+      ? "real"
+      : hasEnabledSpeechProvider()
+        ? "not-connected"
+        : "mock",
+    avatar: hasExecutableAvatarProvider()
+      ? "real"
+      : hasEnabledAvatarProvider()
+        ? "not-connected"
+        : "mock",
     compose: composeMode,
     review: "mock",
     publish: "mock",
@@ -429,6 +463,28 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
         transcribeErrorMessage.value = error.message;
         throw error;
       }
+
+      let audioPath = "";
+      if (transcribeMode === "real") {
+        // 真实转写前通过 Tauri extract_audio command 抽取音频。
+        const audioSelection = selectAudioExtractor({
+          stageMode: "real",
+          ffmpegPath: sidecarConfig.ffmpegPath,
+          verifiedFfmpegPath: verifiedFfmpegPath.value,
+          artifactRoot: appSettings.outputPaths.audioOutput,
+          invoke: tauriInvoke,
+        });
+        if (!audioSelection.ok) {
+          transcribeErrorMessage.value = audioSelection.error.message;
+          throw audioSelection.error;
+        }
+        const extractResult = await audioSelection.extractor.extract({
+          sourceVideoPath,
+          projectId: runtime.workflow.value.projectId,
+        });
+        audioPath = extractResult.audioPath;
+      }
+
       const selection = selectTranscribeProvider({
         stageMode: transcribeMode,
         providerConfigs: providerConfigs.value,
@@ -442,10 +498,14 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
         await new Promise((resolve) => setTimeout(resolve, 1200));
       }
       try {
-        const result = await selection.provider.transcribe({
+        const transcribeInput: TranscribeInput & { audioPath?: string } = {
           sourceVideoPath,
           language: "zh-CN",
-        });
+        };
+        if (transcribeMode === "real") {
+          transcribeInput.audioPath = audioPath;
+        }
+        const result = await selection.provider.transcribe(transcribeInput);
         transcriptText.value = result.text;
         return `已提取 ${result.segments.length} 段文案`;
       } catch (error) {

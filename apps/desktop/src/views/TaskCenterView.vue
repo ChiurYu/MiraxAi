@@ -144,7 +144,10 @@ function taskErrorMessage(task: PublishTask): string {
   <div class="task-center">
     <div class="task-center-header">
       <div class="task-center-header-main">
-        <h1>任务中心</h1>
+        <div class="task-center-title-row">
+          <h1>任务中心</h1>
+          <span class="mx-status-badge is-mock" data-testid="task-center-mock-badge">本地模拟任务</span>
+        </div>
         <p>查看和管理已创建的发布任务，追踪每个任务在各平台上的提交状态。</p>
       </div>
       <div class="task-center-header-actions">
@@ -351,6 +354,17 @@ function taskErrorMessage(task: PublishTask): string {
   width: 32px;
   height: 32px;
   padding: 0;
+}
+
+.task-center-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.task-center-title-row h1 {
+  margin: 0;
 }
 
 .task-center-filters {

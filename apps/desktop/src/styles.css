@@ -1865,6 +1865,12 @@ textarea {
   color: var(--mx-text-tertiary);
 }
 
+.mx-status-badge.is-mock {
+  color: var(--mx-warning);
+  background: var(--mx-warning-bg);
+  border-color: rgba(251, 191, 36, 0.35);
+}
+
 /* ───────────────────────────────────────────────
    Stage progress rail
    ─────────────────────────────────────────────── */

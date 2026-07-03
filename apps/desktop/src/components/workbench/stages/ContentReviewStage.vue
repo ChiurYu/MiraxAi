@@ -133,6 +133,11 @@ function handleTagKeydown(event: KeyboardEvent) {
 <template>
   <div class="review-stage" :data-status="status">
     <div class="review-controls">
+      <div class="review-mock-banner">
+        <span class="mx-status-badge is-mock" data-testid="review-mock-badge">Mock 复核</span>
+        <span class="review-mock-hint">仅本地预览，不会真实发布。</span>
+      </div>
+
       <div class="review-section">
         <div class="review-section-heading">
           <span>标题</span>
@@ -257,6 +262,7 @@ function handleTagKeydown(event: KeyboardEvent) {
       </div>
 
       <div class="review-actions">
+        <span class="mx-status-badge is-mock" data-testid="review-mock-action-badge">Mock 复核</span>
         <button
           type="button"
           class="primary"
@@ -321,3 +327,21 @@ function handleTagKeydown(event: KeyboardEvent) {
     </div>
   </div>
 </template>
+
+<style scoped>
+.review-mock-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--mx-radius-md);
+  background: var(--mx-warning-bg);
+  color: var(--mx-warning);
+  font-size: 12px;
+}
+
+.review-mock-hint {
+  color: var(--mx-warning);
+  opacity: 0.9;
+}
+</style>

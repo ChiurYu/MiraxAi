@@ -163,7 +163,10 @@ function actionIcon(status: AccountUiStatus) {
   <div class="account-management">
     <div class="account-management-header">
       <div class="account-management-header-main">
-        <h1>账号管理</h1>
+        <div class="account-management-title-row">
+          <h1>账号管理</h1>
+          <span class="mx-status-badge is-mock" data-testid="account-mock-badge">Mock 账号</span>
+        </div>
         <p>
           管理各平台发布账号的授权状态。授权凭证通过 <code>credentialRef</code> 引用到系统安全存储，
           本应用不保存密码、Cookie 或 Token 明文。真实 OAuth / 二维码 / Cookie 导入流程暂未接入。
@@ -329,6 +332,17 @@ function actionIcon(status: AccountUiStatus) {
   font-weight: 700;
   color: var(--mx-text-primary);
   line-height: 1.25;
+}
+
+.account-management-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.account-management-title-row h1 {
+  margin: 0;
 }
 
 .account-management-header p {

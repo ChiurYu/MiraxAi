@@ -22,6 +22,25 @@ describe("App provider runtime wiring", () => {
     expect(source).not.toContain('rewrite: findEnabledRewriteProviderConfig(providerConfigs.value) ? "real" : "mock"');
   });
 
+  it("marks provider stages as not-connected when enabled but not verified, instead of falling back to mock", () => {
+    expect(source).toContain("function hasEnabledTranscribeProvider()");
+    expect(source).toContain("function hasEnabledSpeechProvider()");
+    expect(source).toContain("function hasEnabledVoiceCloneProvider()");
+    expect(source).toContain("function hasEnabledAvatarProvider()");
+    expect(source).toMatch(
+      /transcribe:\s*hasExecutableTranscribeProvider\(\)\s*\?\s*"real"\s*:\s*hasEnabledTranscribeProvider\(\)\s*\?\s*"not-connected"\s*:\s*"mock"/s,
+    );
+    expect(source).toMatch(
+      /"voice-clone":\s*hasExecutableVoiceCloneProvider\(\)\s*\?\s*"real"\s*:\s*hasEnabledVoiceCloneProvider\(\)\s*\?\s*"not-connected"\s*:\s*"mock"/s,
+    );
+    expect(source).toMatch(
+      /speech:\s*hasExecutableSpeechProvider\(\)\s*\?\s*"real"\s*:\s*hasEnabledSpeechProvider\(\)\s*\?\s*"not-connected"\s*:\s*"mock"/s,
+    );
+    expect(source).toMatch(
+      /avatar:\s*hasExecutableAvatarProvider\(\)\s*\?\s*"real"\s*:\s*hasEnabledAvatarProvider\(\)\s*\?\s*"not-connected"\s*:\s*"mock"/s,
+    );
+  });
+
   it("does not mark compose real from an unverified ffmpeg path", () => {
     expect(source).toContain("verifiedFfmpegPath");
     expect(source).toContain('"not-connected"');
@@ -76,5 +95,11 @@ describe("App provider runtime wiring", () => {
     expect(source).toContain("ready: draftReady");
     expect(source).toContain("function syncRuntimeFromDraft()");
     expect(source).toContain("void draftReady.then(syncRuntimeFromDraft)");
+  });
+
+  it("extracts audio before real transcribe when sourceVideoPath is present", () => {
+    expect(source).toContain("selectAudioExtractor");
+    expect(source).toContain("extract_audio");
+    expect(source).toContain("audioPath");
   });
 });

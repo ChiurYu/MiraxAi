@@ -100,6 +100,11 @@ function fileName(filePath: string): string {
 <template>
   <div class="publish-stage" :data-status="status">
     <div class="publish-controls">
+      <div class="publish-mock-banner">
+        <span class="mx-status-badge is-mock" data-testid="publish-mock-badge">Mock 发布</span>
+        <span class="publish-mock-hint">本地模拟发布，不会提交到真实平台。</span>
+      </div>
+
       <div class="publish-section">
         <div class="publish-section-heading">发布账号</div>
         <div class="account-list">
@@ -212,6 +217,7 @@ function fileName(filePath: string): string {
       </div>
 
       <div class="publish-actions">
+        <span class="mx-status-badge is-mock" data-testid="publish-mock-action-badge">Mock 发布</span>
         <button
           type="button"
           class="primary"
@@ -265,3 +271,21 @@ function fileName(filePath: string): string {
     </div>
   </div>
 </template>
+
+<style scoped>
+.publish-mock-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--mx-radius-md);
+  background: var(--mx-warning-bg);
+  color: var(--mx-warning);
+  font-size: 12px;
+}
+
+.publish-mock-hint {
+  color: var(--mx-warning);
+  opacity: 0.9;
+}
+</style>

@@ -32,6 +32,12 @@ describe("ContentReviewStage UI contracts", () => {
     expect(source).not.toContain('id: "accounts"');
   });
 
+  it("labels review as mock-only so users do not assume real publishing", () => {
+    expect(source).toContain("Mock 复核");
+    expect(template).toContain('data-testid="review-mock-badge"');
+    expect(template).toContain('data-testid="review-mock-action-badge"');
+  });
+
   it("disables confirm until all readiness items and video are ready", () => {
     expect(script).toContain("const confirmDisabled = computed(() => props.running || !allReady.value || !props.videoPath)");
   });

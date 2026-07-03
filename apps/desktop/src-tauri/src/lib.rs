@@ -102,11 +102,42 @@ fn probe_ffmpeg(ffmpeg_path: String) -> Result<bool, String> {
     Ok(status.success())
 }
 
+#[tauri::command]
+fn extract_audio(ffmpeg_path: String, input_path: String, output_path: String) -> Result<(), String> {
+    if ffmpeg_path.trim().is_empty()
+        || input_path.trim().is_empty()
+        || output_path.trim().is_empty()
+    {
+        return Err("FFmpeg 音频抽取参数不完整".into());
+    }
+
+    create_parent_dir(&output_path)?;
+
+    run_ffmpeg(
+        &ffmpeg_path,
+        &[
+            "-y",
+            "-i",
+            &input_path,
+            "-vn",
+            "-acodec",
+            "pcm_s16le",
+            "-ar",
+            "16000",
+            "-ac",
+            "1",
+            &output_path,
+        ],
+    )?;
+
+    Ok(())
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_sql::Builder::new().build())
-        .invoke_handler(tauri::generate_handler![render_compose, probe_ffmpeg])
+        .invoke_handler(tauri::generate_handler![render_compose, probe_ffmpeg, extract_audio])
         .run(tauri::generate_context!())
         .expect("error while running Mirax AI desktop application");
 }
