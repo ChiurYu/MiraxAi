@@ -8,11 +8,13 @@ withDefaults(
     projectName: string;
     theme: "light" | "dark";
     activeView: AppView;
+    saveStatus?: string;
   }>(),
   {
     projectName: "",
     theme: "dark",
     activeView: "workbench",
+    saveStatus: "Autosaved",
   },
 );
 
@@ -31,6 +33,7 @@ const emit = defineEmits<{
         :project-name="projectName"
         :theme="theme"
         :active-view="activeView"
+        :save-status="saveStatus"
         @toggle-theme="emit('toggleTheme')"
       >
         <template #actions>

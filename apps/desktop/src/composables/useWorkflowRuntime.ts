@@ -217,7 +217,7 @@ export function useWorkflowRuntime(options: UseWorkflowRuntimeOptions) {
     }
 
     const status = stageStatus.value[stageId];
-    if (status === "completed" || status === "running") {
+    if (status === "running") {
       return;
     }
 

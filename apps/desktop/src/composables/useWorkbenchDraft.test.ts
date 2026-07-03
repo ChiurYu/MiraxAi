@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { nextTick } from "vue";
 import { FakeLocalStoreDb, createWorkbenchDraftRepository } from "@mirax/local-store";
 import { useWorkbenchDraft, setWorkbenchDraftDb } from "./useWorkbenchDraft.js";
@@ -59,7 +59,7 @@ describe("useWorkbenchDraft", () => {
       }),
     );
 
-    const { draft, saveStatus, ready } = useWorkbenchDraft({ storage });
+    const { draft, saveStatus, ready } = useWorkbenchDraft({ storage, persistDelayMs: 0 });
     await ready;
 
     expect(saveStatus.value).toBe("已恢复草稿");
@@ -71,7 +71,7 @@ describe("useWorkbenchDraft", () => {
 
   it("does not persist apiKey to storage", async () => {
     const storage = createFakeStorage();
-    const { draft } = useWorkbenchDraft({ storage });
+    const { draft } = useWorkbenchDraft({ storage, persistDelayMs: 0 });
 
     draft.providerConfig.apiKey = "sk-secret";
     await nextTick();
@@ -84,7 +84,7 @@ describe("useWorkbenchDraft", () => {
 
   it("persists project changes", async () => {
     const storage = createFakeStorage();
-    const { draft } = useWorkbenchDraft({ storage });
+    const { draft } = useWorkbenchDraft({ storage, persistDelayMs: 0 });
 
     draft.project.name = "新项目";
     await nextTick();
@@ -94,11 +94,32 @@ describe("useWorkbenchDraft", () => {
     expect(parsed.project.name).toBe("新项目");
   });
 
+  it("debounces automatic persistence", async () => {
+    vi.useFakeTimers();
+    try {
+      const storage = createFakeStorage();
+      const { draft } = useWorkbenchDraft({ storage, persistDelayMs: 50 });
+
+      draft.project.name = "延迟保存项目";
+      await nextTick();
+
+      expect(storage.getItem(DESKTOP_DRAFT_STORAGE_KEY)).toBeNull();
+
+      await vi.advanceTimersByTimeAsync(50);
+
+      const raw = storage.getItem(DESKTOP_DRAFT_STORAGE_KEY);
+      expect(raw).toBeTruthy();
+      expect(JSON.parse(raw!).project.name).toBe("延迟保存项目");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("handles invalid storage gracefully", async () => {
     const storage = createFakeStorage();
     storage.setItem(DESKTOP_DRAFT_STORAGE_KEY, "not-json");
 
-    const { saveStatus, ready } = useWorkbenchDraft({ storage });
+    const { saveStatus, ready } = useWorkbenchDraft({ storage, persistDelayMs: 0 });
     await ready;
 
     expect(saveStatus.value).toBe("草稿读取失败");
@@ -128,7 +149,7 @@ describe("useWorkbenchDraft", () => {
       }),
     );
 
-    const { draft, ready } = useWorkbenchDraft({ storage });
+    const { draft, ready } = useWorkbenchDraft({ storage, persistDelayMs: 0 });
     await ready;
 
     expect(draft.activeStageId).toBe("voice-clone");
@@ -136,7 +157,7 @@ describe("useWorkbenchDraft", () => {
 
   it("persists activeStageId when it changes", async () => {
     const storage = createFakeStorage();
-    const { draft } = useWorkbenchDraft({ storage });
+    const { draft } = useWorkbenchDraft({ storage, persistDelayMs: 0 });
 
     draft.activeStageId = "speech";
     await nextTick();
@@ -149,7 +170,7 @@ describe("useWorkbenchDraft", () => {
 
   it("restores workflow stage statuses from storage", async () => {
     const storage = createFakeStorage();
-    const draft = useWorkbenchDraft({ storage }).draft;
+    const draft = useWorkbenchDraft({ storage, persistDelayMs: 0 }).draft;
     draft.workflow.stages[0].status = "completed";
     draft.workflow.stages[1].status = "completed";
     const persistedWorkflow = JSON.parse(JSON.stringify(draft.workflow));
@@ -177,7 +198,7 @@ describe("useWorkbenchDraft", () => {
       }),
     );
 
-    const { draft: restoredDraft, ready } = useWorkbenchDraft({ storage });
+    const { draft: restoredDraft, ready } = useWorkbenchDraft({ storage, persistDelayMs: 0 });
     await ready;
 
     expect(restoredDraft.activeStageId).toBe("speech");
@@ -188,7 +209,7 @@ describe("useWorkbenchDraft", () => {
 
   it("persists transcriptText changes", async () => {
     const storage = createFakeStorage();
-    const { draft } = useWorkbenchDraft({ storage });
+    const { draft } = useWorkbenchDraft({ storage, persistDelayMs: 0 });
 
     draft.transcriptText = "手动输入的真实商品口播文案";
     await nextTick();
@@ -223,7 +244,7 @@ describe("useWorkbenchDraft", () => {
       }),
     );
 
-    const { draft, ready } = useWorkbenchDraft({ storage });
+    const { draft, ready } = useWorkbenchDraft({ storage, persistDelayMs: 0 });
     await ready;
 
     expect(draft.transcriptText).toBe("恢复后的真实文案");
@@ -282,7 +303,7 @@ describe("useWorkbenchDraft", () => {
       }),
     );
 
-    const { draft, saveStatus, ready } = useWorkbenchDraft({ storage, db });
+    const { draft, saveStatus, ready } = useWorkbenchDraft({ storage, persistDelayMs: 0, db });
     await ready;
 
     expect(saveStatus.value).toBe("已恢复草稿");
@@ -294,7 +315,7 @@ describe("useWorkbenchDraft", () => {
   it("persists changes to SQLite when db is available", async () => {
     const db = new FakeLocalStoreDb();
     const storage = createFakeStorage();
-    const { draft, ready } = useWorkbenchDraft({ storage, db });
+    const { draft, ready } = useWorkbenchDraft({ storage, persistDelayMs: 0, db });
     await ready;
     db.clear();
 
@@ -332,7 +353,7 @@ describe("useWorkbenchDraft", () => {
       }),
     );
 
-    const { draft, saveStatus, ready } = useWorkbenchDraft({ storage });
+    const { draft, saveStatus, ready } = useWorkbenchDraft({ storage, persistDelayMs: 0 });
     await ready;
 
     expect(saveStatus.value).toBe("已恢复草稿");
@@ -343,7 +364,7 @@ describe("useWorkbenchDraft", () => {
 
   it("does not persist apiKey to SQLite", async () => {
     const db = new FakeLocalStoreDb();
-    const { draft, ready } = useWorkbenchDraft({ db });
+    const { draft, ready } = useWorkbenchDraft({ db, persistDelayMs: 0 });
     await ready;
     db.clear();
 
@@ -360,7 +381,7 @@ describe("useWorkbenchDraft", () => {
 
   it("does not persist apiKey to localStorage when db is unavailable", async () => {
     const storage = createFakeStorage();
-    const { draft } = useWorkbenchDraft({ storage });
+    const { draft } = useWorkbenchDraft({ storage, persistDelayMs: 0 });
 
     draft.providerConfig.apiKey = "sk-secret";
     await nextTick();

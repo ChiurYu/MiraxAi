@@ -68,7 +68,7 @@ const aiProvider = createMockAiProvider({ artifactRoot: "/Users/Shared/MiraxAI" 
 const mediaRenderer = createMockMediaRenderer({ artifactRoot: "/Users/Shared/MiraxAI" });
 const publisher = createMockPublisher();
 
-const { draft, persist, ready: draftReady } = useWorkbenchDraft();
+const { draft, persist, saveStatus, ready: draftReady } = useWorkbenchDraft();
 const { appSettings, providerConfigs, sidecarConfig, verifiedFfmpegPath, isProviderVerified } = useAppSettings();
 
 const generatedVideoPath = ref("");
@@ -757,8 +757,8 @@ function deriveRewriteSellingPoints(draft: ProjectDraft): string[] {
   return ["通勤", "大容量", "质感"];
 }
 
-function handleSaveDraft() {
-  persist();
+async function handleSaveDraft() {
+  await persist();
 }
 
 function handleViewTasks() {
@@ -789,6 +789,7 @@ function stagePreviewLabel(stageId: WorkflowStageId): string {
     :project-name="project.name"
     :theme="theme"
     :active-view="navigation.view"
+    :save-status="saveStatus"
     @toggle-theme="toggleTheme"
     @navigate="handleNavigate"
   >

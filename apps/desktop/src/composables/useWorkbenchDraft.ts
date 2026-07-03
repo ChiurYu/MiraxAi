@@ -11,6 +11,7 @@ import {
 export interface UseWorkbenchDraftOptions {
   storage?: Storage;
   db?: LocalStoreDb;
+  persistDelayMs?: number;
 }
 
 const WORKBENCH_DRAFT_ID = "default";
@@ -28,8 +29,10 @@ export function getWorkbenchDraftDb(): LocalStoreDb | undefined {
 export function useWorkbenchDraft(options: UseWorkbenchDraftOptions = {}) {
   const storage = options.storage ?? (typeof window !== "undefined" ? window.localStorage : undefined);
   const db = options.db ?? sharedDb;
+  const persistDelayMs = options.persistDelayMs ?? 180;
   const draft = reactive<DesktopDraft>(createDefaultDesktopDraft());
   const saveStatus = ref("未保存");
+  let pendingPersist: ReturnType<typeof setTimeout> | undefined;
 
   async function restoreFromDb(): Promise<boolean> {
     if (!db) return false;
@@ -121,15 +124,33 @@ export function useWorkbenchDraft(options: UseWorkbenchDraftOptions = {}) {
   }
 
   async function persist() {
+    if (pendingPersist !== undefined) {
+      clearTimeout(pendingPersist);
+      pendingPersist = undefined;
+    }
     const persistedToDb = await persistToDb();
     if (persistedToDb) return;
     persistToStorage();
   }
 
+  function schedulePersist() {
+    if (persistDelayMs <= 0) {
+      void persist();
+      return;
+    }
+    if (pendingPersist !== undefined) {
+      clearTimeout(pendingPersist);
+    }
+    pendingPersist = setTimeout(() => {
+      pendingPersist = undefined;
+      void persist();
+    }, persistDelayMs);
+  }
+
   watch(
     [() => draft.project, () => draft.providerConfig, () => draft.activeStageId, () => draft.workflow, () => draft.transcriptText],
     () => {
-      void persist();
+      schedulePersist();
     },
     { deep: true },
   );

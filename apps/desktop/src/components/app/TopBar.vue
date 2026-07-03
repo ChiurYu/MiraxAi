@@ -8,11 +8,13 @@ const props = withDefaults(
     projectName: string;
     theme: "light" | "dark";
     activeView: AppView;
+    saveStatus?: string;
   }>(),
   {
     projectName: "",
     theme: "dark",
     activeView: "workbench",
+    saveStatus: "Autosaved",
   },
 );
 
@@ -47,7 +49,7 @@ const pageTitle = computed(() => {
 <template>
   <header class="window-bar">
     <span class="window-drag-strip" data-tauri-drag-region aria-hidden="true"></span>
-    <div class="project-overview">
+    <div class="project-overview" data-tauri-drag-region>
       <div class="project-title" :class="{ 'workbench-title': isWorkbench }">
         <strong>{{ pageTitle }}</strong>
       </div>
@@ -57,7 +59,7 @@ const pageTitle = computed(() => {
       <template v-if="isWorkbench">
         <div class="autosaved-state">
           <Cloud :size="16" />
-          <span>Autosaved</span>
+          <span>{{ saveStatus }}</span>
         </div>
       </template>
 

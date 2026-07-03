@@ -78,8 +78,9 @@ describe("macOS 原生标题栏 Overlay 主修复", () => {
     expect(stylesSource).toContain("var(--mx-titlebar-inset)");
   });
 
-  it("拖拽区只覆盖标题栏 inset，不覆盖顶栏按钮", () => {
+  it("拖拽区覆盖标题栏与项目标题区，不覆盖顶栏按钮", () => {
     expect(topBarSource).toContain('class="window-drag-strip" data-tauri-drag-region');
+    expect(topBarSource).toContain('class="project-overview" data-tauri-drag-region');
     expect(topBarSource).not.toContain('<header class="window-bar" data-tauri-drag-region>');
     expect(stylesSource).toMatch(/html\.is-tauri \.window-drag-strip\s*\{[\s\S]*height:\s*var\(--mx-titlebar-inset\);/);
   });
