@@ -51,6 +51,16 @@ describe("ScriptRewritingStage UI contracts", () => {
     expect(template).toContain("status-banner status-error");
   });
 
+  it("accepts an optional statusMessage prop", () => {
+    const script = source.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)?.[1] ?? "";
+    expect(script).toContain("statusMessage?: string");
+  });
+
+  it("renders statusMessage in a run-status element", () => {
+    expect(template).toContain("run-status");
+    expect(template).toMatch(/v-if="statusMessage"/);
+  });
+
   it("does not render apiKey, baseUrl, token or sk- literals in the template", () => {
     const lower = template.toLowerCase();
     expect(lower).not.toContain("apikey");

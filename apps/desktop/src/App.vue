@@ -106,6 +106,7 @@ const showPublishDialog = ref(false);
 const assetLimitedAction = ref<{ view: "voices" | "avatars" | "materials"; action: "import" | "create" } | null>(null);
 const transcribeErrorMessage = ref("");
 const rewriteErrorMessage = ref("");
+const rewriteRunMessage = ref("");
 const voiceCloneErrorMessage = ref("");
 const speechErrorMessage = ref("");
 const avatarErrorMessage = ref("");
@@ -459,16 +460,35 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
         throw new Error("请先完成素材解析，获取原始文案");
       }
       rewriteErrorMessage.value = "";
+      const rewriteMode = runtime.getStageMode("rewrite");
+      const activeRewriteConfig = findActiveRewriteProviderConfig(
+        providerConfigs.value,
+        appSettings.rewriteProviderConfigId,
+      );
+
+      if (rewriteMode === "mock") {
+        rewriteRunMessage.value = "正在使用 Mock 生成文案...";
+      } else if (activeRewriteConfig) {
+        const providerLabel = activeRewriteConfig.label.trim() || (activeRewriteConfig.provider === "custom" ? "Custom LLM" : "OpenAI");
+        const modelLabel = activeRewriteConfig.model?.trim();
+        rewriteRunMessage.value = modelLabel
+          ? `正在调用 ${providerLabel} / ${modelLabel} 生成文案...`
+          : `正在调用 ${providerLabel} 生成文案...`;
+      } else {
+        rewriteRunMessage.value = "正在准备真实 LLM 调用...";
+      }
+
       // 安全边界：apiKey / baseUrl 仅在 selectRewriteProvider 内部作为内存构造参数使用；
       // 返回的 message、prep.updateMetadata 的 title/description 均来自 LLM 结果，不含凭证。
       const selection = selectRewriteProvider({
-        stageMode: runtime.getStageMode("rewrite"),
+        stageMode: rewriteMode,
         providerConfigs: providerConfigs.value,
         mockProvider: aiProvider,
         rewriteProviderConfigId: appSettings.rewriteProviderConfigId,
       });
       if (!selection.ok) {
         rewriteErrorMessage.value = selection.error.message;
+        rewriteRunMessage.value = `生成失败：${selection.error.message}`;
         throw selection.error;
       }
       try {
@@ -482,10 +502,24 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
           title: result.titleSuggestions[0] ?? project.value.name,
           description: result.script.slice(0, 100),
         });
+        const now = new Date();
+        const timeLabel = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}`;
+        if (rewriteMode === "mock") {
+          rewriteRunMessage.value = `文案已重新生成：Mock · ${timeLabel}`;
+        } else {
+          const providerLabel = activeRewriteConfig?.label.trim() || (activeRewriteConfig?.provider === "custom" ? "Custom LLM" : "OpenAI");
+          const modelLabel = activeRewriteConfig?.model?.trim();
+          rewriteRunMessage.value = modelLabel
+            ? `文案已重新生成：${providerLabel} / ${modelLabel} · ${timeLabel}`
+            : `文案已重新生成：${providerLabel} · ${timeLabel}`;
+        }
         return `生成 ${result.titleSuggestions.length} 个标题方向`;
       } catch (error) {
         if (error instanceof Error) {
           rewriteErrorMessage.value = error.message;
+          rewriteRunMessage.value = `文案生成失败：${error.message}`;
+        } else {
+          rewriteRunMessage.value = "文案生成失败：未知错误";
         }
         throw error;
       }
@@ -893,6 +927,7 @@ function stagePreviewLabel(stageId: WorkflowStageId): string {
           :status="stage.status"
           :mode="rewriteMode"
           :error-message="rewriteErrorMessage || rewriteProviderHint"
+          :status-message="rewriteRunMessage"
           @update:transcript-text="transcriptText = $event"
           @run="runtime.runStage('rewrite')"
         />

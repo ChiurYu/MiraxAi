@@ -20,6 +20,7 @@ const props = defineProps<{
   status: WorkflowStageStatus;
   mode?: WorkflowStageRuntimeMode;
   errorMessage?: string;
+  statusMessage?: string;
 }>();
 
 const emit = defineEmits<{
@@ -268,6 +269,8 @@ function handleRegenerate() {
         <span>真实 LLM 模式：将使用设置中启用的 provider 发起真实调用。</span>
       </div>
 
+      <p v-if="statusMessage" class="run-status">{{ statusMessage }}</p>
+
       <div class="action-row">
         <button
           class="primary action-main"
@@ -494,6 +497,13 @@ function handleRegenerate() {
   height: 40px;
   font-size: 13px;
   font-weight: 600;
+}
+
+.run-status {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--mx-text-secondary);
 }
 
 .action-row .secondary {

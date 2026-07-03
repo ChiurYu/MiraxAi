@@ -123,6 +123,16 @@ describe("useAppSettings", () => {
     expect(appSettings.rewriteProviderConfigId).toBeUndefined();
   });
 
+  it("clears rewriteProviderConfigId when set to undefined", () => {
+    const { appSettings, setRewriteProviderConfigId } = useAppSettings();
+
+    setRewriteProviderConfigId("p-active");
+    expect(appSettings.rewriteProviderConfigId).toBe("p-active");
+
+    setRewriteProviderConfigId(undefined);
+    expect(appSettings.rewriteProviderConfigId).toBeUndefined();
+  });
+
   it("does not persist provider apiKey to storage", async () => {
     const storage = createFakeStorage();
     const { providerConfigs, addProviderConfig } = useAppSettings({ storage });

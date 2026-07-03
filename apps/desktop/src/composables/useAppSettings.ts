@@ -481,7 +481,7 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
     settingsSection.value = section;
   }
 
-  function setRewriteProviderConfigId(id: string) {
+  function setRewriteProviderConfigId(id: string | undefined) {
     appSettings.rewriteProviderConfigId = id;
   }
 

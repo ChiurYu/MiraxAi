@@ -92,6 +92,16 @@ describe("rewrite provider selection UI", () => {
     expect(source).toContain("文案改写使用中");
   });
 
+  it("only shows the active rewrite badge for enabled providers", () => {
+    expect(source).toContain("isActiveEnabledRewriteProvider(config)");
+    expect(source).toContain("return isActiveRewriteProvider(config) && config.enabled;");
+  });
+
+  it("shows a stop action for the active rewrite provider", () => {
+    expect(source).toContain("停止文案改写");
+    expect(source).toContain("setRewriteProviderConfigId(undefined)");
+  });
+
   it("calls setRewriteProviderConfigId when selecting", () => {
     expect(source).toContain("setRewriteProviderConfigId(config.id)");
   });
