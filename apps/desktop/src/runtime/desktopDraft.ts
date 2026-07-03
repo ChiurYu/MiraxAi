@@ -21,6 +21,9 @@ export interface DesktopDraft {
   activeStageId: WorkflowStageId;
   workflow: Workflow;
   transcriptText: string;
+  activeGoal: string;
+  activePreset: string;
+  targetLength: number;
 }
 
 export interface PersistedDesktopDraft {
@@ -29,6 +32,9 @@ export interface PersistedDesktopDraft {
   activeStageId?: WorkflowStageId;
   workflow?: Workflow;
   transcriptText?: string;
+  activeGoal?: string;
+  activePreset?: string;
+  targetLength?: number;
 }
 
 export function createDefaultDesktopDraft(): DesktopDraft {
@@ -51,6 +57,9 @@ export function createDefaultDesktopDraft(): DesktopDraft {
     activeStageId: "transcribe",
     workflow: createDefaultWorkflow("demo-project"),
     transcriptText: "",
+    activeGoal: "更口语化",
+    activePreset: "小红书种草风格 (Emoji Enhanced)",
+    targetLength: 50,
   };
 }
 
@@ -61,6 +70,9 @@ export function sanitizeDesktopDraftForStorage(draft: DesktopDraft): PersistedDe
     activeStageId: draft.activeStageId,
     workflow: draft.workflow,
     transcriptText: draft.transcriptText,
+    activeGoal: draft.activeGoal,
+    activePreset: draft.activePreset,
+    targetLength: draft.targetLength,
   };
 }
 
@@ -133,6 +145,9 @@ export function restoreDesktopDraft(saved: Partial<PersistedDesktopDraft>): Desk
     activeStageId: sanitizeActiveStageId(saved.activeStageId),
     workflow: sanitizeWorkflow(saved.workflow, defaults.workflow),
     transcriptText: typeof saved.transcriptText === "string" ? saved.transcriptText : defaults.transcriptText,
+    activeGoal: typeof saved.activeGoal === "string" ? saved.activeGoal : defaults.activeGoal,
+    activePreset: typeof saved.activePreset === "string" ? saved.activePreset : defaults.activePreset,
+    targetLength: typeof saved.targetLength === "number" ? saved.targetLength : defaults.targetLength,
   };
 }
 

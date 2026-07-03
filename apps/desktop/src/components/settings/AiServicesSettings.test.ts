@@ -106,3 +106,26 @@ describe("rewrite provider selection UI", () => {
     expect(source).toContain("setRewriteProviderConfigId(config.id)");
   });
 });
+
+describe("AiServicesSettings rewrite provider action states", () => {
+  it("only enables '设为文案改写' when connection has passed", () => {
+    expect(source).toContain("isConnectionPassed(config)");
+    expect(source).toContain("设为文案改写");
+    expect(source).toContain("setRewriteProviderConfigId(config.id)");
+  });
+
+  it("shows disabled '先测试连接' for enabled but unverified rewrite providers", () => {
+    expect(source).toContain("先测试连接");
+    expect(source).toContain('getProviderReadiness(config) === \'ready\'');
+    expect(source).toContain("!isProviderVerified(config.id)");
+  });
+
+  it("shows disabled '需补全配置' for rewrite providers missing required fields", () => {
+    expect(source).toContain("需补全配置");
+    expect(source).toContain('getProviderReadiness(config) === \'needs-config\'');
+  });
+
+  it("does not show a rewrite action for disabled providers", () => {
+    expect(source).not.toContain('getProviderReadiness(config) === "disabled"');
+  });
+});

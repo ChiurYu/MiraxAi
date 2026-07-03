@@ -21,12 +21,18 @@ const props = defineProps<{
   mode?: WorkflowStageRuntimeMode;
   errorMessage?: string;
   statusMessage?: string;
+  activeGoal: string;
+  activePreset: string;
+  targetLength: number;
 }>();
 
 const emit = defineEmits<{
   "update:modelValue": [value: ProjectDraft];
   "update:transcriptText": [value: string];
-  run: [];
+  "update:activeGoal": [value: string];
+  "update:activePreset": [value: string];
+  "update:targetLength": [value: number];
+  run: [options: { activeGoal: string; activePreset: string; targetLength: number }];
 }>();
 
 const rewrittenScript = computed({
@@ -58,16 +64,25 @@ const resultPlaceholder = computed(() => {
 });
 
 const rewriteGoals = ["保持原意", "更口语化", "更专业", "自定义"] as const;
-const activeGoal = ref<(typeof rewriteGoals)[number]>("更口语化");
+const activeGoal = computed({
+  get: () => props.activeGoal,
+  set: (value) => emit("update:activeGoal", value),
+});
 
 const promptPresets = [
   "小红书种草风格 (Emoji Enhanced)",
   "B站测评硬核风格",
   "高端奢侈品发布语调",
 ];
-const activePreset = ref(promptPresets[0]);
+const activePreset = computed({
+  get: () => props.activePreset,
+  set: (value) => emit("update:activePreset", value),
+});
 
-const targetLength = ref(50);
+const targetLength = computed({
+  get: () => props.targetLength,
+  set: (value) => emit("update:targetLength", value),
+});
 const targetLengthLabel = computed(() => {
   if (targetLength.value < 34) return "精简";
   if (targetLength.value > 66) return "详尽";
@@ -163,7 +178,7 @@ const comparisonSegments = computed<DiffSegment[]>(() => {
 
 function handleRegenerate() {
   if (!canRun.value) return;
-  emit("run");
+  emit("run", { activeGoal: activeGoal.value, activePreset: activePreset.value, targetLength: targetLength.value });
 }
 </script>
 

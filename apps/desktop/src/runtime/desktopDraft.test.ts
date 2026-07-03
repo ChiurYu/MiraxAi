@@ -78,6 +78,42 @@ describe("desktopDraft persistence", () => {
     expect(persisted.transcriptText).toBe("真实商品口播文案");
   });
 
+  it("sanitizeDesktopDraftForStorage persists rewrite options", () => {
+    const draft = createDefaultDesktopDraft();
+    draft.activeGoal = "更专业";
+    draft.activePreset = "B站测评硬核风格";
+    draft.targetLength = 80;
+
+    const persisted = sanitizeDesktopDraftForStorage(draft);
+
+    expect(persisted.activeGoal).toBe("更专业");
+    expect(persisted.activePreset).toBe("B站测评硬核风格");
+    expect(persisted.targetLength).toBe(80);
+  });
+
+  it("restoreDesktopDraft restores rewrite options and defaults when missing", () => {
+    const withOptions = restoreDesktopDraft({
+      project: createDefaultDesktopDraft().project,
+      providerConfig: createDefaultDesktopDraft().providerConfig,
+      activeGoal: "保持原意",
+      activePreset: "高端奢侈品发布语调",
+      targetLength: 20,
+    });
+
+    expect(withOptions.activeGoal).toBe("保持原意");
+    expect(withOptions.activePreset).toBe("高端奢侈品发布语调");
+    expect(withOptions.targetLength).toBe(20);
+
+    const withoutOptions = restoreDesktopDraft({
+      project: createDefaultDesktopDraft().project,
+      providerConfig: createDefaultDesktopDraft().providerConfig,
+    });
+
+    expect(withoutOptions.activeGoal).toBe("更口语化");
+    expect(withoutOptions.activePreset).toBe("小红书种草风格 (Emoji Enhanced)");
+    expect(withoutOptions.targetLength).toBe(50);
+  });
+
   it("restoreDesktopDraft restores transcriptText and defaults to empty when missing", () => {
     const withTranscript = restoreDesktopDraft({
       project: createDefaultDesktopDraft().project,

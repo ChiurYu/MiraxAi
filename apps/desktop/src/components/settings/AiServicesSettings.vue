@@ -262,12 +262,28 @@ function deleteProvider(id: string) {
         </div>
         <div class="provider-cell provider-actions">
           <button
-            v-if="isRewriteProvider(config) && !isActiveRewriteProvider(config)"
+            v-if="isRewriteProvider(config) && !isActiveRewriteProvider(config) && isConnectionPassed(config)"
             type="button"
             class="ghost-button"
             @click="setRewriteProviderConfigId(config.id)"
           >
             设为文案改写
+          </button>
+          <button
+            v-else-if="isRewriteProvider(config) && !isActiveRewriteProvider(config) && getProviderReadiness(config) === 'ready' && !isProviderVerified(config.id)"
+            type="button"
+            class="ghost-button"
+            disabled
+          >
+            先测试连接
+          </button>
+          <button
+            v-else-if="isRewriteProvider(config) && !isActiveRewriteProvider(config) && getProviderReadiness(config) === 'needs-config'"
+            type="button"
+            class="ghost-button"
+            disabled
+          >
+            需补全配置
           </button>
           <span
             v-if="isActiveEnabledRewriteProvider(config)"
@@ -501,6 +517,11 @@ function deleteProvider(id: string) {
   min-height: 28px;
   padding: 0 10px;
   font-size: 12px;
+}
+
+.provider-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .provider-test-message {

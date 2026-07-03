@@ -48,6 +48,9 @@ export function useWorkbenchDraft(options: UseWorkbenchDraftOptions = {}) {
       draft.activeStageId = restored.activeStageId;
       draft.workflow = restored.workflow;
       draft.transcriptText = restored.transcriptText;
+      draft.activeGoal = restored.activeGoal;
+      draft.activePreset = restored.activePreset;
+      draft.targetLength = restored.targetLength;
       saveStatus.value = "已恢复草稿";
       return true;
     } catch (error) {
@@ -70,6 +73,9 @@ export function useWorkbenchDraft(options: UseWorkbenchDraftOptions = {}) {
       draft.activeStageId = restored.activeStageId;
       draft.workflow = restored.workflow;
       draft.transcriptText = restored.transcriptText;
+      draft.activeGoal = restored.activeGoal;
+      draft.activePreset = restored.activePreset;
+      draft.targetLength = restored.targetLength;
       saveStatus.value = "已恢复草稿";
       return true;
     } catch {
@@ -148,7 +154,7 @@ export function useWorkbenchDraft(options: UseWorkbenchDraftOptions = {}) {
   }
 
   watch(
-    [() => draft.project, () => draft.providerConfig, () => draft.activeStageId, () => draft.workflow, () => draft.transcriptText],
+    [() => draft.project, () => draft.providerConfig, () => draft.activeStageId, () => draft.workflow, () => draft.transcriptText, () => draft.activeGoal, () => draft.activePreset, () => draft.targetLength],
     () => {
       schedulePersist();
     },

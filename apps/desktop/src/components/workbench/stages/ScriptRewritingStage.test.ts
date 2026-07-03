@@ -86,4 +86,24 @@ describe("ScriptRewritingStage UI contracts", () => {
     const script = source.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)?.[1] ?? "";
     expect(script).toContain('"update:transcriptText": [value: string]');
   });
+
+  it("emits run with activeGoal, activePreset and targetLength options", () => {
+    const script = source.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)?.[1] ?? "";
+    expect(script).toContain("run: [options: { activeGoal: string; activePreset: string; targetLength: number }]");
+    expect(script).toContain('emit("run", { activeGoal: activeGoal.value, activePreset: activePreset.value, targetLength: targetLength.value })');
+  });
+
+  it("accepts activeGoal, activePreset and targetLength as controlled props", () => {
+    const script = source.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)?.[1] ?? "";
+    expect(script).toContain("activeGoal: string");
+    expect(script).toContain("activePreset: string");
+    expect(script).toContain("targetLength: number");
+  });
+
+  it("emits update:activeGoal, update:activePreset and update:targetLength", () => {
+    const script = source.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)?.[1] ?? "";
+    expect(script).toContain('"update:activeGoal": [value: string]');
+    expect(script).toContain('"update:activePreset": [value: string]');
+    expect(script).toContain('"update:targetLength": [value: number]');
+  });
 });

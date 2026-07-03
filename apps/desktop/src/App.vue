@@ -496,6 +496,9 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
           transcript: transcriptText.value,
           productName: project.value.name,
           sellingPoints: deriveRewriteSellingPoints(project.value),
+          activeGoal: draft.activeGoal,
+          activePreset: draft.activePreset,
+          targetLength: draft.targetLength,
         });
         project.value = { ...project.value, notes: result.script };
         prep.updateMetadata({
@@ -806,6 +809,10 @@ function handleReturnToStage(stageId: WorkflowStageId) {
   runtime.goToStage(stageId);
 }
 
+function runRewriteStage() {
+  void runtime.runStage("rewrite");
+}
+
 function fileName(filePath: string): string {
   const trimmed = filePath.trim();
   if (!trimmed) return "";
@@ -922,6 +929,9 @@ function stagePreviewLabel(stageId: WorkflowStageId): string {
         <ScriptRewritingStage
           v-else-if="stage.id === 'rewrite'"
           v-model="project"
+          v-model:active-goal="draft.activeGoal"
+          v-model:active-preset="draft.activePreset"
+          v-model:target-length="draft.targetLength"
           :transcript-text="transcriptText"
           :running="runtime.running.value"
           :status="stage.status"
@@ -929,7 +939,7 @@ function stagePreviewLabel(stageId: WorkflowStageId): string {
           :error-message="rewriteErrorMessage || rewriteProviderHint"
           :status-message="rewriteRunMessage"
           @update:transcript-text="transcriptText = $event"
-          @run="runtime.runStage('rewrite')"
+          @run="runRewriteStage"
         />
         <VoiceCloningStage
           v-else-if="stage.id === 'voice-clone'"

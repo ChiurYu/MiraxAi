@@ -60,6 +60,18 @@ describe("App provider runtime wiring", () => {
     expect(source).toContain("draft.transcriptText");
   });
 
+  it("passes persisted rewrite UI options into rewriteScript call", () => {
+    expect(source).toContain("activeGoal: draft.activeGoal");
+    expect(source).toContain("activePreset: draft.activePreset");
+    expect(source).toContain("targetLength: draft.targetLength");
+  });
+
+  it("binds activeGoal, activePreset and targetLength to ScriptRewritingStage as controlled props", () => {
+    expect(source).toContain('v-model:active-goal="draft.activeGoal"');
+    expect(source).toContain('v-model:active-preset="draft.activePreset"');
+    expect(source).toContain('v-model:target-length="draft.targetLength"');
+  });
+
   it("syncs async restored draft state into workflow runtime", () => {
     expect(source).toContain("ready: draftReady");
     expect(source).toContain("function syncRuntimeFromDraft()");

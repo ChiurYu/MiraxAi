@@ -220,6 +220,23 @@ describe("useWorkbenchDraft", () => {
     expect(parsed.transcriptText).toBe("手动输入的真实商品口播文案");
   });
 
+  it("persists rewrite options changes", async () => {
+    const storage = createFakeStorage();
+    const { draft } = useWorkbenchDraft({ storage, persistDelayMs: 0 });
+
+    draft.activeGoal = "更专业";
+    draft.activePreset = "B站测评硬核风格";
+    draft.targetLength = 80;
+    await nextTick();
+
+    const raw = storage.getItem(DESKTOP_DRAFT_STORAGE_KEY);
+    expect(raw).toBeTruthy();
+    const parsed = JSON.parse(raw!);
+    expect(parsed.activeGoal).toBe("更专业");
+    expect(parsed.activePreset).toBe("B站测评硬核风格");
+    expect(parsed.targetLength).toBe(80);
+  });
+
   it("restores transcriptText from storage", async () => {
     const storage = createFakeStorage();
     storage.setItem(
@@ -248,6 +265,40 @@ describe("useWorkbenchDraft", () => {
     await ready;
 
     expect(draft.transcriptText).toBe("恢复后的真实文案");
+  });
+
+  it("restores rewrite options from storage", async () => {
+    const storage = createFakeStorage();
+    storage.setItem(
+      DESKTOP_DRAFT_STORAGE_KEY,
+      JSON.stringify({
+        project: {
+          name: "测试项目",
+          sourceVideoPath: "",
+          voiceSamplePath: "",
+          notes: "",
+          targetPlatforms: ["douyin"],
+        },
+        providerConfig: {
+          id: "main-ai",
+          label: "主模型配置",
+          provider: "openai",
+          baseUrl: "https://api.openai.com/v1",
+          model: "gpt-4.1",
+          enabled: true,
+        },
+        activeGoal: "保持原意",
+        activePreset: "高端奢侈品发布语调",
+        targetLength: 20,
+      }),
+    );
+
+    const { draft, ready } = useWorkbenchDraft({ storage, persistDelayMs: 0 });
+    await ready;
+
+    expect(draft.activeGoal).toBe("保持原意");
+    expect(draft.activePreset).toBe("高端奢侈品发布语调");
+    expect(draft.targetLength).toBe(20);
   });
 
   it("prefers SQLite over localStorage when db is available", async () => {
