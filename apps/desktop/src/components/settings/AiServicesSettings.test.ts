@@ -92,9 +92,14 @@ describe("rewrite provider selection UI", () => {
     expect(source).toContain("文案改写使用中");
   });
 
-  it("only shows the active rewrite badge for enabled providers", () => {
-    expect(source).toContain("isActiveEnabledRewriteProvider(config)");
-    expect(source).toContain("return isActiveRewriteProvider(config) && config.enabled;");
+  it("only shows the active rewrite badge when connection has passed", () => {
+    expect(source).toContain("isActiveRewriteProvider(config) && isConnectionPassed(config)");
+    expect(source).not.toContain("isActiveEnabledRewriteProvider");
+  });
+
+  it("shows a non-ready badge for active rewrite providers that are not connected", () => {
+    expect(source).toContain("文案改写未就绪");
+    expect(source).toContain('v-else-if="isActiveRewriteProvider(config)"');
   });
 
   it("shows a stop action for the active rewrite provider", () => {

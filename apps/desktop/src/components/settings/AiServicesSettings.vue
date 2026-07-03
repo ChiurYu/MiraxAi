@@ -80,10 +80,6 @@ function isActiveRewriteProvider(config: ApiKeyProviderConfig): boolean {
   return isRewriteProvider(config) && appSettings.rewriteProviderConfigId === config.id;
 }
 
-function isActiveEnabledRewriteProvider(config: ApiKeyProviderConfig): boolean {
-  return isActiveRewriteProvider(config) && config.enabled;
-}
-
 function isConnectionPassed(config: ApiKeyProviderConfig): boolean {
   return config.enabled && getProviderReadiness(config) === "ready" && isProviderVerified(config.id);
 }
@@ -286,11 +282,18 @@ function deleteProvider(id: string) {
             需补全配置
           </button>
           <span
-            v-if="isActiveEnabledRewriteProvider(config)"
+            v-if="isActiveRewriteProvider(config) && isConnectionPassed(config)"
             class="provider-status ready"
           >
             <CheckCircle2 :size="12" />
             文案改写使用中
+          </span>
+          <span
+            v-else-if="isActiveRewriteProvider(config)"
+            class="provider-status needs-config"
+          >
+            <AlertCircle :size="12" />
+            文案改写未就绪
           </span>
           <button
             v-if="isActiveRewriteProvider(config)"
