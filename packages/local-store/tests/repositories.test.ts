@@ -18,6 +18,7 @@ describe("createAppSettingsRepository", () => {
       id: "default",
       theme: "dark",
       outputPathsJson: JSON.stringify({ baseOutput: "/tmp/mirax" }),
+      rewriteProviderConfigId: "openai-1",
       createdAt: "2026-01-01T00:00:00.000Z",
       updatedAt: "2026-01-01T00:00:00.000Z",
     });
@@ -26,6 +27,7 @@ describe("createAppSettingsRepository", () => {
     expect(call.sql).toContain("INSERT OR REPLACE INTO app_settings");
     expect(call.bind).toContain("dark");
     expect(call.bind).toContain('{"baseOutput":"/tmp/mirax"}');
+    expect(call.bind).toContain("openai-1");
   });
 
   it("maps select rows to camelCase records", async () => {
