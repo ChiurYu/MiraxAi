@@ -84,22 +84,21 @@ describe("macOS 原生标题栏 Overlay 主修复", () => {
   });
 
   it("拖拽区覆盖标题栏与顶栏非交互区域", () => {
-    expect(topBarSource).toContain('<header class="window-bar" @pointerdown="startDragging">');
-    expect(topBarSource).not.toContain("data-tauri-drag-region");
+    expect(topBarSource).toContain('<span class="window-drag-strip" data-tauri-drag-region');
+    expect(topBarSource).toContain('<div class="project-overview" data-tauri-drag-region>');
+    expect(topBarSource).not.toContain('@pointerdown="startDragging"');
     expect(stylesSource).toMatch(/html\.is-tauri \.window-drag-strip\s*\{[\s\S]*height:\s*var\(--mx-titlebar-inset\);/);
   });
 
-  it("Overlay 标题栏下同步调用 startDragging API 实现拖动", () => {
-    expect(topBarSource).toContain('import { getCurrentWindow } from "@tauri-apps/api/window";');
-    expect(topBarSource).toContain("function startDragging(event: PointerEvent)");
-    expect(topBarSource).not.toContain('await import("@tauri-apps/api/window")');
-    expect(topBarSource).toContain("getCurrentWindow().startDragging()");
+  it("Overlay 标题栏下通过 data-tauri-drag-region 原生拖拽", () => {
+    expect(topBarSource).toContain("data-tauri-drag-region");
+    expect(topBarSource).not.toContain("getCurrentWindow().startDragging()");
+    expect(topBarSource).not.toContain("function startDragging");
   });
 
-  it("startDragging 仅响应鼠标左键并跳过交互元素", () => {
-    expect(topBarSource).toContain("event.button !== 0");
-    expect(topBarSource).toContain('target.closest("button, input, select, textarea, a")');
-    expect(topBarSource).toContain("if (!isTauriAvailable()) return;");
+  it("顶栏交互按钮通过 data-tauri-drag-region=\"false\" 排除在拖拽区外", () => {
+    expect(topBarSource).toContain('data-tauri-drag-region="false"');
+    expect(topBarSource).toContain('class="toolbar-actions" data-tauri-drag-region="false"');
   });
 
   it("系统外观变化时显式通知 Tauri 窗口，确保 WKWebView prefers-color-scheme 同步", () => {
