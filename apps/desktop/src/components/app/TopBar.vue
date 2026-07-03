@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Cloud, Moon, Sun } from "lucide-vue-next";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { computed } from "vue";
 import type { AppView } from "../../app/navigation";
 
@@ -35,20 +36,15 @@ function isInteractiveDragTarget(target: EventTarget | null): boolean {
   return target.closest("button, input, select, textarea, a") !== null;
 }
 
-async function startDragging(event: PointerEvent) {
+function startDragging(event: PointerEvent) {
   // 只响应鼠标左键；交互元素不触发拖动；非 Tauri 环境跳过。
   if (event.button !== 0) return;
   if (isInteractiveDragTarget(event.target)) return;
   if (!isTauriAvailable()) return;
 
-  try {
-    const { getCurrentWindow } = await import("@tauri-apps/api/window");
-    await getCurrentWindow().startDragging();
-  } catch (error) {
-    if (import.meta.env.DEV) {
-      console.warn("[mirax] 窗口拖动调用失败", error);
-    }
-  }
+  void getCurrentWindow().startDragging().catch((error) => {
+    if (import.meta.env.DEV) console.warn("[mirax] 窗口拖动调用失败", error);
+  });
 }
 
 const pageTitle = computed(() => {
@@ -74,9 +70,9 @@ const pageTitle = computed(() => {
 </script>
 
 <template>
-  <header class="window-bar">
-    <span class="window-drag-strip" data-tauri-drag-region aria-hidden="true" @pointerdown="startDragging"></span>
-    <div class="project-overview" data-tauri-drag-region @pointerdown="startDragging">
+  <header class="window-bar" @pointerdown="startDragging">
+    <span class="window-drag-strip" aria-hidden="true"></span>
+    <div class="project-overview">
       <div class="project-title" :class="{ 'workbench-title': isWorkbench }">
         <strong>{{ pageTitle }}</strong>
       </div>

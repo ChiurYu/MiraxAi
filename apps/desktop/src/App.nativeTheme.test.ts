@@ -30,7 +30,8 @@ describe("原生标题栏主题同步", () => {
 
     const syncBlock = appScript.match(/async function syncNativeWindowTheme\([\s\S]*?\n\}/)?.[0] ?? "";
     expect(syncBlock).toContain("if (!isTauriAvailable()) return;");
-    expect(syncBlock).toContain('await import("@tauri-apps/api/window")');
+    expect(appScript).toContain('import { getCurrentWindow } from "@tauri-apps/api/window";');
+    expect(syncBlock).not.toContain('await import("@tauri-apps/api/window")');
     expect(syncBlock).toContain("getCurrentWindow().setTheme(next)");
   });
 
@@ -82,17 +83,16 @@ describe("macOS 原生标题栏 Overlay 主修复", () => {
     expect(stylesSource).toContain("var(--mx-titlebar-inset)");
   });
 
-  it("拖拽区覆盖标题栏与项目标题区，不覆盖顶栏按钮", () => {
-    expect(topBarSource).toContain('class="window-drag-strip" data-tauri-drag-region');
-    expect(topBarSource).toContain('class="project-overview" data-tauri-drag-region');
-    expect(topBarSource).not.toContain('<header class="window-bar" data-tauri-drag-region>');
+  it("拖拽区覆盖标题栏与顶栏非交互区域", () => {
+    expect(topBarSource).toContain('<header class="window-bar" @pointerdown="startDragging">');
+    expect(topBarSource).not.toContain("data-tauri-drag-region");
     expect(stylesSource).toMatch(/html\.is-tauri \.window-drag-strip\s*\{[\s\S]*height:\s*var\(--mx-titlebar-inset\);/);
   });
 
-  it("Overlay 标题栏下通过 startDragging API 实现拖动，保留 data-tauri-drag-region 作为兜底", () => {
-    expect(topBarSource).toContain('@pointerdown="startDragging"');
-    expect(topBarSource).toContain("async function startDragging(event: PointerEvent)");
-    expect(topBarSource).toContain('await import("@tauri-apps/api/window")');
+  it("Overlay 标题栏下同步调用 startDragging API 实现拖动", () => {
+    expect(topBarSource).toContain('import { getCurrentWindow } from "@tauri-apps/api/window";');
+    expect(topBarSource).toContain("function startDragging(event: PointerEvent)");
+    expect(topBarSource).not.toContain('await import("@tauri-apps/api/window")');
     expect(topBarSource).toContain("getCurrentWindow().startDragging()");
   });
 

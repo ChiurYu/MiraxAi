@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Plus, Upload } from "lucide-vue-next";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import {
   type ProjectDraft,
@@ -149,7 +150,6 @@ function isTauriAvailable(): boolean {
 async function syncNativeWindowTheme(next: "light" | "dark") {
   if (!isTauriAvailable()) return;
   try {
-    const { getCurrentWindow } = await import("@tauri-apps/api/window");
     await getCurrentWindow().setTheme(next);
   } catch (error) {
     // setTheme 失败不致命：原生标题栏浅色化的主修复来自 Overlay 标题栏 + CSS 主题背景覆盖，
