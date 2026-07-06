@@ -21,6 +21,7 @@
     "@mirax/sidecar-manager": "workspace:*",
     "@tauri-apps/api": "^2.0.0",
     "@tauri-apps/plugin-dialog": "^2.7.1",
+    "@tauri-apps/plugin-fs": "^2.0.0",
     "@tauri-apps/plugin-sql": "^2.0.0",
     "lucide-vue-next": "^0.468.0",
     "vue": "^3.5.0"

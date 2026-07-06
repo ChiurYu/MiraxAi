@@ -20,7 +20,7 @@ export function createMockAiProvider(options: MockAiProviderOptions = {}): AiPro
 
   return {
     async transcribe(input: TranscribeInput): Promise<TranscriptResult> {
-      const fileName = getFileName(input.sourceVideoPath);
+      const fileName = getFileName(input.sourceVideoPath ?? "");
 
       return {
         text: `这是从 ${fileName} 提取的模拟口播文案，语言为 ${input.language ?? "auto"}。`,

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AlertCircle, CheckCircle2, Download, Play, RefreshCw, Wrench } from "lucide-vue-next";
+import { AlertCircle, CheckCircle2, RefreshCw, Wrench } from "lucide-vue-next";
 import { computed, ref } from "vue";
 import {
   checkSidecarDependencies,
@@ -7,7 +7,7 @@ import {
   type DependencyCheckResult,
   type SidecarConfig,
 } from "@mirax/sidecar-manager";
-import { useAppSettings, probeFfmpegPath } from "../../composables/useAppSettings.js";
+import { useAppSettings, probeFfmpegPath, detectFfmpegPath } from "../../composables/useAppSettings.js";
 
 type DependencyKey = "ffmpeg" | "python" | "cosyvoice" | "heygem" | "playwright";
 
@@ -138,25 +138,32 @@ function dependencyOk(key: DependencyKey): boolean {
 }
 
 function actionLabelFor(key: DependencyKey): string {
-  return key === "ffmpeg" ? "重新检测" : "查看说明";
+  return key === "ffmpeg" ? "检测本地环境" : "查看说明";
 }
 
 async function runLimitedAction(key: DependencyKey, name: string) {
   if (key === "ffmpeg") {
     const trimmed = sidecarConfig.ffmpegPath.trim();
-    if (!trimmed) {
-      verifiedFfmpegPath.value = "";
-      actionMessages.value[key] = "请先配置 FFmpeg 可执行文件路径";
+    if (trimmed) {
+      const ok = await probeFfmpegPath(trimmed);
+      if (ok) {
+        verifiedFfmpegPath.value = trimmed;
+        actionMessages.value[key] = "FFmpeg 路径已验证为可执行";
+      } else {
+        verifiedFfmpegPath.value = "";
+        actionMessages.value[key] = "FFmpeg 路径无法执行，请检查路径是否正确";
+      }
       return;
     }
 
-    const ok = await probeFfmpegPath(trimmed);
-    if (ok) {
-      verifiedFfmpegPath.value = trimmed;
-      actionMessages.value[key] = "FFmpeg 路径已验证为可执行";
+    const detected = await detectFfmpegPath();
+    if (detected) {
+      sidecarConfig.ffmpegPath = detected;
+      verifiedFfmpegPath.value = detected;
+      actionMessages.value[key] = "已检测到 FFmpeg 并自动填入路径";
     } else {
       verifiedFfmpegPath.value = "";
-      actionMessages.value[key] = "FFmpeg 路径无法执行，请检查路径是否正确";
+      actionMessages.value[key] = "未在系统 PATH 中发现 FFmpeg，请手动选择可执行文件路径";
     }
     return;
   }
@@ -181,7 +188,7 @@ const filteredDependencies = computed(() => {
   <div class="settings-section local-dependencies-settings">
     <div class="section-hero">
       <h2>本地依赖</h2>
-      <p>配置 FFmpeg、Python 本地服务、HeyGem、CosyVoice 和 Playwright 浏览器。检测状态会随输入实时更新；安装与启动按钮因服务尚未接入而被禁用。</p>
+      <p>配置 FFmpeg、Python 本地服务、HeyGem、CosyVoice 和 Playwright 浏览器。检测状态会随输入实时更新；安装与启动功能尚未接入，当前仅提供环境检测与说明。FFmpeg 支持自动从系统 PATH 检测并填入路径。</p>
     </div>
 
     <div class="settings-toolbar">
@@ -241,24 +248,6 @@ const filteredDependencies = computed(() => {
 
           <div class="dependency-actions"
           >
-            <button
-              type="button"
-              class="secondary"
-              disabled
-              :title="dep.installNote"
-            >
-              <Download :size="14" />
-              安装
-            </button>
-            <button
-              type="button"
-              class="secondary"
-              disabled
-              :title="dep.installNote"
-            >
-              <Play :size="14" />
-              启动
-            </button>
             <button
               type="button"
               class="ghost-button"

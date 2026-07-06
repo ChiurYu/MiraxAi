@@ -10,7 +10,7 @@ import {
   type WorkflowStageRuntimeMode,
 } from "@mirax/core";
 import { createMockMediaRenderer, MediaRendererError } from "@mirax/media-pipeline";
-import { AiProviderError, createMockAiProvider, type TranscribeInput } from "@mirax/provider-ai";
+import { AiProviderError, createMockAiProvider } from "@mirax/provider-ai";
 import { SUPPORTED_PLATFORM_PROFILES, createMockPublisher, type PublishAccount } from "@mirax/provider-publish";
 import {
   createNavigationState,
@@ -498,14 +498,10 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
         await new Promise((resolve) => setTimeout(resolve, 1200));
       }
       try {
-        const transcribeInput: TranscribeInput & { audioPath?: string } = {
-          sourceVideoPath,
+        const result = await selection.provider.transcribe({
+          ...(transcribeMode === "real" ? { audioPath } : { sourceVideoPath }),
           language: "zh-CN",
-        };
-        if (transcribeMode === "real") {
-          transcribeInput.audioPath = audioPath;
-        }
-        const result = await selection.provider.transcribe(transcribeInput);
+        });
         transcriptText.value = result.text;
         return `已提取 ${result.segments.length} 段文案`;
       } catch (error) {

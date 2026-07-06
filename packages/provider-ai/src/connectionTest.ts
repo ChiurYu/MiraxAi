@@ -137,6 +137,9 @@ async function testWhisperConnection(input: Extract<AiConnectionTestInput, { mod
   if (!input.baseUrl.trim()) {
     return { ok: false, code: "not-configured", message: "Whisper Base URL 不能为空。" };
   }
+  if (!input.apiKey?.trim()) {
+    return { ok: false, code: "not-configured", message: "Whisper provider 需要 API Key。" };
+  }
 
   const baseUrl = sanitizeBaseUrl(input.baseUrl);
   if (!baseUrl) {
@@ -151,7 +154,7 @@ async function testWhisperConnection(input: Extract<AiConnectionTestInput, { mod
 
   try {
     const response = await transport.request({
-      endpoint: `${baseUrl}/health`,
+      endpoint: `${baseUrl}/models`,
       method: "GET",
       headers: input.apiKey ? { Authorization: `Bearer ${input.apiKey}` } : {},
     });

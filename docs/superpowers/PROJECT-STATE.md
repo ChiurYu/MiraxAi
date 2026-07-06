@@ -30,6 +30,19 @@ Mirax AI 目前处在 **first usable release / 真实能力逐步接入** 阶段
   - 重新生成时显示真实 provider / model 调用状态。
   - active 但不可用的 provider 会显示未就绪，不再显示绿色“使用中”。
 
+- [x] **视频 / 素材分析最小链路**
+  - 本地视频 → FFmpeg 抽取 16kHz mono WAV（Task 1A）已完成。
+  - OpenAI `/audio/transcriptions` 文件上传真实转写（Task 1B）已完成。
+  - transcript 进入 rewrite/script 链路已打通。
+  - 计划文档：`docs/superpowers/plans/2026-07-03-video-material-analysis-task1.md`。
+
+- [x] **真实语音转写链路**
+  - `WhisperProvider` 读取 Task 1A 生成的 `audioPath`，multipart POST 到 OpenAI `/audio/transcriptions`。
+  - 解析 `verbose_json` 返回真实 text / segments。
+  - apiKey 仅进入 Authorization header，不进入日志、错误、snapshot、测试 fixture。
+  - 真实失败不 fallback 到 mock，不伪造 transcript。
+  - Task 1B review fix 完成：模型限制为 whisper-1、language 归一化为 ISO-639-1、音频大小限制 25MB。
+
 - [x] **mock / 未接入能力的诚实标识**
   - Review 阶段显示「Mock 复核」。
   - Publish 阶段显示「Mock 发布」。
@@ -41,15 +54,6 @@ Mirax AI 目前处在 **first usable release / 真实能力逐步接入** 阶段
   - 已覆盖 transcribe / speech / voice-clone / avatar 的误导状态修复。
 
 ## 当前仍是 mock / 未完整真实接入
-
-- [ ] **视频 / 素材分析**
-  - 本地视频 → FFmpeg 音频抽取产物（Task 1A）已实现并验证。
-  - 真实转写端点（Task 1B）尚未接入，仍是下一步。
-  - 计划文档：`docs/superpowers/plans/2026-07-03-video-material-analysis-task1.md`。
-
-- [ ] **语音转写**
-  - 代码中已有 provider 路由基础，但产品链路还没有完整打通本地视频/音频输入到真实转写结果。
-  - Task 1B 将接入 OpenAI `/audio/transcriptions` 文件上传。
 
 - [ ] **声音生成 / 声音克隆**
   - 目前产品可用口径仍按 mock / 未完整真实接入处理。
@@ -67,10 +71,10 @@ Mirax AI 目前处在 **first usable release / 真实能力逐步接入** 阶段
 
 ## 下一步
 
-当前最新任务：**视频 / 素材分析 Task 1A 已完成**。
+当前最新任务：**视频 / 素材分析 Task 1A / Task 1B 均已完成**。
 
 - Task 1A：本地视频 → FFmpeg 音频抽取产物 ✅
-- Task 1B：真实转写端点（OpenAI Whisper 文件上传）⏳ 待执行
+- Task 1B：真实转写端点（OpenAI Whisper 文件上传）✅
 
 计划文档：`docs/superpowers/plans/2026-07-03-video-material-analysis-task1.md`
 
@@ -79,10 +83,21 @@ Mirax AI 目前处在 **first usable release / 真实能力逐步接入** 阶段
 1. [x] 盘点当前素材导入入口与 Workbench material parsing / transcribe 阶段实际输入（已完成）。
 2. [x] 设计最小真实链路：本地视频/音频文件 -> 可转写音频 -> transcript -> rewrite/script（已完成）。
 3. [x] 实现 Task 1A：本地视频 → FFmpeg 音频抽取产物（已完成）。
-4. [ ] 实现 Task 1B：真实转写端点（OpenAI Whisper 文件上传）。
-5. [ ] 完成后同步本文件，把完成项移动到「已完成」。
+4. [x] 实现 Task 1B：真实转写端点（OpenAI Whisper 文件上传）（已完成）。
+5. [x] 同步本文件，把完成项移动到「已完成」（已完成）。
 
-下一步：执行 Task 1B，让 `WhisperProvider` 读取 Task 1A 生成的 `audioPath`，通过 multipart 文件上传调用 OpenAI `/audio/transcriptions`，并解析 `verbose_json` 返回真实 transcript。Task 1B 是独立任务，不依赖 Task 1A 的代码改动回滚。
+下一步候选：
+
+- **真实语音转写链路验收**：在真实 OpenAI key 下端到端跑通本地视频 → 抽取音频 → 真实 transcript → rewrite，确认产物质量与失败处理。
+- **真实脚本生成 / 改写增强**：在已有 rewrite 能力基础上，接入更多 prompt 模板、字数控制、风格变量。
+- **真实 TTS / 声音克隆**：待脚本生成稳定后，再按创作链路顺序接入声音生成真实能力。
+
+暂不做：
+
+- 真实发布平台接入。
+- 多平台 OAuth。
+- 发布状态回传。
+- 画面理解 / OCR / 高级视频分析的一次性大规划。
 
 ## 后续路线
 

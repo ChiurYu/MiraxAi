@@ -173,6 +173,21 @@ export async function probeFfmpegPath(ffmpegPath: string, invoke?: ProbeFfmpegIn
   }
 }
 
+export type DetectFfmpegInvoke = (command: string, args: Record<string, unknown>) => Promise<unknown>;
+
+export async function detectFfmpegPath(invoke?: DetectFfmpegInvoke): Promise<string | null> {
+  const doInvoke = invoke ?? tauriInvoke;
+  try {
+    const payload = await doInvoke("detect_ffmpeg", {});
+    if (typeof payload === "string") {
+      return payload;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export type ProviderReadiness = "disabled" | "needs-config" | "ready";
 
 /**
@@ -206,7 +221,7 @@ export function getProviderReadiness(config: ApiKeyProviderConfig): ProviderRead
       return "ready";
     }
     case "whisper": {
-      if (!trimmedBaseUrl || !trimmedModel) {
+      if (!trimmedApiKey || !trimmedBaseUrl || !trimmedModel) {
         return "needs-config";
       }
       return "ready";
@@ -487,8 +502,10 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
 
   watch(
     () => sidecarConfig.ffmpegPath,
-    () => {
-      verifiedFfmpegPath.value = "";
+    (newPath) => {
+      if (verifiedFfmpegPath.value !== newPath.trim()) {
+        verifiedFfmpegPath.value = "";
+      }
     },
   );
 

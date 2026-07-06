@@ -1,3 +1,4 @@
+import { readFile } from "@tauri-apps/plugin-fs";
 import { sanitizeBaseUrlForStorage, type ApiKeyProviderConfig, type WorkflowStageRuntimeMode } from "@mirax/core";
 import { AiProviderError, createWhisperProvider, type AiProvider } from "@mirax/provider-ai";
 import { findEnabledTranscribeProviderConfig } from "./useAppSettings.js";
@@ -58,6 +59,7 @@ export function selectTranscribeProvider(input: TranscribeProviderSelectionInput
         baseUrl: sanitizedBaseUrl,
         apiKey: config.apiKey,
         model: config.model,
+        readAudioFile: (path) => readFile(path),
       }),
     };
   } catch (error) {

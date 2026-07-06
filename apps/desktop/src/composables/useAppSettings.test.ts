@@ -3,6 +3,7 @@ import { nextTick } from "vue";
 import type { ApiKeyProviderConfig } from "@mirax/core";
 import { FakeLocalStoreDb } from "@mirax/local-store";
 import {
+  detectFfmpegPath,
   findActiveRewriteProviderConfig,
   findEnabledAvatarProviderConfig,
   findEnabledRewriteProviderConfig,
@@ -189,7 +190,7 @@ describe("useAppSettings", () => {
     expect(raw).not.toContain("verifiedFfmpegPath");
   });
 
-  it("clears verifiedFfmpegPath when ffmpegPath changes", async () => {
+  it("clears verifiedFfmpegPath when ffmpegPath changes to a different value", async () => {
     const storage = createFakeStorage();
     const { sidecarConfig, verifiedFfmpegPath } = useAppSettings({ storage });
 
@@ -201,6 +202,16 @@ describe("useAppSettings", () => {
     sidecarConfig.ffmpegPath = "/usr/bin/ffmpeg";
     await nextTick();
     expect(verifiedFfmpegPath.value).toBe("");
+  });
+
+  it("keeps verifiedFfmpegPath when ffmpegPath is set to the same value", async () => {
+    const storage = createFakeStorage();
+    const { sidecarConfig, verifiedFfmpegPath } = useAppSettings({ storage });
+
+    verifiedFfmpegPath.value = "/usr/bin/ffmpeg";
+    sidecarConfig.ffmpegPath = "/usr/bin/ffmpeg";
+    await nextTick();
+    expect(verifiedFfmpegPath.value).toBe("/usr/bin/ffmpeg");
   });
 
   it("tracks provider verification as session-only state", () => {
@@ -729,6 +740,28 @@ describe("probeFfmpegPath", () => {
       throw new Error("probe failed");
     });
     expect(result).toBe(false);
+  });
+});
+
+describe("detectFfmpegPath", () => {
+  it("returns detected path when detect_ffmpeg invoke returns a string", async () => {
+    const result = await detectFfmpegPath(async (command) => {
+      expect(command).toBe("detect_ffmpeg");
+      return "/usr/bin/ffmpeg";
+    });
+    expect(result).toBe("/usr/bin/ffmpeg");
+  });
+
+  it("returns null when detect_ffmpeg invoke returns null", async () => {
+    const result = await detectFfmpegPath(async () => null);
+    expect(result).toBeNull();
+  });
+
+  it("returns null when detect_ffmpeg invoke throws", async () => {
+    const result = await detectFfmpegPath(async () => {
+      throw new Error("detect failed");
+    });
+    expect(result).toBeNull();
   });
 });
 

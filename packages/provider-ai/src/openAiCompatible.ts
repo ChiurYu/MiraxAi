@@ -121,13 +121,14 @@ function validateOptions(options: OpenAiCompatibleProviderOptions): void {
 export function createDefaultOpenAiTransport(): OpenAiCompatibleTransport {
   return {
     async request(req: OpenAiCompatibleTransportRequest): Promise<OpenAiCompatibleTransportResponse> {
+      const isFormData = typeof FormData !== "undefined" && req.body instanceof FormData;
       const response = await fetch(req.endpoint, {
         method: req.method,
         headers: {
-          "Content-Type": "application/json",
+          ...(isFormData ? {} : { "Content-Type": "application/json" }),
           ...req.headers,
         },
-        body: req.body ? JSON.stringify(req.body) : undefined,
+        body: isFormData ? (req.body as FormData) : req.body ? JSON.stringify(req.body) : undefined,
       });
 
       return {

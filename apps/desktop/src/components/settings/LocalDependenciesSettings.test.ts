@@ -32,7 +32,23 @@ describe("LocalDependenciesSettings FFmpeg verified readiness", () => {
   });
 
   it("only labels FFmpeg as a real re-detect action", () => {
-    expect(source).toContain('return key === "ffmpeg" ? "重新检测" : "查看说明";');
+    expect(source).toContain('return key === "ffmpeg" ? "检测本地环境" : "查看说明";');
     expect(source).toContain("@click=\"runLimitedAction(dep.key, actionLabelFor(dep.key))\"");
+  });
+
+  it("falls back to PATH detection when ffmpeg path is empty", () => {
+    expect(source).toContain("detectFfmpegPath");
+    expect(source).toContain("已检测到 FFmpeg 并自动填入路径");
+    expect(source).toContain("未在系统 PATH 中发现 FFmpeg，请手动选择可执行文件路径");
+  });
+
+  it("assigns verifiedFfmpegPath when auto-detection succeeds", () => {
+    expect(source).toContain("verifiedFfmpegPath.value = detected");
+  });
+
+  it("does not render invalid install or start buttons", () => {
+    expect(source).not.toContain("<Download");
+    expect(source).not.toContain("<Play");
+    expect(source).not.toContain('class="secondary"\n              disabled');
   });
 });

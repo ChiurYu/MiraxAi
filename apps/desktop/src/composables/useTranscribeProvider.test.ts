@@ -10,7 +10,7 @@ function makeConfig(overrides: Partial<ApiKeyProviderConfig> = {}): ApiKeyProvid
     provider: "whisper",
     apiKey: "whisper-token",
     baseUrl: "https://whisper.example.com",
-    model: "whisper-v3",
+    model: "whisper-1",
     enabled: true,
     ...overrides,
   };
@@ -97,6 +97,22 @@ describe("selectTranscribeProvider", () => {
   it("returns not-configured when model is empty", () => {
     const result = select("real", [makeConfig({ model: "" })]);
 
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe("not-configured");
+    }
+  });
+
+  it("returns not-configured when apiKey is empty", () => {
+    const result = select("real", [makeConfig({ apiKey: "" })]);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe("not-configured");
+    }
+  });
+
+  it("returns not-configured when model is not whisper-1", () => {
+    const result = select("real", [makeConfig({ model: "gpt-4o-transcribe" })]);
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error.code).toBe("not-configured");

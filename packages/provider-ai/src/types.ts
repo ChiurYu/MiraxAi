@@ -1,5 +1,6 @@
 export interface TranscribeInput {
-  sourceVideoPath: string;
+  sourceVideoPath?: string;
+  audioPath?: string;
   language?: string;
 }
 
@@ -184,6 +185,11 @@ export interface CosyVoiceProviderOptions {
 }
 
 /**
+ * 读取本地音频文件字节的抽象；桌面端注入 `@tauri-apps/plugin-fs.readFile`，单测注入 fake。
+ */
+export type ReadAudioFile = (path: string) => Promise<Uint8Array>;
+
+/**
  * Whisper-compatible provider 的内存配置。`apiKey` 可选，本地服务可不需要鉴权。
  */
 export interface WhisperProviderOptions {
@@ -191,6 +197,7 @@ export interface WhisperProviderOptions {
   apiKey?: string;
   model: string;
   transport?: OpenAiCompatibleTransport;
+  readAudioFile?: ReadAudioFile;
 }
 
 /**

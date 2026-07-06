@@ -133,11 +133,36 @@ fn extract_audio(ffmpeg_path: String, input_path: String, output_path: String) -
     Ok(())
 }
 
+#[tauri::command]
+fn detect_ffmpeg() -> Result<Option<String>, String> {
+    let path_var = match std::env::var_os("PATH") {
+        Some(v) => v,
+        None => return Ok(None),
+    };
+
+    for dir in std::env::split_paths(&path_var) {
+        let candidate = dir.join("ffmpeg");
+        if candidate.is_file() {
+            let candidate_str = candidate.to_string_lossy().to_string();
+            let status = Command::new(&candidate_str)
+                .args(["-version"])
+                .status()
+                .map_err(|_| "FFmpeg 探测失败".to_string())?;
+            if status.success() {
+                return Ok(Some(candidate_str));
+            }
+        }
+    }
+
+    Ok(None)
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_sql::Builder::new().build())
-        .invoke_handler(tauri::generate_handler![render_compose, probe_ffmpeg, extract_audio])
+        .invoke_handler(tauri::generate_handler![render_compose, probe_ffmpeg, extract_audio, detect_ffmpeg])
         .run(tauri::generate_context!())
         .expect("error while running Mirax AI desktop application");
 }
