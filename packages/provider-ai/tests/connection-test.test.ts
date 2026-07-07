@@ -248,7 +248,7 @@ describe("ai provider connection test", () => {
     expect(result.message).not.toContain("secret-token");
   });
 
-  it("does not send baseUrl token in whisper health endpoint", async () => {
+  it("does not send baseUrl token in whisper models endpoint", async () => {
     let requestedEndpoint = "";
     const transport: OpenAiCompatibleTransport = {
       async request(req) {
@@ -268,7 +268,7 @@ describe("ai provider connection test", () => {
     });
 
     expect(result.ok).toBe(true);
-    expect(requestedEndpoint).toBe("https://whisper.example.com/api/health");
+    expect(requestedEndpoint).toBe("https://whisper.example.com/api/models");
     expect(requestedEndpoint).not.toContain("url-secret");
     expect(result.message).not.toContain("secret-token");
     expect(result.message).not.toContain("url-secret");
