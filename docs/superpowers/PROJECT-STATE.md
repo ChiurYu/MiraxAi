@@ -45,7 +45,8 @@ Mirax AI 目前处在 **first usable release / 真实能力逐步接入** 阶段
   - apiKey 仅进入 Authorization header，不进入日志、错误、snapshot、测试 fixture。
   - 真实失败不 fallback 到 mock，不伪造 transcript。
   - Task 1B review fix 完成：模型限制为 whisper-1、language 归一化为 ISO-639-1、音频大小限制 25MB。
-  - 本地 `local-whisper` Provider 已接入 faster-whisper，默认 venv 为 `/Users/yuzhenzhao/.local/share/mirax-ai/asr-venv`，默认 `tiny` / `cpu` / `int8`。
+  - 本地 `local-whisper` Provider 已接入 faster-whisper，默认 venv 为 `~/.local/share/mirax-ai/asr-venv`（Rust 侧展开 `~` 到 `HOME`），默认 `tiny` / `cpu` / `int8`。
+  - `local-whisper` 的 Python 解释器路径已支持在 Provider 配置中覆盖，并持久化到 SQLite；连接测试与真实转写使用同一路径。
   - 本地视频 → FFmpeg 抽音频 → faster-whisper 转写 → transcript → 文案改写链路已通过本机 dogfood。
   - 本地 ASR 中文输出已做简体归一化，避免工作台显示繁体转写结果。
 

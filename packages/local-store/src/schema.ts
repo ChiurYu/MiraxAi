@@ -121,6 +121,7 @@ export const LOCAL_STORE_MIGRATIONS = [
     created_at TEXT NOT NULL
   );`,
   `ALTER TABLE app_settings ADD COLUMN rewrite_provider_config_id TEXT;`,
+  `ALTER TABLE provider_configs ADD COLUMN python_path TEXT;`,
 ] as const;
 
 export function createLocalStoreMigrationSql(): string {

@@ -18,6 +18,17 @@ describe("AiServicesSettings connection test wiring", () => {
     expect(source).toContain("probe: async");
   });
 
+  it("uses configured pythonPath for local-whisper connection test", () => {
+    expect(source).toContain("config.pythonPath?.trim()");
+    expect(source).toContain("DEFAULT_PYTHON_PATH");
+  });
+
+  it("shows python path input only for local-whisper", () => {
+    expect(source).toContain("Python 解释器路径");
+    expect(source).toContain('v-if="isLocalWhisper"');
+    expect(source).toContain("editingConfig.pythonPath");
+  });
+
   it("does not test a custom provider through the default OpenAI URL when baseUrl is missing", () => {
     expect(source).toContain('config.provider === "custom" && !config.baseUrl?.trim()');
     expect(source).toContain("Custom provider Base URL 不能为空。");

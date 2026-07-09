@@ -84,6 +84,7 @@ describe("createProviderConfigRepository", () => {
       provider: "openai",
       label: "主模型",
       baseUrl: "https://api.example.com",
+      pythonPath: undefined,
       model: "gpt-4",
       enabled: true,
       credentialRef: "p1",
@@ -97,6 +98,28 @@ describe("createProviderConfigRepository", () => {
     expect(call.bind).not.toContain("sk-secret");
     expect(call.bind).toContain("p1");
     expect(call.bind).toContain(1);
+  });
+
+  it("saves local-whisper pythonPath", async () => {
+    const db = new FakeLocalStoreDb();
+    const repo = createProviderConfigRepository(db);
+
+    await repo.save({
+      id: "p-local",
+      provider: "local-whisper",
+      label: "本地 Whisper",
+      pythonPath: "~/.local/share/mirax-ai/asr-venv/bin/python",
+      model: "tiny",
+      enabled: true,
+      credentialRef: "p-local",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    });
+
+    const call = db.calls[0];
+    expect(call.sql).toContain("INSERT OR REPLACE INTO provider_configs");
+    expect(call.sql).toContain("python_path");
+    expect(call.bind).toContain("~/.local/share/mirax-ai/asr-venv/bin/python");
   });
 
   it("defaults credentialRef to id", async () => {

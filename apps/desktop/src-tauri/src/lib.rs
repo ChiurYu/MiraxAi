@@ -1,5 +1,22 @@
 use std::{fs, path::Path, process::Command};
 
+fn expand_tilde(path: &str) -> Result<String, String> {
+    let trimmed = path.trim();
+    if trimmed == "~" {
+        return home_dir().map(|home| home);
+    }
+    if let Some(rest) = trimmed.strip_prefix("~/") {
+        return home_dir().map(|home| format!("{}/{}", home, rest));
+    }
+    Ok(trimmed.to_string())
+}
+
+fn home_dir() -> Result<String, String> {
+    std::env::var("HOME")
+        .or_else(|_| std::env::var("USERPROFILE"))
+        .map_err(|_| "not-configured: 无法解析用户主目录".to_string())
+}
+
 #[tauri::command]
 fn render_compose(
     ffmpeg_path: String,
@@ -159,7 +176,8 @@ fn detect_ffmpeg() -> Result<Option<String>, String> {
 
 #[tauri::command]
 fn probe_local_whisper(python_path: String) -> Result<bool, String> {
-    let trimmed = python_path.trim();
+    let expanded = expand_tilde(&python_path)?;
+    let trimmed = expanded.trim();
     if trimmed.is_empty() {
         return Err("not-configured: Python 解释器路径未配置".into());
     }
@@ -192,7 +210,8 @@ fn run_local_whisper(
     audio_path: String,
     language: Option<String>,
 ) -> Result<String, String> {
-    let trimmed_python = python_path.trim();
+    let expanded_python = expand_tilde(&python_path)?;
+    let trimmed_python = expanded_python.trim();
     if trimmed_python.is_empty() {
         return Err("not-configured: Python 解释器路径未配置".into());
     }

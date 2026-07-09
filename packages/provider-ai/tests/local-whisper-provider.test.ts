@@ -72,7 +72,7 @@ describe("local whisper provider", () => {
     await provider.transcribe({ audioPath: "/tmp/audio.wav" });
 
     expect(capturedInput).toBeDefined();
-    expect(capturedInput!.pythonPath).toBe("/Users/yuzhenzhao/.local/share/mirax-ai/asr-venv/bin/python");
+    expect(capturedInput!.pythonPath).toBe("~/.local/share/mirax-ai/asr-venv/bin/python");
     expect(capturedInput!.model).toBe("tiny");
     expect(capturedInput!.device).toBe("cpu");
     expect(capturedInput!.computeType).toBe("int8");

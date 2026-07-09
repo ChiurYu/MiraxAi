@@ -15,7 +15,7 @@ import type {
   TranscribeInput,
 } from "./types.js";
 
-const DEFAULT_PYTHON_PATH = "/Users/yuzhenzhao/.local/share/mirax-ai/asr-venv/bin/python";
+const DEFAULT_PYTHON_PATH = "~/.local/share/mirax-ai/asr-venv/bin/python";
 const DEFAULT_MODEL = "tiny";
 const DEFAULT_DEVICE = "cpu";
 const DEFAULT_COMPUTE_TYPE = "int8";

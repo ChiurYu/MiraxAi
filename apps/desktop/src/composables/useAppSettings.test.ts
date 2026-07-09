@@ -339,6 +339,38 @@ describe("useAppSettings", () => {
     });
   });
 
+  it("persists local-whisper provider metadata including pythonPath", async () => {
+    const storage = createFakeStorage();
+    const { providerConfigs, addProviderConfig } = useAppSettings({ storage });
+
+    addProviderConfig({
+      id: "p-local-whisper",
+      label: "本地 Whisper",
+      provider: "local-whisper",
+      apiKey: "",
+      baseUrl: "",
+      pythonPath: "~/.local/share/mirax-ai/asr-venv/bin/python",
+      model: "tiny",
+      enabled: true,
+    });
+
+    await nextTick();
+
+    const raw = storage.getItem("mirax-ai.app-settings.v1");
+    expect(raw).toBeTruthy();
+    const parsed = JSON.parse(raw!);
+    const meta = parsed.providerConfigs[0];
+    expect(meta).toEqual({
+      id: "p-local-whisper",
+      label: "本地 Whisper",
+      provider: "local-whisper",
+      baseUrl: undefined,
+      pythonPath: "~/.local/share/mirax-ai/asr-venv/bin/python",
+      model: "tiny",
+      enabled: true,
+    });
+  });
+
   it("persists the active settings section only when persistSection is true", async () => {
     const storage = createFakeStorage();
     const { settingsSection, setSettingsSection } = useAppSettings({ storage, persistSection: true });
@@ -858,13 +890,14 @@ describe("useAppSettings SQLite persistence", () => {
   function fakeDbWithProvider(): FakeLocalStoreDb {
     const db = new FakeLocalStoreDb();
     db.whenSelect(
-      `SELECT id, provider, label, base_url as baseUrl, model, enabled, credential_ref as credentialRef, created_at as createdAt, updated_at as updatedAt FROM provider_configs`,
+      `SELECT id, provider, label, base_url as baseUrl, python_path as pythonPath, model, enabled, credential_ref as credentialRef, created_at as createdAt, updated_at as updatedAt FROM provider_configs`,
       [
         {
           id: "p1",
           provider: "openai",
           label: "主模型",
           baseUrl: "https://api.openai.com/v1",
+          pythonPath: undefined,
           model: "gpt-4.1",
           enabled: 1,
           credentialRef: "p1",

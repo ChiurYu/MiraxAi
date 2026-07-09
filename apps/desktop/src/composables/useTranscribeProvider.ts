@@ -58,6 +58,7 @@ export function selectTranscribeProvider(input: TranscribeProviderSelectionInput
       return {
         ok: true,
         provider: createLocalWhisperProvider({
+          pythonPath: config.pythonPath,
           model: config.model,
           runLocalWhisper: createTauriLocalWhisperRunner(invoke),
         }),

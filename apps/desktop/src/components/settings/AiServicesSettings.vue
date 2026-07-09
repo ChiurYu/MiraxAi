@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { AlertCircle, CheckCircle2, Plus, Trash2 } from "lucide-vue-next";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import {
   createApiKeyProviderConfig,
   validateProviderConfig,
@@ -75,6 +75,21 @@ const apiKeyFieldName = computed(() =>
 );
 
 const isLocalWhisper = computed(() => editingConfig.value?.provider === "local-whisper");
+
+watch(
+  () => editingConfig.value?.provider,
+  (provider) => {
+    if (!editingConfig.value) return;
+    if (provider === "local-whisper") {
+      if (!editingConfig.value.model?.trim()) {
+        editingConfig.value.model = "tiny";
+      }
+      if (!editingConfig.value.pythonPath?.trim()) {
+        editingConfig.value.pythonPath = DEFAULT_PYTHON_PATH;
+      }
+    }
+  },
+);
 
 function isRewriteProvider(config: ApiKeyProviderConfig): boolean {
   return config.provider === "openai" || config.provider === "custom";
@@ -181,7 +196,7 @@ function connectionTestInputFor(config: ApiKeyProviderConfig): AiConnectionTestI
   if (config.provider === "local-whisper") {
     return {
       mode: "local-whisper",
-      pythonPath: DEFAULT_PYTHON_PATH,
+      pythonPath: config.pythonPath?.trim() || DEFAULT_PYTHON_PATH,
       model: config.model ?? "",
       probe: async (pythonPath) => {
         const result = await tauriInvoke("probe_local_whisper", { pythonPath });
@@ -360,7 +375,13 @@ function deleteProvider(id: string) {
         <label class="field"
         >
           <span class="field-label">默认模型</span>
-          <input v-model="editingConfig.model" :placeholder="isLocalWhisper ? 'tiny' : 'gpt-4.1'" />
+          <input v-model="editingConfig.model" :placeholder="isLocalWhisper ? 'tiny / base' : 'gpt-4.1'" />
+        </label>
+        <label v-if="isLocalWhisper" class="field"
+        >
+          <span class="field-label">Python 解释器路径</span>
+          <input v-model="editingConfig.pythonPath" :placeholder="DEFAULT_PYTHON_PATH" />
+          <span class="field-hint">支持 ~ 表示用户主目录，留空则使用默认值。</span>
         </label>
         <label v-if="!isLocalWhisper" class="field"
         >

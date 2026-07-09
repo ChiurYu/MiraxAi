@@ -50,6 +50,7 @@ export interface ApiKeyProviderConfig {
   provider: ApiKeyProvider;
   apiKey: string;
   baseUrl?: string;
+  pythonPath?: string;
   model?: string;
   enabled: boolean;
 }

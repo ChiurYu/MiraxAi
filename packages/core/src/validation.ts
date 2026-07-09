@@ -15,6 +15,7 @@ export function sanitizeProviderConfigForStorage(config: ApiKeyProviderConfig): 
     label: config.label,
     provider: config.provider,
     baseUrl: sanitizeBaseUrlForStorage(config.baseUrl),
+    pythonPath: config.pythonPath,
     model: config.model,
     enabled: config.enabled,
   };

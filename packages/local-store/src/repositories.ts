@@ -3,6 +3,7 @@ export interface ProviderConfigRecord {
   provider: string;
   label: string;
   baseUrl?: string;
+  pythonPath?: string;
   model?: string;
   enabled: boolean;
   credentialRef?: string;
@@ -219,7 +220,7 @@ export function createProviderConfigRepository(db: LocalStoreDb): ProviderConfig
   return {
     async getById(id: string): Promise<ProviderConfigRecord | undefined> {
       const rows = await db.select<ProviderConfigRecord>(
-        `SELECT id, provider, label, base_url as baseUrl, model, enabled, credential_ref as credentialRef, created_at as createdAt, updated_at as updatedAt FROM provider_configs WHERE id = ?`,
+        `SELECT id, provider, label, base_url as baseUrl, python_path as pythonPath, model, enabled, credential_ref as credentialRef, created_at as createdAt, updated_at as updatedAt FROM provider_configs WHERE id = ?`,
         [id],
       );
       return rows[0];
@@ -227,12 +228,13 @@ export function createProviderConfigRepository(db: LocalStoreDb): ProviderConfig
     async save(record: ProviderConfigRecord): Promise<void> {
       const t = nowIso();
       await db.execute(
-        `INSERT OR REPLACE INTO provider_configs (id, provider, label, base_url, model, enabled, credential_ref, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT OR REPLACE INTO provider_configs (id, provider, label, base_url, python_path, model, enabled, credential_ref, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           record.id,
           record.provider,
           record.label,
           record.baseUrl ?? null,
+          record.pythonPath ?? null,
           record.model ?? null,
           record.enabled ? 1 : 0,
           record.credentialRef ?? record.id,
@@ -243,7 +245,7 @@ export function createProviderConfigRepository(db: LocalStoreDb): ProviderConfig
     },
     async list(): Promise<ProviderConfigRecord[]> {
       return db.select<ProviderConfigRecord>(
-        `SELECT id, provider, label, base_url as baseUrl, model, enabled, credential_ref as credentialRef, created_at as createdAt, updated_at as updatedAt FROM provider_configs`,
+        `SELECT id, provider, label, base_url as baseUrl, python_path as pythonPath, model, enabled, credential_ref as credentialRef, created_at as createdAt, updated_at as updatedAt FROM provider_configs`,
       );
     },
     async deleteById(id: string): Promise<void> {

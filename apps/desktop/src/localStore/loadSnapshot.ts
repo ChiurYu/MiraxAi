@@ -20,6 +20,7 @@ function recordToProviderConfig(
     provider: record.provider as ApiKeyProviderConfig["provider"],
     apiKey: secret?.apiKey ?? "",
     baseUrl: sanitizeBaseUrlForStorage(record.baseUrl),
+    pythonPath: record.pythonPath,
     model: record.model,
     enabled: record.enabled,
   });

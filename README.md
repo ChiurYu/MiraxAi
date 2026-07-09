@@ -136,10 +136,11 @@ OpenAI `whisper-1` API 不是免费能力。
 
 #### 本地 Whisper / faster-whisper
 
-- 默认 Python: `/Users/yuzhenzhao/.local/share/mirax-ai/asr-venv/bin/python`
-- 默认 Model: `tiny`
+- 默认 Python: `~/.local/share/mirax-ai/asr-venv/bin/python`（Rust 侧会展开 `~` 到用户 `HOME`）
+- 默认 Model: `tiny`（可改为 `base` 等）
 - 默认 Device: `cpu`
 - 默认 Compute Type: `int8`
+- 可在 Provider 配置中覆盖 Python 解释器路径，连接测试与真实转写使用同一路径
 
 本地视频会先通过 FFmpeg 抽取音频，再交给 faster-whisper 转写。当前 dogfood 已验证本地视频 → 本地转写 → 文案改写链路。
 

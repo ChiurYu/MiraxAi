@@ -50,6 +50,25 @@ describe("selectTranscribeProvider", () => {
     }
   });
 
+  it("passes configured pythonPath to local-whisper provider", async () => {
+    const customPythonPath = "~/custom/venv/bin/python";
+    const result = select("real", [
+      makeConfig({
+        provider: "local-whisper",
+        model: "tiny",
+        apiKey: "",
+        baseUrl: "",
+        pythonPath: customPythonPath,
+      }),
+    ]);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const provider = result.provider as LocalWhisperProvider;
+    expect(provider.pythonPath).toBe(customPythonPath);
+  });
+
   it("returns local provider for enabled local-whisper config", () => {
     const result = select("real", [makeConfig({ provider: "local-whisper", model: "tiny", apiKey: "", baseUrl: "" })]);
 
