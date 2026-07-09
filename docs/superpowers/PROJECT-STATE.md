@@ -49,6 +49,7 @@ Mirax AI 目前处在 **first usable release / 真实能力逐步接入** 阶段
   - `local-whisper` 的 Python 解释器路径已支持在 Provider 配置中覆盖，并持久化到 SQLite；连接测试与真实转写使用同一路径。
   - 本地视频 → FFmpeg 抽音频 → faster-whisper 转写 → transcript → 文案改写链路已通过本机 dogfood。
   - 本地 ASR 中文输出已做简体归一化，避免工作台显示繁体转写结果。
+  - 已完成 `tiny` / `base` 质量验收（60 秒 demo 素材，CPU / int8）：`tiny` 约 3.5 秒但繁体残留与错漏词多；`base` 约 5× 实时、质量明显更好；默认保持 `tiny`，`base` 作为手动质量选项。
 
 - [x] **mock / 未接入能力的诚实标识**
   - Review 阶段显示「Mock 复核」。

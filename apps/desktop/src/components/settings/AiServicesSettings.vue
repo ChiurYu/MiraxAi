@@ -376,6 +376,9 @@ function deleteProvider(id: string) {
         >
           <span class="field-label">默认模型</span>
           <input v-model="editingConfig.model" :placeholder="isLocalWhisper ? 'tiny / base' : 'gpt-4.1'" />
+          <span v-if="isLocalWhisper" class="field-hint">
+            tiny：速度快，适合快速 dogfood；base：中文质量更好，但在 CPU 上会明显变慢，适合短素材或离线验收。
+          </span>
         </label>
         <label v-if="isLocalWhisper" class="field"
         >

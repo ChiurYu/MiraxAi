@@ -29,6 +29,12 @@ describe("AiServicesSettings connection test wiring", () => {
     expect(source).toContain("editingConfig.pythonPath");
   });
 
+  it("shows tiny / base model trade-off hint for local-whisper", () => {
+    expect(source).toContain("tiny：速度快");
+    expect(source).toContain("base：中文质量更好");
+    expect(source).toContain("CPU 上会明显变慢");
+  });
+
   it("does not test a custom provider through the default OpenAI URL when baseUrl is missing", () => {
     expect(source).toContain('config.provider === "custom" && !config.baseUrl?.trim()');
     expect(source).toContain("Custom provider Base URL 不能为空。");
