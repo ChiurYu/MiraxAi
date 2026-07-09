@@ -231,6 +231,12 @@ export function useWorkflowRuntime(options: UseWorkflowRuntimeOptions) {
 
     try {
       await processStage(stageId, stage.title);
+      if (stageStatus.value[stageId] === "completed" && activeStageId.value === stageId) {
+        const nextId = WORKFLOW_STAGES[stageIndex(stageId) + 1];
+        if (nextId) {
+          activeStageId.value = nextId;
+        }
+      }
     } catch (error) {
       if (error instanceof Error && error.message === "PUBLISH_CANCELLED") {
         throw error;

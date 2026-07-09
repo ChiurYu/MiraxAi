@@ -56,6 +56,15 @@ describe("useWorkflowRuntime", () => {
     expect(executor).toHaveBeenCalledTimes(2);
   });
 
+  it("moves to the next stage after a single stage completes", async () => {
+    const executor = vi.fn().mockResolvedValue("ok");
+    const runtime = useWorkflowRuntime({ projectId: "demo", executor });
+
+    await runtime.runStage("transcribe");
+
+    expect(runtime.activeStageId.value).toBe("rewrite");
+  });
+
   it("does not start another run while a stage is running", async () => {
     let resolveExecutor: (value: string) => void;
     const executor = vi.fn().mockImplementation(() => new Promise<string>((resolve) => { resolveExecutor = resolve; }));

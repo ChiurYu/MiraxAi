@@ -588,16 +588,29 @@ describe("findEnabledTranscribeProviderConfig", () => {
     };
   }
 
-  it("returns the first enabled whisper config", () => {
+  it("returns the first enabled whisper or local-whisper config", () => {
     const configs = [
       makeConfig({ id: "o", provider: "openai", enabled: true }),
       makeConfig({ id: "w", provider: "whisper", enabled: true }),
+      makeConfig({ id: "lw", provider: "local-whisper", model: "tiny", enabled: true }),
     ];
 
     const found = findEnabledTranscribeProviderConfig(configs);
 
     expect(found).toBeDefined();
     expect(found!.id).toBe("w");
+  });
+
+  it("returns local-whisper config when no whisper config is enabled", () => {
+    const configs = [
+      makeConfig({ id: "o", provider: "openai", enabled: true }),
+      makeConfig({ id: "lw", provider: "local-whisper", model: "tiny", apiKey: "", baseUrl: "", enabled: true }),
+    ];
+
+    const found = findEnabledTranscribeProviderConfig(configs);
+
+    expect(found).toBeDefined();
+    expect(found!.id).toBe("lw");
   });
 
   it("returns undefined when only non-transcribe providers are enabled", () => {
@@ -806,8 +819,24 @@ describe("getProviderReadiness", () => {
     expect(getProviderReadiness(makeConfig({ provider: "whisper", model: "" }))).toBe("needs-config");
   });
 
-  it("returns ready for whisper with baseUrl and model", () => {
+  it("returns ready for whisper with baseUrl, model and apiKey", () => {
     expect(getProviderReadiness(makeConfig({ provider: "whisper" }))).toBe("ready");
+  });
+
+  it("returns needs-config for local-whisper when model is empty", () => {
+    expect(
+      getProviderReadiness(
+        makeConfig({ provider: "local-whisper", model: "", apiKey: "", baseUrl: "" }),
+      ),
+    ).toBe("needs-config");
+  });
+
+  it("returns ready for local-whisper with model and without apiKey/baseUrl", () => {
+    expect(
+      getProviderReadiness(
+        makeConfig({ provider: "local-whisper", apiKey: "", baseUrl: "" }),
+      ),
+    ).toBe("ready");
   });
 
   it("returns needs-config for cosyvoice / heygem when baseUrl is empty", () => {

@@ -104,7 +104,7 @@ export function findActiveRewriteProviderConfig(
 export function findEnabledTranscribeProviderConfig(
   configs: ApiKeyProviderConfig[],
 ): ApiKeyProviderConfig | undefined {
-  return configs.find((c) => c.enabled && c.provider === "whisper");
+  return configs.find((c) => c.enabled && (c.provider === "whisper" || c.provider === "local-whisper"));
 }
 
 /**
@@ -195,7 +195,8 @@ export type ProviderReadiness = "disabled" | "needs-config" | "ready";
  *
  * 规则与 Workbench real 路由保持一致：
  * - openai / custom rewrite：enabled + 非空 apiKey + 非空 model；custom 还需非空 baseUrl。
- * - whisper：enabled + 非空 baseUrl + 非空 model。
+ * - whisper：enabled + 非空 baseUrl + 非空 model + 非空 apiKey。
+ * - local-whisper：enabled + 非空 model；apiKey / baseUrl 不需要。
  * - cosyvoice / heygem：enabled + 非空 baseUrl；apiKey 可选。
  */
 export function getProviderReadiness(config: ApiKeyProviderConfig): ProviderReadiness {
@@ -222,6 +223,12 @@ export function getProviderReadiness(config: ApiKeyProviderConfig): ProviderRead
     }
     case "whisper": {
       if (!trimmedApiKey || !trimmedBaseUrl || !trimmedModel) {
+        return "needs-config";
+      }
+      return "ready";
+    }
+    case "local-whisper": {
+      if (!trimmedModel) {
         return "needs-config";
       }
       return "ready";

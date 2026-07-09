@@ -183,7 +183,7 @@ describe("desktopDraft persistence", () => {
     expect(restored.activeStageId).toBe("transcribe");
   });
 
-  it("sanitizeDesktopDraftForStorage persists workflow stage statuses", () => {
+  it("sanitizeDesktopDraftForStorage does not persist stale running workflow statuses", () => {
     const draft = createDefaultDesktopDraft();
     draft.workflow.stages[0].status = "completed";
     draft.workflow.stages[1].status = "completed";
@@ -192,10 +192,10 @@ describe("desktopDraft persistence", () => {
     const persisted = sanitizeDesktopDraftForStorage(draft);
 
     expect(persisted.workflow?.stages[0].status).toBe("completed");
-    expect(persisted.workflow?.stages[2].status).toBe("running");
+    expect(persisted.workflow?.stages[2].status).toBe("pending");
   });
 
-  it("restoreDesktopDraft restores saved workflow stage statuses", () => {
+  it("restoreDesktopDraft restores saved workflow stage statuses without stale running", () => {
     const draft = createDefaultDesktopDraft();
     draft.workflow.stages[0].status = "completed";
     draft.workflow.stages[1].status = "completed";
@@ -206,7 +206,7 @@ describe("desktopDraft persistence", () => {
 
     expect(restored.workflow.stages[0].status).toBe("completed");
     expect(restored.workflow.stages[1].status).toBe("completed");
-    expect(restored.workflow.stages[2].status).toBe("running");
+    expect(restored.workflow.stages[2].status).toBe("pending");
     expect(restored.workflow.stages[3].status).toBe("pending");
   });
 

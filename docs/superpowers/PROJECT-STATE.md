@@ -8,6 +8,7 @@ Mirax AI 目前处在 **first usable release / 真实能力逐步接入** 阶段
 
 - UI 主体已经完成。
 - 今天已接入真实 AI 文本生成 / 文案改写能力。
+- 本地 faster-whisper 转写已完成本机 dogfood 验证。
 - 其它创作、媒体、发布能力先按 **mock / 未完整真实接入** 管理。
 - 后续按创作链路从前往后接真实能力，不直接跳到发布。
 
@@ -28,6 +29,8 @@ Mirax AI 目前处在 **first usable release / 真实能力逐步接入** 阶段
   - 改写目标、提示词模板、目标字数已传入真实 rewrite 调用。
   - 改写参数已持久化到 Workbench draft。
   - 重新生成时显示真实 provider / model 调用状态。
+  - 改写请求运行中、完成、失败都有界面反馈，不再让用户误以为按钮无响应。
+  - Provider 配置就绪后可直接用于改写，测试连接只作为主动检查，不再成为每次使用前的硬门槛。
   - active 但不可用的 provider 会显示未就绪，不再显示绿色“使用中”。
 
 - [x] **视频 / 素材分析最小链路**
@@ -42,6 +45,9 @@ Mirax AI 目前处在 **first usable release / 真实能力逐步接入** 阶段
   - apiKey 仅进入 Authorization header，不进入日志、错误、snapshot、测试 fixture。
   - 真实失败不 fallback 到 mock，不伪造 transcript。
   - Task 1B review fix 完成：模型限制为 whisper-1、language 归一化为 ISO-639-1、音频大小限制 25MB。
+  - 本地 `local-whisper` Provider 已接入 faster-whisper，默认 venv 为 `/Users/yuzhenzhao/.local/share/mirax-ai/asr-venv`，默认 `tiny` / `cpu` / `int8`。
+  - 本地视频 → FFmpeg 抽音频 → faster-whisper 转写 → transcript → 文案改写链路已通过本机 dogfood。
+  - 本地 ASR 中文输出已做简体归一化，避免工作台显示繁体转写结果。
 
 - [x] **mock / 未接入能力的诚实标识**
   - Review 阶段显示「Mock 复核」。
@@ -71,10 +77,11 @@ Mirax AI 目前处在 **first usable release / 真实能力逐步接入** 阶段
 
 ## 下一步
 
-当前最新任务：**视频 / 素材分析 Task 1A / Task 1B 均已完成**。
+当前最新任务：**视频 / 素材分析 Task 1A / Task 1B / 本地 faster-whisper dogfood 均已完成**。
 
 - Task 1A：本地视频 → FFmpeg 音频抽取产物 ✅
 - Task 1B：真实转写端点（OpenAI Whisper 文件上传）✅
+- 本地 faster-whisper：本机 venv、模型下载、转写、简体归一化、进入改写链路 ✅
 
 计划文档：`docs/superpowers/plans/2026-07-03-video-material-analysis-task1.md`
 
@@ -84,11 +91,12 @@ Mirax AI 目前处在 **first usable release / 真实能力逐步接入** 阶段
 2. [x] 设计最小真实链路：本地视频/音频文件 -> 可转写音频 -> transcript -> rewrite/script（已完成）。
 3. [x] 实现 Task 1A：本地视频 → FFmpeg 音频抽取产物（已完成）。
 4. [x] 实现 Task 1B：真实转写端点（OpenAI Whisper 文件上传）（已完成）。
-5. [x] 同步本文件，把完成项移动到「已完成」（已完成）。
+5. [x] 接入并验证本地 faster-whisper Provider（已完成）。
+6. [x] 同步本文件，把完成项移动到「已完成」（已完成）。
 
 下一步候选：
 
-- **真实语音转写链路验收**：在真实 OpenAI key 下端到端跑通本地视频 → 抽取音频 → 真实 transcript → rewrite，确认产物质量与失败处理。
+- **本地 ASR 质量优化**：按真实素材质量评估 `tiny` 是否足够；如果质量明显不够，再切到 `base` 做本机验收。
 - **真实脚本生成 / 改写增强**：在已有 rewrite 能力基础上，接入更多 prompt 模板、字数控制、风格变量。
 - **真实 TTS / 声音克隆**：待脚本生成稳定后，再按创作链路顺序接入声音生成真实能力。
 

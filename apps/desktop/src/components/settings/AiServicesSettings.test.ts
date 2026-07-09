@@ -12,6 +12,12 @@ describe("AiServicesSettings connection test wiring", () => {
     expect(source).not.toContain(': ({ mode: "mock" } as const)');
   });
 
+  it("supports local-whisper mode with probe runner", () => {
+    expect(source).toContain('mode: "local-whisper"');
+    expect(source).toContain("probe_local_whisper");
+    expect(source).toContain("probe: async");
+  });
+
   it("does not test a custom provider through the default OpenAI URL when baseUrl is missing", () => {
     expect(source).toContain('config.provider === "custom" && !config.baseUrl?.trim()');
     expect(source).toContain("Custom provider Base URL 不能为空。");

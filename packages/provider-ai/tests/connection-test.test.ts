@@ -274,6 +274,55 @@ describe("ai provider connection test", () => {
     expect(result.message).not.toContain("url-secret");
   });
 
+  it("returns success for local-whisper mode when probe succeeds", async () => {
+    const result = await testAiProviderConnection({
+      mode: "local-whisper",
+      pythonPath: "/usr/bin/python",
+      model: "tiny",
+      probe: async () => {},
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.message).toContain("本地 Whisper");
+  });
+
+  it("returns not-configured for local-whisper mode when model is empty", async () => {
+    const result = await testAiProviderConnection({
+      mode: "local-whisper",
+      pythonPath: "/usr/bin/python",
+      model: "",
+      probe: async () => {},
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.code).toBe("not-configured");
+  });
+
+  it("returns not-configured for local-whisper mode when probe throws", async () => {
+    const result = await testAiProviderConnection({
+      mode: "local-whisper",
+      pythonPath: "/usr/bin/python",
+      model: "tiny",
+      probe: async () => {
+        throw new Error("probe failed");
+      },
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.code).toBe("not-configured");
+  });
+
+  it("returns not-configured for local-whisper mode when probe is missing", async () => {
+    const result = await testAiProviderConnection({
+      mode: "local-whisper",
+      pythonPath: "/usr/bin/python",
+      model: "tiny",
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.code).toBe("not-configured");
+  });
+
   it("returns success for heygem mode when fake service is healthy", async () => {
     let requestedEndpoint = "";
     const transport: OpenAiCompatibleTransport = {

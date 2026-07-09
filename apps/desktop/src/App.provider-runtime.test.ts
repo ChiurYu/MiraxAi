@@ -11,8 +11,14 @@ describe("App provider runtime wiring", () => {
     expect(source).toContain("runtime.stageModes.value = modes;");
   });
 
-  it("only enables real provider stages when config is ready and verified in the current session", () => {
+  it("lets ready rewrite configs run without requiring a session connection test", () => {
     expect(source).toContain("function hasExecutableRewriteProvider()");
+    const body = source.match(/function hasExecutableRewriteProvider\(\): boolean \{([\s\S]*?)\n\}/)?.[1] ?? "";
+    expect(body).toContain("return Boolean(config);");
+    expect(body).not.toContain("isProviderVerified");
+  });
+
+  it("still keeps non-local provider stages behind current-session readiness checks", () => {
     expect(source).toContain("function hasExecutableTranscribeProvider()");
     expect(source).toContain("function hasExecutableSpeechProvider()");
     expect(source).toContain("function hasExecutableVoiceCloneProvider()");
@@ -20,6 +26,12 @@ describe("App provider runtime wiring", () => {
     expect(source).toContain('getProviderReadiness(config) === "ready"');
     expect(source).toContain("isProviderVerified(config.id)");
     expect(source).not.toContain('rewrite: findEnabledRewriteProviderConfig(providerConfigs.value) ? "real" : "mock"');
+  });
+
+  it("lets local whisper run when its config is ready without requiring a manual test", () => {
+    const body = source.match(/function hasExecutableTranscribeProvider\(\): boolean \{([\s\S]*?)\n\}/)?.[1] ?? "";
+    expect(body).toContain('config.provider === "local-whisper"');
+    expect(body).toContain('getProviderReadiness(config) !== "ready"');
   });
 
   it("marks provider stages as not-connected when enabled but not verified, instead of falling back to mock", () => {

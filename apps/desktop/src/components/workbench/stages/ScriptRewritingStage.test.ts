@@ -56,9 +56,15 @@ describe("ScriptRewritingStage UI contracts", () => {
     expect(script).toContain("statusMessage?: string");
   });
 
-  it("renders statusMessage in a run-status element", () => {
-    expect(template).toContain("run-status");
-    expect(template).toMatch(/v-if="statusMessage"/);
+  it("renders statusMessage in a visible feedback banner", () => {
+    expect(template).toContain("rewrite-feedback");
+    expect(template).toMatch(/v-if="rewriteFeedbackMessage"/);
+  });
+
+  it("shows a visible rewrite feedback banner near the generate button", () => {
+    expect(source).toContain("rewriteFeedbackMessage");
+    expect(template).toContain("rewrite-feedback");
+    expect(source).toContain("正在生成改写文案，请稍等...");
   });
 
   it("does not render apiKey, baseUrl, token or sk- literals in the template", () => {

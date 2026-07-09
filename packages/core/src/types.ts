@@ -21,7 +21,7 @@ export type WorkflowStageRuntimeMode = "mock" | "real" | "not-connected";
 
 export type PublishPlatform = "douyin" | "xiaohongshu" | "kuaishou" | "shipinhao" | "bilibili";
 
-export type ApiKeyProvider = "openai" | "whisper" | "cosyvoice" | "heygem" | "custom";
+export type ApiKeyProvider = "openai" | "whisper" | "local-whisper" | "cosyvoice" | "heygem" | "custom";
 
 export interface WorkflowStage {
   id: WorkflowStageId;

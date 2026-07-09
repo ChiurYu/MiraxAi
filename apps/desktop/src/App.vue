@@ -229,12 +229,18 @@ function hasExecutableRewriteProvider(): boolean {
     providerConfigs.value,
     appSettings.rewriteProviderConfigId,
   );
-  return Boolean(config && isProviderVerified(config.id));
+  return Boolean(config);
 }
 
 function hasExecutableTranscribeProvider(): boolean {
   const config = findEnabledTranscribeProviderConfig(providerConfigs.value);
-  return Boolean(config && getProviderReadiness(config) === "ready" && isProviderVerified(config.id));
+  if (!config || getProviderReadiness(config) !== "ready") {
+    return false;
+  }
+  if (config.provider === "local-whisper") {
+    return true;
+  }
+  return isProviderVerified(config.id);
 }
 
 function hasExecutableSpeechProvider(): boolean {
@@ -253,7 +259,7 @@ function hasExecutableAvatarProvider(): boolean {
 }
 
 function hasEnabledTranscribeProvider(): boolean {
-  return providerConfigs.value.some((c) => c.enabled && c.provider === "whisper");
+  return providerConfigs.value.some((c) => c.enabled && (c.provider === "whisper" || c.provider === "local-whisper"));
 }
 
 function hasEnabledSpeechProvider(): boolean {
@@ -866,6 +872,8 @@ function handleReturnToStage(stageId: WorkflowStageId) {
 }
 
 function runRewriteStage() {
+  rewriteErrorMessage.value = "";
+  rewriteRunMessage.value = "已提交改写请求，正在准备调用 LLM...";
   void runtime.runStage("rewrite");
 }
 

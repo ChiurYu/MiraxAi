@@ -7,13 +7,15 @@ import {
   type ApiKeyProvider,
   type ApiKeyProviderConfig,
 } from "@mirax/core";
-import { testAiProviderConnection, type AiConnectionTestInput } from "@mirax/provider-ai";
+import { testAiProviderConnection, DEFAULT_PYTHON_PATH, type AiConnectionTestInput } from "@mirax/provider-ai";
+import { invoke as tauriInvoke } from "@tauri-apps/api/core";
 import AppDrawer from "../../components/ui/AppDrawer.vue";
 import { useAppSettings, getProviderReadiness, type ProviderReadiness } from "../../composables/useAppSettings.js";
 
 const PROVIDER_OPTIONS: { value: ApiKeyProvider; label: string }[] = [
   { value: "openai", label: "OpenAI" },
-  { value: "whisper", label: "Whisper" },
+  { value: "whisper", label: "Whisper (OpenAI API)" },
+  { value: "local-whisper", label: "本地 Whisper (faster-whisper)" },
   { value: "cosyvoice", label: "CosyVoice" },
   { value: "heygem", label: "HeyGem" },
   { value: "custom", label: "自定义" },
@@ -71,6 +73,8 @@ const filter = ref<"all" | "enabled" | "needs-config" | "failed">("all");
 const apiKeyFieldName = computed(() =>
   editingConfig.value ? `mirax-provider-api-key-${editingConfig.value.id}` : "mirax-provider-api-key",
 );
+
+const isLocalWhisper = computed(() => editingConfig.value?.provider === "local-whisper");
 
 function isRewriteProvider(config: ApiKeyProviderConfig): boolean {
   return config.provider === "openai" || config.provider === "custom";
@@ -173,6 +177,19 @@ async function testProvider(config: ApiKeyProviderConfig) {
 function connectionTestInputFor(config: ApiKeyProviderConfig): AiConnectionTestInput {
   if (config.provider === "whisper") {
     return { mode: "whisper", baseUrl: config.baseUrl ?? "", apiKey: config.apiKey };
+  }
+  if (config.provider === "local-whisper") {
+    return {
+      mode: "local-whisper",
+      pythonPath: DEFAULT_PYTHON_PATH,
+      model: config.model ?? "",
+      probe: async (pythonPath) => {
+        const result = await tauriInvoke("probe_local_whisper", { pythonPath });
+        if (result !== true) {
+          throw new Error("not-configured: 本地 Whisper 探测失败");
+        }
+      },
+    };
   }
   if (config.provider === "cosyvoice") {
     return { mode: "cosyvoice", baseUrl: config.baseUrl ?? "", apiKey: config.apiKey };
@@ -333,14 +350,19 @@ function deleteProvider(id: string) {
         <label class="field"
         >
           <span class="field-label">Base URL</span>
-          <input v-model="editingConfig.baseUrl" placeholder="https://api.openai.com/v1" />
+          <input
+            v-if="!isLocalWhisper"
+            v-model="editingConfig.baseUrl"
+            placeholder="https://api.openai.com/v1"
+          />
+          <input v-else disabled value="本地 faster-whisper，无需 Base URL" />
         </label>
         <label class="field"
         >
           <span class="field-label">默认模型</span>
-          <input v-model="editingConfig.model" placeholder="gpt-4.1" />
+          <input v-model="editingConfig.model" :placeholder="isLocalWhisper ? 'tiny' : 'gpt-4.1'" />
         </label>
-        <label class="field"
+        <label v-if="!isLocalWhisper" class="field"
         >
           <span class="field-label">API Key</span>
           <input
@@ -354,6 +376,10 @@ function deleteProvider(id: string) {
             API Key 仅保存在本机 SQLite，不会进入 snapshot 或 localStorage。
           </span>
         </label>
+        <div v-else class="field">
+          <span class="field-label">API Key</span>
+          <span class="field-hint">本地 Whisper 不需要 API Key。</span>
+        </div>
       </form>
 
       <template #actions>

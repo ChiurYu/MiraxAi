@@ -1,6 +1,9 @@
 import { createDefaultOpenAiTransport } from "./openAiCompatible.js";
+import { DEFAULT_PYTHON_PATH } from "./localWhisperProvider.js";
 import { AiProviderError } from "./types.js";
 import type { AiConnectionTestResult, AiProviderErrorCode, OpenAiCompatibleTransport } from "./types.js";
+
+export type ProbeLocalWhisper = (pythonPath: string) => Promise<void>;
 
 export type AiConnectionTestInput =
   | { mode: "mock" }
@@ -24,6 +27,12 @@ export type AiConnectionTestInput =
       transport?: OpenAiCompatibleTransport;
     }
   | {
+      mode: "local-whisper";
+      pythonPath?: string;
+      model?: string;
+      probe?: ProbeLocalWhisper;
+    }
+  | {
       mode: "heygem";
       baseUrl: string;
       apiKey?: string;
@@ -41,6 +50,10 @@ export async function testAiProviderConnection(input: AiConnectionTestInput): Pr
 
   if (input.mode === "whisper") {
     return testWhisperConnection(input);
+  }
+
+  if (input.mode === "local-whisper") {
+    return testLocalWhisperConnection(input);
   }
 
   if (input.mode === "heygem") {
@@ -176,6 +189,31 @@ async function testWhisperConnection(input: Extract<AiConnectionTestInput, { mod
       return { ok: false, code: "bad-response", message: "Whisper 响应无法解析为 JSON。" };
     }
     return { ok: false, code: "network", message: "无法连接到 Whisper provider，请检查网络与 baseUrl。" };
+  }
+}
+
+async function testLocalWhisperConnection(
+  input: Extract<AiConnectionTestInput, { mode: "local-whisper" }>,
+): Promise<AiConnectionTestResult> {
+  const pythonPath = input.pythonPath?.trim() || DEFAULT_PYTHON_PATH;
+  if (!pythonPath) {
+    return { ok: false, code: "not-configured", message: "Python 解释器路径未配置。" };
+  }
+  if (!input.model?.trim()) {
+    return { ok: false, code: "not-configured", message: "本地 Whisper model 不能为空。" };
+  }
+  if (!input.probe) {
+    return { ok: false, code: "not-configured", message: "未注入本地 Whisper 探测器。" };
+  }
+
+  try {
+    await input.probe(pythonPath);
+    return { ok: true, message: "本地 Whisper 环境正常。" };
+  } catch (error) {
+    if (error instanceof AiProviderError) {
+      return { ok: false, code: error.code, message: error.message };
+    }
+    return { ok: false, code: "not-configured", message: "本地 Whisper 探测失败。" };
   }
 }
 

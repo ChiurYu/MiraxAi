@@ -49,6 +49,13 @@ const isNotConnected = computed(() => props.mode === "not-connected");
 const hasError = computed(() => !!props.errorMessage?.trim());
 
 const canRun = computed(() => hasTranscript.value && !props.running && !isNotConnected.value);
+const rewriteFeedbackMessage = computed(() => {
+  if (props.running && props.status === "running") {
+    return "正在生成改写文案，请稍等...";
+  }
+  return props.statusMessage?.trim() ?? "";
+});
+const rewriteFeedbackTone = computed(() => (hasError.value ? "status-error" : "status-info"));
 
 const modeLabel = computed(() => {
   if (isMock.value) return "Mock 结果";
@@ -284,7 +291,16 @@ function handleRegenerate() {
         <span>真实 LLM 模式：将使用设置中启用的 provider 发起真实调用。</span>
       </div>
 
-      <p v-if="statusMessage" class="run-status">{{ statusMessage }}</p>
+      <div
+        v-if="rewriteFeedbackMessage"
+        class="status-banner rewrite-feedback"
+        :class="rewriteFeedbackTone"
+      >
+        <Loader2 v-if="running && status === 'running'" :size="14" class="spin" />
+        <AlertCircle v-else-if="hasError" :size="14" />
+        <CheckCircle2 v-else :size="14" />
+        <span>{{ rewriteFeedbackMessage }}</span>
+      </div>
 
       <div class="action-row">
         <button
@@ -295,7 +311,7 @@ function handleRegenerate() {
         >
           <Loader2 v-if="running" :size="16" class="spin" />
           <Sparkles v-else :size="16" />
-          <span>{{ running ? "生成中" : "重新生成" }}</span>
+          <span>{{ running ? "正在生成..." : "重新生成" }}</span>
         </button>
         <button
           class="secondary"
@@ -512,13 +528,6 @@ function handleRegenerate() {
   height: 40px;
   font-size: 13px;
   font-weight: 600;
-}
-
-.run-status {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--mx-text-secondary);
 }
 
 .action-row .secondary {

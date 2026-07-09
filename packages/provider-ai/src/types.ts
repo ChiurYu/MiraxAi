@@ -201,6 +201,38 @@ export interface WhisperProviderOptions {
 }
 
 /**
+ * 本地 faster-whisper 转写调用输入。
+ *
+ * 安全边界：实现方不得将 audioPath / pythonPath 等完整本地路径写入日志或 snapshot。
+ */
+export interface RunLocalWhisperInput {
+  pythonPath: string;
+  model: string;
+  device: string;
+  computeType: string;
+  audioPath: string;
+  language?: string;
+}
+
+/**
+ * 本地 faster-whisper 转写执行器；由桌面端注入 Tauri command 或测试 fake。
+ */
+export type RunLocalWhisper = (input: RunLocalWhisperInput) => Promise<string>;
+
+/**
+ * 本地 faster-whisper provider 的内存配置。
+ *
+ * 不依赖网络，不需要 apiKey / baseUrl；通过本机 venv Python 调用 faster-whisper。
+ */
+export interface LocalWhisperProviderOptions {
+  pythonPath?: string;
+  model?: string;
+  device?: string;
+  computeType?: string;
+  runLocalWhisper: RunLocalWhisper;
+}
+
+/**
  * HeyGem-compatible provider 的内存配置。`apiKey` 可选，本地服务可不需要鉴权。
  */
 export interface HeyGemProviderOptions {

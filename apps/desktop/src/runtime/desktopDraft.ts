@@ -68,7 +68,7 @@ export function sanitizeDesktopDraftForStorage(draft: DesktopDraft): PersistedDe
     project: draft.project,
     providerConfig: sanitizeProviderConfigForStorage(draft.providerConfig),
     activeStageId: draft.activeStageId,
-    workflow: draft.workflow,
+    workflow: sanitizeWorkflowForPersistence(draft.workflow),
     transcriptText: draft.transcriptText,
     activeGoal: draft.activeGoal,
     activePreset: draft.activePreset,
@@ -94,12 +94,9 @@ function sanitizeWorkflow(value: unknown, defaultWorkflow: Workflow): Workflow {
     return defaultWorkflow;
   }
 
-  const validStatuses: WorkflowStageStatus[] = ["pending", "running", "completed", "failed", "skipped"];
   const nextStages = savedStages.map((stage, index) => {
     const id = WORKFLOW_STAGES[index];
-    const status = validStatuses.includes(stage.status as WorkflowStageStatus)
-      ? (stage.status as WorkflowStageStatus)
-      : "pending";
+    const status = normalizePersistedStageStatus(stage.status);
     return {
       ...stage,
       id,
@@ -113,6 +110,24 @@ function sanitizeWorkflow(value: unknown, defaultWorkflow: Workflow): Workflow {
     createdAt: saved.createdAt ?? defaultWorkflow.createdAt,
     updatedAt: saved.updatedAt ?? defaultWorkflow.updatedAt,
   };
+}
+
+function sanitizeWorkflowForPersistence(workflow: Workflow): Workflow {
+  return {
+    ...workflow,
+    stages: workflow.stages.map((stage) => ({
+      ...stage,
+      status: normalizePersistedStageStatus(stage.status),
+    })),
+  };
+}
+
+function normalizePersistedStageStatus(status: unknown): WorkflowStageStatus {
+  const validStatuses: WorkflowStageStatus[] = ["pending", "completed", "failed", "skipped"];
+  if (validStatuses.includes(status as WorkflowStageStatus)) {
+    return status as WorkflowStageStatus;
+  }
+  return "pending";
 }
 
 export function restoreDesktopDraft(saved: Partial<PersistedDesktopDraft>): DesktopDraft {

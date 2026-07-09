@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ApiKeyProviderConfig, WorkflowStageRuntimeMode } from "@mirax/core";
-import { WhisperProvider, createMockAiProvider } from "@mirax/provider-ai";
+import { LocalWhisperProvider, WhisperProvider, createMockAiProvider } from "@mirax/provider-ai";
 import { selectTranscribeProvider } from "./useTranscribeProvider.js";
 
 function makeConfig(overrides: Partial<ApiKeyProviderConfig> = {}): ApiKeyProviderConfig {
@@ -19,8 +19,8 @@ function makeConfig(overrides: Partial<ApiKeyProviderConfig> = {}): ApiKeyProvid
 describe("selectTranscribeProvider", () => {
   const mockProvider = createMockAiProvider();
 
-  function select(stageMode: WorkflowStageRuntimeMode, providerConfigs: ApiKeyProviderConfig[]) {
-    return selectTranscribeProvider({ stageMode, providerConfigs, mockProvider });
+  function select(stageMode: WorkflowStageRuntimeMode, providerConfigs: ApiKeyProviderConfig[], invoke?: (command: string, args: Record<string, unknown>) => Promise<unknown>) {
+    return selectTranscribeProvider({ stageMode, providerConfigs, mockProvider, invoke });
   }
 
   it("returns mock provider in mock mode", () => {
@@ -47,6 +47,50 @@ describe("selectTranscribeProvider", () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.provider).toBeInstanceOf(WhisperProvider);
+    }
+  });
+
+  it("returns local provider for enabled local-whisper config", () => {
+    const result = select("real", [makeConfig({ provider: "local-whisper", model: "tiny", apiKey: "", baseUrl: "" })]);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.provider).toBeInstanceOf(LocalWhisperProvider);
+    }
+  });
+
+  it("injects Tauri invoke runner for local-whisper and maps not-configured prefix", async () => {
+    const result = select("real", [makeConfig({ provider: "local-whisper", model: "tiny" })], async () => {
+      throw new Error("not-configured: Python 解释器不存在");
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    await expect(result.provider.transcribe({ audioPath: "/tmp/audio.wav" })).rejects.toMatchObject({
+      code: "not-configured",
+    });
+  });
+
+  it("injects Tauri invoke runner for local-whisper and maps transcribe-failed prefix", async () => {
+    const result = select("real", [makeConfig({ provider: "local-whisper", model: "tiny" })], async () => {
+      throw new Error("transcribe-failed: 本地 Whisper 执行失败");
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    await expect(result.provider.transcribe({ audioPath: "/tmp/audio.wav" })).rejects.toMatchObject({
+      code: "transcribe-failed",
+    });
+  });
+
+  it("returns not-configured for local-whisper when model is empty", () => {
+    const result = select("real", [makeConfig({ provider: "local-whisper", model: "" })]);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe("not-configured");
     }
   });
 
