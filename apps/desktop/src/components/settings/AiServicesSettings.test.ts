@@ -29,6 +29,24 @@ describe("AiServicesSettings connection test wiring", () => {
     expect(source).toContain("editingConfig.pythonPath");
   });
 
+  it("auto-loads default pythonPath hint for local-whisper", () => {
+    expect(source).toContain("自动加载默认本地环境路径");
+    expect(source).toContain("可手动覆盖");
+  });
+
+  it("uses a model dropdown for local-whisper", () => {
+    expect(source).toContain("LOCAL_WHISPER_MODEL_OPTIONS");
+    expect(source).toContain('v-if="isLocalWhisper"');
+    expect(source).toContain('<select');
+  });
+
+  it("exposes tiny and base options for local-whisper", () => {
+    expect(source).toContain('value: "tiny"');
+    expect(source).toContain('value: "base"');
+    expect(source).toContain("tiny：速度快");
+    expect(source).toContain("base：中文质量更好");
+  });
+
   it("shows tiny / base model trade-off hint for local-whisper", () => {
     expect(source).toContain("tiny：速度快");
     expect(source).toContain("base：中文质量更好");

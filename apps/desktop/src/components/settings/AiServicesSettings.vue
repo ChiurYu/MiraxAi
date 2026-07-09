@@ -28,6 +28,11 @@ const FILTER_OPTIONS: { value: "all" | "enabled" | "needs-config" | "failed"; la
   { value: "failed", label: "连接失败" },
 ];
 
+const LOCAL_WHISPER_MODEL_OPTIONS: { value: string; label: string }[] = [
+  { value: "tiny", label: "tiny：速度快，适合快速 dogfood" },
+  { value: "base", label: "base：中文质量更好，但 CPU 上明显变慢" },
+];
+
 const STATUS_META: Record<
   ProviderReadiness,
   { label: string; icon: typeof AlertCircle | typeof CheckCircle2; className: string }
@@ -375,7 +380,10 @@ function deleteProvider(id: string) {
         <label class="field"
         >
           <span class="field-label">默认模型</span>
-          <input v-model="editingConfig.model" :placeholder="isLocalWhisper ? 'tiny / base' : 'gpt-4.1'" />
+          <select v-if="isLocalWhisper" v-model="editingConfig.model">
+            <option v-for="option in LOCAL_WHISPER_MODEL_OPTIONS" :key="option.value" :value="option.value">{{ option.label }}</option>
+          </select>
+          <input v-else v-model="editingConfig.model" placeholder="gpt-4.1" />
           <span v-if="isLocalWhisper" class="field-hint">
             tiny：速度快，适合快速 dogfood；base：中文质量更好，但在 CPU 上会明显变慢，适合短素材或离线验收。
           </span>
@@ -384,7 +392,7 @@ function deleteProvider(id: string) {
         >
           <span class="field-label">Python 解释器路径</span>
           <input v-model="editingConfig.pythonPath" :placeholder="DEFAULT_PYTHON_PATH" />
-          <span class="field-hint">支持 ~ 表示用户主目录，留空则使用默认值。</span>
+          <span class="field-hint">自动加载默认本地环境路径，可手动覆盖；支持 ~ 表示用户主目录，留空则使用默认值。</span>
         </label>
         <label v-if="!isLocalWhisper" class="field"
         >
