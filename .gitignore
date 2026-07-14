@@ -10,6 +10,12 @@ video-frames/
 # Browser verification artifacts
 .playwright-mcp/
 
+# Local manual verification screenshots at repository root
+/manual-*.png
+/mirax-actual-*.png
+/playwright-*.png
+/review-*.png
+
 # OS/editor noise
 .DS_Store
 Thumbs.db
