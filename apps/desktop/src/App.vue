@@ -4,6 +4,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { invoke as tauriInvoke } from "@tauri-apps/api/core";
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import {
+  updateStageStatus,
   type ProjectDraft,
   type PublishPlatform,
   type WorkflowStageId,
@@ -11,6 +12,7 @@ import {
 } from "@mirax/core";
 import { createMockMediaRenderer, MediaRendererError } from "@mirax/media-pipeline";
 import { AiProviderError, createMockAiProvider } from "@mirax/provider-ai";
+import { createProjectVoiceCloneRepository, createVoiceSampleRepository, createVoiceSampleStorageRootRepository, replaceActiveProjectVoiceClone } from "@mirax/local-store";
 import { SUPPORTED_PLATFORM_PROFILES, createMockPublisher, type PublishAccount } from "@mirax/provider-publish";
 import {
   createNavigationState,
@@ -40,7 +42,7 @@ import {
   findEnabledAvatarProviderConfig,
   findEnabledSpeechProviderConfig,
   findEnabledTranscribeProviderConfig,
-  findEnabledVoiceCloneProviderConfig,
+  getLocalStoreDb,
   getProviderReadiness,
   useAppSettings,
 } from "./composables/useAppSettings.js";
@@ -50,9 +52,19 @@ import { buildAvatarOutputPath, selectAvatarProvider } from "./composables/useAv
 import { selectComposeRenderer } from "./composables/useComposeRenderer.js";
 import { selectAudioExtractor } from "./composables/useAudioExtractor.js";
 import { selectRewriteProvider } from "./composables/useRewriteProvider.js";
-import { buildSpeechOutputPath, selectSpeechProvider } from "./composables/useSpeechProvider.js";
+import {
+  buildSpeechOutputPath,
+  createTauriAudioDurationProber,
+  createTauriAudioFileWriter,
+  selectSpeechProvider,
+} from "./composables/useSpeechProvider.js";
 import { selectTranscribeProvider } from "./composables/useTranscribeProvider.js";
 import { selectVoiceCloneProvider } from "./composables/useVoiceCloneProvider.js";
+import { createTauriBaiLianFetchBinary, createTauriBaiLianFetchJson } from "./runtime/tauriBaiLianHttp.js";
+import { runVoiceClone } from "./features/voice-clone/voiceCloneLifecycle.js";
+import { resolveSpeechVoice } from "./features/voice-clone/resolveSpeechVoice.js";
+import { importManagedVoiceSample, readManagedVoiceSample } from "./features/voice-clone/tauriVoiceSamples.js";
+import { useVoiceSampleStorage } from "./features/voice-clone/useVoiceSampleStorage.js";
 import type { AssetListItem } from "./features/assets/assetModels.js";
 import { mockAccounts } from "./features/accounts/mockAccounts.js";
 import AccountManagementView from "./views/AccountManagementView.vue";
@@ -81,6 +93,62 @@ const generatedAudioDuration = ref(0);
 const generatedAvatarPath = ref("");
 const generatedAvatarDuration = ref(0);
 
+function getAudioFormat(path: string): "mp3" | "wav" {
+  return path.toLowerCase().endsWith(".wav") ? "wav" : "mp3";
+}
+
+function toRelativeAudioPath(root: string, absolutePath: string): string {
+  const normalizedRoot = root.replace(/[/\\]+$/, "");
+  const normalizedPath = absolutePath.replace(/[/\\]+$/, "");
+  const sep = normalizedPath.startsWith(normalizedRoot + "/") || normalizedPath.startsWith(normalizedRoot + "\\");
+  if (!sep) return "";
+  return normalizedPath.slice(normalizedRoot.length).replace(/^[/\\]/, "");
+}
+
+function joinAudioRoot(root: string, relativePath: string): string {
+  const normalizedRoot = root.replace(/[/\\]+$/, "");
+  const normalizedRelative = relativePath.replace(/^[/\\]+/, "");
+  return `${normalizedRoot}/${normalizedRelative}`;
+}
+
+function recordSpeechArtifact(absolutePath: string, durationSeconds: number) {
+  const relativePath = toRelativeAudioPath(appSettings.outputPaths.audioOutput, absolutePath);
+  if (!relativePath) return;
+  draft.speechArtifact = {
+    relativePath,
+    durationSeconds,
+    format: getAudioFormat(absolutePath),
+  };
+}
+
+async function restoreSpeechArtifact() {
+  const artifact = draft.speechArtifact;
+  if (!artifact) return;
+
+  const absolutePath = joinAudioRoot(appSettings.outputPaths.audioOutput, artifact.relativePath);
+  try {
+    const ok = await tauriInvoke<boolean>("check_audio_file", {
+      path: absolutePath,
+      allowedRoot: appSettings.outputPaths.audioOutput,
+    });
+    if (!ok) {
+      throw new Error("语音合成产物文件不存在，请重新合成。");
+    }
+    generatedAudioPath.value = absolutePath;
+    generatedAudioDuration.value = artifact.durationSeconds;
+    if (runtime.stageStatus.value.speech !== "completed") {
+      runtime.workflow.value = updateStageStatus(runtime.workflow.value, "speech", "completed");
+    }
+    speechErrorMessage.value = "";
+  } catch (error) {
+    draft.speechArtifact = undefined;
+    generatedAudioPath.value = "";
+    generatedAudioDuration.value = 0;
+    runtime.workflow.value = updateStageStatus(runtime.workflow.value, "speech", "pending");
+    speechErrorMessage.value = error instanceof Error ? error.message : "语音合成产物恢复失败";
+  }
+}
+
 // WB-08 内容复核的封面候选使用本地 Stitch 示例媒体，避免依赖外部热链。
 const stitchCoverCandidates = [
   new URL("./assets/stitch/avatars/qinghe-studio-v2.jpg", import.meta.url).href,
@@ -100,6 +168,30 @@ const transcriptText = computed({
 // 声音选择：voiceId 与 voiceName 必须来自真实的 voice-clone executor 结果或样本文件名。
 const selectedVoiceId = ref("");
 const selectedVoiceName = ref("");
+// 原始样本路径仅在当前 App session 中短暂保留，绝不写入 ProjectDraft。
+const pendingVoiceSamplePath = ref("");
+const pendingVoiceSampleName = ref("");
+const pendingVoiceName = ref("");
+// 仅供当前百炼 CosyVoice 克隆请求使用；不得写入 draft、SQLite 或浏览器存储。
+const pendingVoiceExternalSampleUrl = ref("");
+const voiceCloneConsentAccepted = ref(false);
+const managedSampleAvailable = ref(false);
+const projectCloneBound = ref(false);
+const remoteVoiceDeletable = ref(false);
+const remoteVoiceDeleteBlockedMessage = ref("");
+const selectedVoiceCloneProviderConfigId = ref("");
+const voiceCloneProviderOptions = computed(() => providerConfigs.value
+  .filter((config) => config.enabled && (config.provider === "elevenlabs-tts" || config.provider === "bailian-qwen-tts" || config.provider === "bailian-cosyvoice"))
+  .map((config) => ({ id: config.id, label: config.label.trim() || config.provider })));
+const selectedVoiceCloneProvider = computed(() => providerConfigs.value.find(
+  (config) => config.id === selectedVoiceCloneProviderConfigId.value && (config.provider === "elevenlabs-tts" || config.provider === "bailian-qwen-tts" || config.provider === "bailian-cosyvoice"),
+));
+const voiceCloneRequiresExternalSampleUrl = computed(() => selectedVoiceCloneProvider.value?.provider === "bailian-cosyvoice");
+
+watch(selectedVoiceCloneProviderConfigId, () => {
+  pendingVoiceExternalSampleUrl.value = "";
+  voiceCloneConsentAccepted.value = false;
+});
 const systemTheme = ref<"light" | "dark">("dark");
 const navigation = reactive(createNavigationState());
 const publishAccounts = ref<PublishAccount[]>([]);
@@ -110,9 +202,47 @@ const transcribeErrorMessage = ref("");
 const rewriteErrorMessage = ref("");
 const rewriteRunMessage = ref("");
 const voiceCloneErrorMessage = ref("");
+const voiceCloneDiagnosticLogs = ref<Array<{ id: number; timestamp: string; message: string }>>([]);
+let voiceCloneDiagnosticSequence = 0;
 const speechErrorMessage = ref("");
 const avatarErrorMessage = ref("");
 const composeErrorMessage = ref("");
+
+function appendVoiceCloneDiagnostic(message: string) {
+  const trimmed = message.trim();
+  if (!trimmed) return;
+  voiceCloneDiagnosticLogs.value = [
+    {
+      id: voiceCloneDiagnosticSequence += 1,
+      timestamp: new Date().toLocaleTimeString("zh-CN", { hour12: false }),
+      message: trimmed,
+    },
+    ...voiceCloneDiagnosticLogs.value,
+  ].slice(0, 10);
+}
+
+function clearVoiceCloneDiagnosticLogs() {
+  voiceCloneDiagnosticLogs.value = [];
+}
+
+function readSafeVoiceCloneError(error: unknown): string {
+  const value = error instanceof Error
+    ? error.message
+    : typeof error === "string"
+      ? error
+      : error && typeof error === "object" && "message" in error && typeof error.message === "string"
+        ? error.message
+        : "";
+  const message = value.trim();
+  if (!message) return "声音克隆失败，未返回可读错误。请查看本次会话诊断日志后重试。";
+  const lower = message.toLowerCase();
+  if (message.length > 320 || ["data:", "://", "/", "\\", "?", "&", "bearer", "sk-", "signature"].some((marker) => lower.includes(marker))) {
+    return "声音克隆失败，诊断包含敏感内容，已隐藏。请查看本次会话诊断日志后重试。";
+  }
+  return message;
+}
+
+const voiceSampleRootReady = computed(() => Boolean(appSettings.activeVoiceSampleStorageRootId));
 
 const platformLabels = computed<Record<PublishPlatform, string>>(() =>
   Object.fromEntries(SUPPORTED_PLATFORM_PROFILES.map((profile) => [profile.id, profile.label])) as Record<
@@ -245,12 +375,25 @@ function hasExecutableTranscribeProvider(): boolean {
 
 function hasExecutableSpeechProvider(): boolean {
   const config = findEnabledSpeechProviderConfig(providerConfigs.value);
-  return Boolean(config && getProviderReadiness(config) === "ready" && isProviderVerified(config.id));
+  if (!config || getProviderReadiness(config) !== "ready") {
+    return false;
+  }
+  // 这些云端 TTS 没有稳定、无计费副作用的健康检查；凭据与业务空间配置完整即可执行。
+  if (config.provider === "elevenlabs-tts") {
+    return true;
+  }
+  if (config.provider === "bailian-qwen-tts" || config.provider === "bailian-cosyvoice") {
+    return true;
+  }
+  return isProviderVerified(config.id);
 }
 
 function hasExecutableVoiceCloneProvider(): boolean {
-  const config = findEnabledVoiceCloneProviderConfig(providerConfigs.value);
-  return Boolean(config && getProviderReadiness(config) === "ready" && isProviderVerified(config.id));
+  return providerConfigs.value.some((config) => config.enabled
+    && (config.provider === "elevenlabs-tts" || config.provider === "bailian-qwen-tts" || config.provider === "bailian-cosyvoice")
+    && Boolean(config.apiKey.trim())
+    && Boolean(config.model?.trim())
+    && (config.provider === "elevenlabs-tts" || Boolean(config.baseUrl?.trim())));
 }
 
 function hasExecutableAvatarProvider(): boolean {
@@ -263,11 +406,11 @@ function hasEnabledTranscribeProvider(): boolean {
 }
 
 function hasEnabledSpeechProvider(): boolean {
-  return providerConfigs.value.some((c) => c.enabled && c.provider === "cosyvoice");
+  return providerConfigs.value.some((c) => c.enabled && (c.provider === "cosyvoice" || c.provider === "elevenlabs-tts" || c.provider === "bailian-qwen-tts" || c.provider === "bailian-cosyvoice"));
 }
 
 function hasEnabledVoiceCloneProvider(): boolean {
-  return hasEnabledSpeechProvider();
+  return providerConfigs.value.some((c) => c.enabled && (c.provider === "elevenlabs-tts" || c.provider === "bailian-qwen-tts" || c.provider === "bailian-cosyvoice"));
 }
 
 function hasEnabledAvatarProvider(): boolean {
@@ -331,8 +474,39 @@ function syncRuntimeFromDraft() {
   runtime.activeStageId.value = draft.activeStageId ?? "transcribe";
 }
 
+async function restoreActiveProjectVoiceClone() {
+  const db = getLocalStoreDb();
+  if (!db) return;
+
+  try {
+    const clone = await createProjectVoiceCloneRepository(db).findActiveByProjectId(project.value.id);
+    if (!clone?.remoteVoiceId) return;
+
+    const sample = await createVoiceSampleRepository(db).getById(clone.sampleId);
+    const restoredVoiceName = sample?.originalFileName || "项目克隆声音";
+    selectedVoiceId.value = clone.remoteVoiceId;
+    selectedVoiceName.value = restoredVoiceName;
+    pendingVoiceName.value = restoredVoiceName;
+    pendingVoiceSampleName.value = sample?.originalFileName ?? "";
+    selectedVoiceCloneProviderConfigId.value = clone.providerConfigId;
+    managedSampleAvailable.value = sample?.state === "managed";
+    projectCloneBound.value = true;
+    remoteVoiceDeletable.value = clone.provider === "elevenlabs-tts";
+    remoteVoiceDeleteBlockedMessage.value = "";
+    voiceCloneErrorMessage.value = "";
+    if (runtime.stageStatus.value["voice-clone"] !== "completed") {
+      runtime.workflow.value = updateStageStatus(runtime.workflow.value, "voice-clone", "completed");
+    }
+  } catch {
+    voiceCloneErrorMessage.value = "项目声音状态恢复失败，请重新进入声音克隆页面。";
+  }
+}
+
 syncRuntimeFromDraft();
-void draftReady.then(syncRuntimeFromDraft);
+void draftReady.then(() => {
+  syncRuntimeFromDraft();
+  return Promise.all([restoreSpeechArtifact(), restoreActiveProjectVoiceClone()]);
+});
 watch(
   () => runtime.activeStageId.value,
   (stageId) => {
@@ -569,14 +743,15 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
         });
         const now = new Date();
         const timeLabel = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}`;
+        const adoptHint = "请检查并点击「采用此文案」进入下一步。";
         if (rewriteMode === "mock") {
-          rewriteRunMessage.value = `文案已重新生成：Mock · ${timeLabel}`;
+          rewriteRunMessage.value = `文案已重新生成：Mock · ${timeLabel}。${adoptHint}`;
         } else {
           const providerLabel = activeRewriteConfig?.label.trim() || (activeRewriteConfig?.provider === "custom" ? "Custom LLM" : "OpenAI");
           const modelLabel = activeRewriteConfig?.model?.trim();
           rewriteRunMessage.value = modelLabel
-            ? `文案已重新生成：${providerLabel} / ${modelLabel} · ${timeLabel}`
-            : `文案已重新生成：${providerLabel} · ${timeLabel}`;
+            ? `文案已重新生成：${providerLabel} / ${modelLabel} · ${timeLabel}。${adoptHint}`
+            : `文案已重新生成：${providerLabel} · ${timeLabel}。${adoptHint}`;
         }
         return `生成 ${result.titleSuggestions.length} 个标题方向`;
       } catch (error) {
@@ -592,11 +767,7 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
     case "voice-clone": {
       const voiceCloneMode = runtime.getStageMode("voice-clone");
       voiceCloneErrorMessage.value = "";
-      if (voiceCloneMode === "real") {
-        selectedVoiceId.value = "";
-        selectedVoiceName.value = "";
-      }
-      const samplePath = project.value.voiceSamplePath ?? "";
+      const samplePath = pendingVoiceSamplePath.value;
       if (!samplePath.trim()) {
         const error = new AiProviderError("not-configured", "请先选择声音样本文件。");
         voiceCloneErrorMessage.value = error.message;
@@ -605,24 +776,61 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
       const selection = selectVoiceCloneProvider({
         stageMode: voiceCloneMode,
         providerConfigs: providerConfigs.value,
+        selectedProviderConfigId: selectedVoiceCloneProviderConfigId.value,
         mockProvider: aiProvider,
+        readAudioFile: async (path) => readManagedVoiceSample({ path, allowedRoot: (await useVoiceSampleStorage({ db: getLocalStoreDb() }).requireActiveWritableRoot()).path }),
+        baiLianFetchJson: createTauriBaiLianFetchJson(),
       });
       if (!selection.ok) {
         voiceCloneErrorMessage.value = selection.error.message;
         throw selection.error;
       }
       try {
-        const result = await selection.provider.cloneVoice({
-          voiceSamplePath: samplePath,
-          projectId: runtime.workflow.value.projectId,
-        });
-        selectedVoiceId.value = result.voiceId;
-        selectedVoiceName.value = fileName(result.samplePath || samplePath);
-        return `声音配置 ${result.voiceId} 已就绪`;
-      } catch (error) {
-        if (error instanceof Error) {
-          voiceCloneErrorMessage.value = error.message;
+        if (voiceCloneMode === "mock") {
+          const result = await selection.provider.cloneVoice({ voiceSamplePath: samplePath, projectId: project.value.id });
+          selectedVoiceId.value = result.voiceId;
+          selectedVoiceName.value = fileName(samplePath);
+          return `声音配置 ${result.voiceId} 已就绪`;
         }
+        const db = getLocalStoreDb();
+        if (!db || !selectedVoiceCloneProvider.value) throw new AiProviderError("not-configured", "本地 SQLite 或声音克隆 Provider 配置不可用。");
+        const storage = useVoiceSampleStorage({ db });
+        const cloneRepository = createProjectVoiceCloneRepository(db);
+        const recoverableClone = await cloneRepository.findLatestRecoverable(project.value.id, selectedVoiceCloneProvider.value.id);
+        const clone = recoverableClone
+          ? await replaceActiveProjectVoiceClone(db, project.value.id, recoverableClone.id).then(() => ({ ...recoverableClone, state: "active" as const }))
+          : await runVoiceClone({
+            projectId: project.value.id,
+            providerConfigId: selectedVoiceCloneProvider.value.id,
+            sourcePath: samplePath,
+            voiceName: pendingVoiceName.value,
+            externalSampleUrl: voiceCloneRequiresExternalSampleUrl.value ? pendingVoiceExternalSampleUrl.value : undefined,
+            consent: {
+              accepted: true,
+              policyVersion: selectedVoiceCloneProvider.value.provider === "bailian-cosyvoice" ? "bailian-cosyvoice-manual-oss-v1" : selectedVoiceCloneProvider.value.provider === "bailian-qwen-tts" ? "bailian-qwen-tts-v1" : "elevenlabs-ivc-v1",
+              acceptedAt: new Date().toISOString(),
+            },
+          }, {
+            requireDb: async () => db, requireActiveWritableRoot: storage.requireActiveWritableRoot,
+            providerConfig: selectedVoiceCloneProvider.value, provider: selection.provider,
+            validateSource: async (path) => /\.(wav|mp3|m4a|flac|aac)$/i.test(path), createId: () => crypto.randomUUID(), now: () => new Date().toISOString(),
+            saveSample: createVoiceSampleRepository(db).save, saveClone: cloneRepository.save,
+            importManagedVoiceSample, readManagedVoiceSample,
+            replaceActiveProjectVoiceClone: (localDb, projectId, cloneId) => replaceActiveProjectVoiceClone(localDb as typeof db, projectId, cloneId),
+          });
+        selectedVoiceId.value = clone.remoteVoiceId ?? "";
+        selectedVoiceName.value = pendingVoiceName.value;
+        managedSampleAvailable.value = true;
+        projectCloneBound.value = clone.state === "active";
+        remoteVoiceDeletable.value = clone.state === "active" && selectedVoiceCloneProvider.value.provider === "elevenlabs-tts";
+        remoteVoiceDeleteBlockedMessage.value = "";
+        pendingVoiceExternalSampleUrl.value = "";
+        return clone.state === "pending-verification" ? "声音等待服务端验证" : "声音克隆已就绪";
+      } catch (error) {
+        pendingVoiceExternalSampleUrl.value = "";
+        const message = readSafeVoiceCloneError(error);
+        voiceCloneErrorMessage.value = message;
+        appendVoiceCloneDiagnostic(message);
         throw error;
       }
     }
@@ -633,15 +841,6 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
         generatedAudioPath.value = "";
         generatedAudioDuration.value = 0;
       }
-      const selection = selectSpeechProvider({
-        stageMode: speechMode,
-        providerConfigs: providerConfigs.value,
-        mockProvider: aiProvider,
-      });
-      if (!selection.ok) {
-        speechErrorMessage.value = selection.error.message;
-        throw selection.error;
-      }
 
       const script = speechMode === "real" ? (project.value.notes ?? "").trim() : project.value.notes ?? project.value.name;
       if (!script.trim()) {
@@ -650,7 +849,44 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
         throw error;
       }
 
-      const voiceId = speechMode === "real" ? selectedVoiceId.value.trim() : selectedVoiceId.value || `mock-voice-${runtime.workflow.value.projectId}`;
+      let speechConfig = findEnabledSpeechProviderConfig(providerConfigs.value);
+      let voiceId = selectedVoiceId.value || `mock-voice-${runtime.workflow.value.projectId}`;
+      if (speechMode === "real") {
+        const db = getLocalStoreDb();
+        const activeClone = db ? await createProjectVoiceCloneRepository(db).findActiveByProjectId(project.value.id) : undefined;
+        const shouldResolveProjectVoice = Boolean(activeClone) || speechConfig?.provider === "elevenlabs-tts" || speechConfig?.provider === "bailian-qwen-tts" || speechConfig?.provider === "bailian-cosyvoice";
+        if (shouldResolveProjectVoice) {
+          if (!db) throw new AiProviderError("voice-unavailable", "本地 SQLite 不可用，无法解析项目声音。");
+          const resolved = await resolveSpeechVoice({
+            projectId: project.value.id,
+            providerConfigs: providerConfigs.value,
+            defaultProviderConfigId: speechConfig?.id,
+            findActiveClone: createProjectVoiceCloneRepository(db).findActiveByProjectId,
+          });
+          speechConfig = resolved.providerConfig;
+          voiceId = resolved.voiceId;
+        } else {
+          voiceId = selectedVoiceId.value.trim();
+        }
+      }
+      const speechProvider = speechConfig?.provider;
+      const usesDownloadedAudio = speechProvider === "elevenlabs-tts" || speechProvider === "bailian-qwen-tts" || speechProvider === "bailian-cosyvoice";
+      const writer = usesDownloadedAudio ? createTauriAudioFileWriter(tauriInvoke, appSettings.outputPaths.audioOutput) : undefined;
+      const prober = usesDownloadedAudio ? createTauriAudioDurationProber(tauriInvoke, appSettings.outputPaths.audioOutput, sidecarConfig.ffmpegPath) : undefined;
+      const selection = selectSpeechProvider({
+        stageMode: speechMode,
+        providerConfigs: providerConfigs.value,
+        selectedProviderConfigId: speechMode === "real" ? speechConfig?.id : undefined,
+        mockProvider: aiProvider,
+        writeFile: writer,
+        readDuration: prober,
+        baiLianFetchJson: createTauriBaiLianFetchJson(),
+        baiLianFetchBinary: createTauriBaiLianFetchBinary(),
+      });
+      if (!selection.ok) {
+        speechErrorMessage.value = selection.error.message;
+        throw selection.error;
+      }
       if (!voiceId.trim()) {
         const error = new AiProviderError("voice-unavailable", "请先选择可用于 TTS 的声音。");
         speechErrorMessage.value = error.message;
@@ -664,11 +900,17 @@ async function executeStage(stageId: WorkflowStageId, title: string): Promise<st
           projectId: runtime.workflow.value.projectId,
           outputPath:
             speechMode === "real"
-              ? buildSpeechOutputPath(appSettings.outputPaths.audioOutput, runtime.workflow.value.projectId)
+              ? buildSpeechOutputPath(appSettings.outputPaths.audioOutput, runtime.workflow.value.projectId, speechProvider)
               : undefined,
         });
         generatedAudioPath.value = result.audioPath;
         generatedAudioDuration.value = result.durationSeconds;
+        if (speechMode === "real") {
+          recordSpeechArtifact(result.audioPath, result.durationSeconds);
+          await persist();
+        } else {
+          draft.speechArtifact = undefined;
+        }
         return `音频已生成：${result.audioPath}`;
       } catch (error) {
         if (error instanceof Error) {
@@ -844,10 +1086,78 @@ function handleVoiceSelect(item: AssetListItem) {
   selectedVoiceId.value = item.id;
   selectedVoiceName.value = item.name;
   if (item.samplePath) {
-    project.value = { ...project.value, voiceSamplePath: item.samplePath };
+    pendingVoiceSamplePath.value = item.samplePath;
+    pendingVoiceSampleName.value = fileName(item.samplePath);
+    voiceCloneConsentAccepted.value = false;
   }
   if (navigation.returnToStage) {
     returnToWorkbench(navigation);
+  }
+}
+
+async function deleteManagedVoiceSampleForProject() {
+  const db = getLocalStoreDb();
+  if (!db) return;
+  const clone = await createProjectVoiceCloneRepository(db).findActiveByProjectId(project.value.id);
+  if (!clone) return;
+  const sample = await createVoiceSampleRepository(db).getById(clone.sampleId);
+  if (!sample) return;
+  const root = await createVoiceSampleStorageRootRepository(db).getById(sample.storageRootId);
+  if (!root) return;
+  await tauriInvoke("delete_managed_voice_sample", { path: `${root.path}/${sample.relativePath}`, allowedRoot: root.path });
+  await createVoiceSampleRepository(db).save({ ...sample, state: "local-deleted" });
+  managedSampleAvailable.value = false;
+}
+
+async function removeProjectVoiceBinding() {
+  const db = getLocalStoreDb();
+  if (!db) return;
+  const repo = createProjectVoiceCloneRepository(db);
+  const clone = await repo.findActiveByProjectId(project.value.id);
+  if (!clone) return;
+  await repo.save({ ...clone, state: "removed" });
+  projectCloneBound.value = false;
+}
+
+async function deleteRemoteVoiceForProject() {
+  const db = getLocalStoreDb();
+  if (!db) return;
+  const repo = createProjectVoiceCloneRepository(db);
+  const clone = await repo.findActiveByProjectId(project.value.id);
+  if (!clone?.remoteVoiceId) return;
+  const references = (await repo.list()).filter((item) => item.providerConfigId === clone.providerConfigId && item.remoteVoiceId === clone.remoteVoiceId && item.state !== "removed");
+  if (references.length > 1) {
+    remoteVoiceDeletable.value = false;
+    remoteVoiceDeleteBlockedMessage.value = "该远端声音仍被其它本地项目引用，无法删除。";
+    return;
+  }
+  const config = providerConfigs.value.find((item) => item.id === clone.providerConfigId);
+  if (!config) return;
+  const selection = selectVoiceCloneProvider({
+    stageMode: "real", providerConfigs: providerConfigs.value, selectedProviderConfigId: config.id, mockProvider: aiProvider,
+    readAudioFile: async (path) => readManagedVoiceSample({ path, allowedRoot: (await useVoiceSampleStorage({ db }).requireActiveWritableRoot()).path }),
+  });
+  if (!selection.ok || !("deleteRemoteVoice" in selection.provider)) return;
+  await (selection.provider as { deleteRemoteVoice(voiceId: string): Promise<void> }).deleteRemoteVoice(clone.remoteVoiceId);
+  await repo.save({ ...clone, state: "removed" });
+  projectCloneBound.value = false;
+}
+
+async function choosePendingVoiceSample() {
+  try {
+    const dialog = await import("@tauri-apps/plugin-dialog");
+    const selected = await dialog.open({
+      multiple: false,
+      directory: false,
+      filters: [{ name: "音频文件", extensions: ["wav", "mp3", "m4a", "flac", "aac"] }],
+    });
+    if (typeof selected !== "string") return;
+    pendingVoiceSamplePath.value = selected;
+    pendingVoiceSampleName.value = fileName(selected);
+    pendingVoiceExternalSampleUrl.value = "";
+    voiceCloneConsentAccepted.value = false;
+  } catch {
+    voiceCloneErrorMessage.value = "无法选择声音样本。";
   }
 }
 
@@ -874,7 +1184,25 @@ function handleReturnToStage(stageId: WorkflowStageId) {
 function runRewriteStage() {
   rewriteErrorMessage.value = "";
   rewriteRunMessage.value = "已提交改写请求，正在准备调用 LLM...";
-  void runtime.runStage("rewrite");
+  void runtime.runStage("rewrite", { autoAdvance: false });
+}
+
+function handleAdoptScript() {
+  rewriteRunMessage.value = "已采用当前改写文案，进入下一步。";
+  runtime.goToNextStage();
+}
+
+function handleNextStage() {
+  const currentStageId = runtime.activeStageId.value;
+  if (
+    currentStageId === "rewrite" &&
+    runtime.stageStatus.value.rewrite === "completed" &&
+    (project.value.notes ?? "").trim().length > 0
+  ) {
+    handleAdoptScript();
+  } else {
+    runtime.goToNextStage();
+  }
 }
 
 function fileName(filePath: string): string {
@@ -965,7 +1293,7 @@ function stagePreviewLabel(stageId: WorkflowStageId): string {
       :running="runtime.running.value"
       @select-stage="runtime.goToStage"
       @previous="runtime.goToPreviousStage"
-      @next="runtime.goToNextStage"
+      @next="handleNextStage"
       @save="handleSaveDraft"
     >
       <template #stage-controls="{ stage }">
@@ -1004,18 +1332,42 @@ function stagePreviewLabel(stageId: WorkflowStageId): string {
           :status-message="rewriteRunMessage"
           @update:transcript-text="transcriptText = $event"
           @run="runRewriteStage"
+          @adopt="handleAdoptScript"
         />
         <VoiceCloningStage
           v-else-if="stage.id === 'voice-clone'"
-          v-model="project"
           :script-text="project.notes ?? ''"
           :voice-id="selectedVoiceId"
-          :voice-name="selectedVoiceName"
+          :voice-name="pendingVoiceName"
+          :pending-sample-path="pendingVoiceSamplePath"
+          :pending-sample-name="pendingVoiceSampleName"
+          :selected-provider-config-id="selectedVoiceCloneProviderConfigId"
+          :selected-provider-label="selectedVoiceCloneProvider?.label ?? ''"
+          :provider-options="voiceCloneProviderOptions"
+          :external-sample-url="pendingVoiceExternalSampleUrl"
+          :requires-external-sample-url="voiceCloneRequiresExternalSampleUrl"
+          :consent-accepted="voiceCloneConsentAccepted"
+          :root-ready="voiceSampleRootReady"
+          lifecycle-state=""
+          :managed-sample-available="managedSampleAvailable"
+          :project-clone-bound="projectCloneBound"
+          :remote-voice-deletable="remoteVoiceDeletable"
+          :remote-voice-delete-blocked-message="remoteVoiceDeleteBlockedMessage"
           :running="runtime.running.value"
           :status="stage.status"
           :mode="voiceCloneMode"
           :error-message="voiceCloneErrorMessage"
-          @run="runtime.runStage('voice-clone')"
+          :diagnostic-logs="voiceCloneDiagnosticLogs"
+          @update:voice-name="pendingVoiceName = $event"
+          @update:consent-accepted="voiceCloneConsentAccepted = $event"
+          @update:selected-provider-config-id="selectedVoiceCloneProviderConfigId = $event"
+          @update:external-sample-url="pendingVoiceExternalSampleUrl = $event"
+          @choose-sample="choosePendingVoiceSample"
+          @delete-managed-sample="deleteManagedVoiceSampleForProject"
+          @remove-project-binding="removeProjectVoiceBinding"
+          @delete-remote-voice="deleteRemoteVoiceForProject"
+          @clear-diagnostic-logs="clearVoiceCloneDiagnosticLogs"
+          @run="runtime.runStage('voice-clone', { autoAdvance: false })"
           @create-voice="handleNavigate('voices')"
         />
         <SpeechSynthesisStage
@@ -1026,9 +1378,10 @@ function stagePreviewLabel(stageId: WorkflowStageId): string {
           :status="stage.status"
           :audio-path="generatedAudioPath"
           :audio-duration="generatedAudioDuration"
+          :audio-output-root="appSettings.outputPaths.audioOutput"
           :mode="speechMode"
           :error-message="speechErrorMessage"
-          @run="runtime.runStage('speech')"
+          @run="runtime.runStage('speech', { autoAdvance: false })"
           @edit-script="runtime.goToStage('rewrite')"
           @change-voice="runtime.goToStage('voice-clone')"
         />

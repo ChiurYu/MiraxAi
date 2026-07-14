@@ -99,6 +99,23 @@ describe("ScriptRewritingStage UI contracts", () => {
     expect(script).toContain('emit("run", { activeGoal: activeGoal.value, activePreset: activePreset.value, targetLength: targetLength.value })');
   });
 
+  it("renders an explicit adopt button", () => {
+    expect(template).toContain("采用此文案");
+  });
+
+  it("emits adopt from the component", () => {
+    const script = source.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)?.[1] ?? "";
+    expect(script).toContain("adopt: []");
+    expect(script).toContain('emit("adopt")');
+  });
+
+  it("disables the adopt button unless the stage is completed with a script", () => {
+    expect(template).toMatch(/:disabled="!canAdopt"/);
+    const script = source.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)?.[1] ?? "";
+    expect(script).toContain('props.status === "completed"');
+    expect(script).toContain("rewrittenScript.value.trim().length > 0");
+  });
+
   it("accepts activeGoal, activePreset and targetLength as controlled props", () => {
     const script = source.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)?.[1] ?? "";
     expect(script).toContain("activeGoal: string");

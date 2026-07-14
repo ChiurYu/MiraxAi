@@ -65,6 +65,16 @@ describe("useWorkflowRuntime", () => {
     expect(runtime.activeStageId.value).toBe("rewrite");
   });
 
+  it("stays on the stage when autoAdvance is disabled", async () => {
+    const executor = vi.fn().mockResolvedValue("ok");
+    const runtime = useWorkflowRuntime({ projectId: "demo", executor });
+
+    await runtime.runStage("transcribe", { autoAdvance: false });
+
+    expect(runtime.workflow.value.stages[0].status).toBe("completed");
+    expect(runtime.activeStageId.value).toBe("transcribe");
+  });
+
   it("does not start another run while a stage is running", async () => {
     let resolveExecutor: (value: string) => void;
     const executor = vi.fn().mockImplementation(() => new Promise<string>((resolve) => { resolveExecutor = resolve; }));

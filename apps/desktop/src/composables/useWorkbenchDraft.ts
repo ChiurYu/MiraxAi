@@ -34,6 +34,9 @@ export function useWorkbenchDraft(options: UseWorkbenchDraftOptions = {}) {
   const saveStatus = ref("未保存");
   let pendingPersist: ReturnType<typeof setTimeout> | undefined;
 
+  let suppressSaveStatus = false;
+  let pendingPersistPromise: Promise<void> | undefined;
+
   async function restoreFromDb(): Promise<boolean> {
     if (!db) return false;
     try {
@@ -51,7 +54,13 @@ export function useWorkbenchDraft(options: UseWorkbenchDraftOptions = {}) {
       draft.activeGoal = restored.activeGoal;
       draft.activePreset = restored.activePreset;
       draft.targetLength = restored.targetLength;
+      draft.speechArtifact = restored.speechArtifact;
       saveStatus.value = "已恢复草稿";
+
+      if (!saved.project?.id) {
+        await persistToDb();
+      }
+
       return true;
     } catch (error) {
       // eslint-disable-next-line no-console
@@ -60,7 +69,7 @@ export function useWorkbenchDraft(options: UseWorkbenchDraftOptions = {}) {
     }
   }
 
-  function restoreFromStorage(): boolean {
+  async function restoreFromStorage(): Promise<boolean> {
     if (!storage) return false;
     try {
       const raw = storage.getItem(DESKTOP_DRAFT_STORAGE_KEY);
@@ -76,7 +85,13 @@ export function useWorkbenchDraft(options: UseWorkbenchDraftOptions = {}) {
       draft.activeGoal = restored.activeGoal;
       draft.activePreset = restored.activePreset;
       draft.targetLength = restored.targetLength;
+      draft.speechArtifact = restored.speechArtifact;
       saveStatus.value = "已恢复草稿";
+
+      if (db && !saved.project?.id) {
+        await persistToDb();
+      }
+
       return true;
     } catch {
       saveStatus.value = "草稿读取失败";
@@ -85,12 +100,20 @@ export function useWorkbenchDraft(options: UseWorkbenchDraftOptions = {}) {
   }
 
   async function restore() {
-    const restoredFromDb = await restoreFromDb();
-    if (restoredFromDb) return;
+    suppressSaveStatus = true;
+    try {
+      const restoredFromDb = await restoreFromDb();
+      if (restoredFromDb) return;
 
-    const restoredFromStorage = restoreFromStorage();
-    if (!restoredFromStorage && !storage) {
-      saveStatus.value = "无可用存储";
+      const restoredFromStorage = await restoreFromStorage();
+      if (!restoredFromStorage && !storage) {
+        saveStatus.value = "无可用存储";
+      }
+    } finally {
+      if (pendingPersistPromise) {
+        await pendingPersistPromise;
+      }
+      suppressSaveStatus = false;
     }
   }
 
@@ -104,7 +127,9 @@ export function useWorkbenchDraft(options: UseWorkbenchDraftOptions = {}) {
         payloadJson: JSON.stringify(payload),
         updatedAt: new Date().toISOString(),
       });
-      saveStatus.value = "草稿已保存";
+      if (!suppressSaveStatus) {
+        saveStatus.value = "草稿已保存";
+      }
       return true;
     } catch (error) {
       // eslint-disable-next-line no-console
@@ -121,7 +146,9 @@ export function useWorkbenchDraft(options: UseWorkbenchDraftOptions = {}) {
     try {
       const payload = sanitizeDesktopDraftForStorage(draft);
       storage.setItem(DESKTOP_DRAFT_STORAGE_KEY, JSON.stringify(payload));
-      saveStatus.value = "草稿已保存";
+      if (!suppressSaveStatus) {
+        saveStatus.value = "草稿已保存";
+      }
       return true;
     } catch {
       saveStatus.value = "草稿保存失败";
@@ -130,13 +157,17 @@ export function useWorkbenchDraft(options: UseWorkbenchDraftOptions = {}) {
   }
 
   async function persist() {
-    if (pendingPersist !== undefined) {
-      clearTimeout(pendingPersist);
-      pendingPersist = undefined;
-    }
-    const persistedToDb = await persistToDb();
-    if (persistedToDb) return;
-    persistToStorage();
+    pendingPersistPromise = (async () => {
+      if (pendingPersist !== undefined) {
+        clearTimeout(pendingPersist);
+        pendingPersist = undefined;
+      }
+      const persistedToDb = await persistToDb();
+      if (persistedToDb) return;
+      persistToStorage();
+    })();
+    await pendingPersistPromise;
+    pendingPersistPromise = undefined;
   }
 
   function schedulePersist() {
@@ -154,7 +185,7 @@ export function useWorkbenchDraft(options: UseWorkbenchDraftOptions = {}) {
   }
 
   watch(
-    [() => draft.project, () => draft.providerConfig, () => draft.activeStageId, () => draft.workflow, () => draft.transcriptText, () => draft.activeGoal, () => draft.activePreset, () => draft.targetLength],
+    [() => draft.project, () => draft.providerConfig, () => draft.activeStageId, () => draft.workflow, () => draft.transcriptText, () => draft.activeGoal, () => draft.activePreset, () => draft.targetLength, () => draft.speechArtifact],
     () => {
       schedulePersist();
     },

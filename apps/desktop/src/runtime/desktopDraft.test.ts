@@ -6,6 +6,12 @@ import {
 } from "./desktopDraft.js";
 
 describe("createDefaultDesktopDraft", () => {
+  it("creates a stable UUID project id", () => {
+    const draft = createDefaultDesktopDraft();
+
+    expect(draft.project.id).toMatch(/^[0-9a-f-]{36}$/i);
+  });
+
   it("does not pre-fill sourceVideoPath or voiceSamplePath", () => {
     const draft = createDefaultDesktopDraft();
 
@@ -46,6 +52,43 @@ describe("desktopDraft persistence", () => {
     const persisted = sanitizeDesktopDraftForStorage(draft);
 
     expect(persisted.providerConfig).not.toHaveProperty("apiKey");
+  });
+
+  it("sanitizeDesktopDraftForStorage omits the original voiceSamplePath from project", () => {
+    const draft = createDefaultDesktopDraft();
+    draft.project.voiceSamplePath = "/tmp/real-voice-sample.wav";
+
+    const persisted = sanitizeDesktopDraftForStorage(draft);
+
+    expect(persisted.project).not.toHaveProperty("voiceSamplePath");
+    expect(JSON.stringify(persisted)).not.toContain("/tmp/real-voice-sample.wav");
+  });
+
+  it("restoreDesktopDraft preserves an existing stable project id", () => {
+    const restored = restoreDesktopDraft({
+      project: {
+        ...createDefaultDesktopDraft().project,
+        id: "project-id-from-sqlite",
+      },
+      providerConfig: createDefaultDesktopDraft().providerConfig,
+    });
+
+    expect(restored.project.id).toBe("project-id-from-sqlite");
+    expect(restored.workflow.projectId).toBe("project-id-from-sqlite");
+  });
+
+  it("restoreDesktopDraft generates and keeps a stable project id when missing and syncs workflow", () => {
+    const savedProject = { ...createDefaultDesktopDraft().project };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (savedProject as any).id;
+
+    const restored = restoreDesktopDraft({
+      project: savedProject,
+      providerConfig: createDefaultDesktopDraft().providerConfig,
+    });
+
+    expect(restored.project.id).toMatch(/^[0-9a-f-]{36}$/i);
+    expect(restored.workflow.projectId).toBe(restored.project.id);
   });
 
   it("sanitizeDesktopDraftForStorage strips URL credentials, query and hash from baseUrl", () => {
@@ -229,6 +272,87 @@ describe("desktopDraft persistence", () => {
     const restored = restoreDesktopDraft(persisted);
 
     expect(restored.workflow.stages[0].status).toBe("pending");
+  });
+
+  it("sanitizeDesktopDraftForStorage persists relative speech artifact metadata without absolute paths", () => {
+    const draft = createDefaultDesktopDraft();
+    draft.speechArtifact = {
+      relativePath: "dogfood-project/speech/speech.mp3",
+      durationSeconds: 18.337959,
+      format: "mp3",
+    };
+
+    const persisted = sanitizeDesktopDraftForStorage(draft);
+
+    expect(persisted.speechArtifact).toEqual({
+      relativePath: "dogfood-project/speech/speech.mp3",
+      durationSeconds: 18.337959,
+      format: "mp3",
+    });
+  });
+
+  it("sanitizeDesktopDraftForStorage persists speech artifact with only relativePath, durationSeconds and format", () => {
+    const draft = createDefaultDesktopDraft();
+    draft.speechArtifact = {
+      relativePath: "project/speech/speech.mp3",
+      durationSeconds: 12.5,
+      format: "mp3",
+    };
+
+    const persisted = sanitizeDesktopDraftForStorage(draft);
+
+    expect(persisted.speechArtifact).toEqual({
+      relativePath: "project/speech/speech.mp3",
+      durationSeconds: 12.5,
+      format: "mp3",
+    });
+  });
+
+  it("sanitizeDesktopDraftForStorage drops invalid speech artifact metadata", () => {
+    const draft = createDefaultDesktopDraft();
+    draft.speechArtifact = {
+      relativePath: "",
+      durationSeconds: 18.337959,
+      format: "mp3",
+    };
+
+    const persisted = sanitizeDesktopDraftForStorage(draft);
+
+    expect(persisted.speechArtifact).toBeUndefined();
+  });
+
+  it("restoreDesktopDraft restores speech artifact metadata", () => {
+    const restored = restoreDesktopDraft({
+      project: createDefaultDesktopDraft().project,
+      providerConfig: createDefaultDesktopDraft().providerConfig,
+      speechArtifact: {
+        relativePath: "dogfood-project/speech/speech.mp3",
+        durationSeconds: 18.337959,
+        format: "mp3",
+      },
+    });
+
+    expect(restored.speechArtifact).toEqual({
+      relativePath: "dogfood-project/speech/speech.mp3",
+      durationSeconds: 18.337959,
+      format: "mp3",
+    });
+  });
+
+  it("sanitizeDesktopDraftForStorage does not leak API Key through speech artifact", () => {
+    const draft = createDefaultDesktopDraft();
+    draft.providerConfig.apiKey = "sk-secret";
+    draft.speechArtifact = {
+      relativePath: "dogfood-project/speech/speech.mp3",
+      durationSeconds: 18.337959,
+      format: "mp3",
+    };
+
+    const persisted = sanitizeDesktopDraftForStorage(draft);
+    const json = JSON.stringify(persisted);
+
+    expect(json).not.toContain("sk-secret");
+    expect(persisted.providerConfig).not.toHaveProperty("apiKey");
   });
 
   it("restoreDesktopDraft sanitizes baseUrl credentials, query and hash from legacy saved data", () => {

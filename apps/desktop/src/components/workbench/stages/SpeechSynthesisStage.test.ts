@@ -14,7 +14,7 @@ describe("SpeechSynthesisStage UI contracts", () => {
 
   it("renders an honest not-connected hint", () => {
     expect(source).toContain("真实 TTS 未连接");
-    expect(source).toContain("请在设置中配置并启用 CosyVoice provider");
+    expect(source).toContain("请在设置中配置并启用 CosyVoice 或 ElevenLabs TTS provider 后再试");
   });
 
   it("renders a real-mode info hint", () => {
@@ -42,9 +42,36 @@ describe("SpeechSynthesisStage UI contracts", () => {
     expect(appSource).toContain(":error-message=\"speechErrorMessage\"");
   });
 
+  it("App passes audio output root into the stage for restricted file reads", () => {
+    expect(appSource).toContain(':audio-output-root="appSettings.outputPaths.audioOutput"');
+  });
+
+  it("does not rely on the unscoped asset protocol for audio preview", () => {
+    expect(source).not.toContain("convertFileSrc");
+    expect(source).not.toContain('"asset"');
+  });
+
   it("App clears stale audio before real speech synthesis", () => {
-    expect(appSource).toContain("if (speechMode === \"real\") {");
-    expect(appSource).toContain("generatedAudioPath.value = \"\";");
-    expect(appSource).toContain("generatedAudioDuration.value = 0;");
+    expect(appSource).toContain('if (speechMode === "real") {');
+    expect(appSource).toContain('generatedAudioPath.value = "";');
+    expect(appSource).toContain('generatedAudioDuration.value = 0;');
+  });
+
+  it("keeps manual synthesis on the speech result page", () => {
+    expect(appSource).toContain("@run=\"runtime.runStage('speech', { autoAdvance: false })\"");
+  });
+
+  it("uses native desktop actions to export and reveal the generated audio", () => {
+    expect(source).toContain('invoke<boolean>("export_audio_file"');
+    expect(source).toContain('invoke("reveal_audio_file"');
+    expect(template).toContain('@click="exportAudio"');
+    expect(template).toContain('@click="revealAudio"');
+    expect(template).not.toContain('title="本地文件夹访问待接入"');
+    expect(template).not.toContain(':download="fileName"');
+  });
+
+  it("shows feedback when restoring settings or completing a file action", () => {
+    expect(source).toContain('settingsMessage.value = "已恢复默认设置"');
+    expect(template).toContain('class="action-feedback"');
   });
 });

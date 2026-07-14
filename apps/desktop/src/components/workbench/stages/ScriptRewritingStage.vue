@@ -33,6 +33,7 @@ const emit = defineEmits<{
   "update:activePreset": [value: string];
   "update:targetLength": [value: number];
   run: [options: { activeGoal: string; activePreset: string; targetLength: number }];
+  adopt: [];
 }>();
 
 const rewrittenScript = computed({
@@ -49,6 +50,9 @@ const isNotConnected = computed(() => props.mode === "not-connected");
 const hasError = computed(() => !!props.errorMessage?.trim());
 
 const canRun = computed(() => hasTranscript.value && !props.running && !isNotConnected.value);
+const canAdopt = computed(
+  () => props.status === "completed" && rewrittenScript.value.trim().length > 0 && !props.running,
+);
 const rewriteFeedbackMessage = computed(() => {
   if (props.running && props.status === "running") {
     return "正在生成改写文案，请稍等...";
@@ -187,6 +191,11 @@ function handleRegenerate() {
   if (!canRun.value) return;
   emit("run", { activeGoal: activeGoal.value, activePreset: activePreset.value, targetLength: targetLength.value });
 }
+
+function handleAdopt() {
+  if (!canAdopt.value) return;
+  emit("adopt");
+}
 </script>
 
 <template>
@@ -312,6 +321,15 @@ function handleRegenerate() {
           <Loader2 v-if="running" :size="16" class="spin" />
           <Sparkles v-else :size="16" />
           <span>{{ running ? "正在生成..." : "重新生成" }}</span>
+        </button>
+        <button
+          class="primary action-adopt"
+          type="button"
+          :disabled="!canAdopt"
+          @click="handleAdopt"
+        >
+          <CheckCircle2 :size="16" />
+          <span>采用此文案</span>
         </button>
         <button
           class="secondary"
@@ -526,6 +544,13 @@ function handleRegenerate() {
 .action-main {
   flex: 1;
   height: 40px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.action-adopt {
+  height: 40px;
+  padding: 0 16px;
   font-size: 13px;
   font-weight: 600;
 }

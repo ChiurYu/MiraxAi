@@ -1,4 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
   FakeLocalStoreDb,
   createAppSettingsRepository,
@@ -7,7 +10,68 @@ import {
   createSidecarConfigRepository,
   createWorkbenchDraftRepository,
   createTaskHistoryRepository,
+  createVoiceSampleStorageRootRepository,
+  createVoiceSampleRepository,
+  createProjectVoiceCloneRepository,
+  replaceActiveProjectVoiceClone,
+  migrateLocalStore,
+  type LocalStoreDb,
+  type ProjectVoiceCloneRecord,
 } from "../src/index.js";
+
+function getNodeSqlite() {
+  const mod = (process as unknown as { getBuiltinModule(id: string): unknown }).getBuiltinModule("node:sqlite");
+  return mod as { DatabaseSync: typeof import("node:sqlite").DatabaseSync };
+}
+
+class NodeSqliteDb implements LocalStoreDb {
+  private db = new (getNodeSqlite().DatabaseSync)(":memory:");
+
+  async execute(sql: string, bind?: unknown[]): Promise<void> {
+    if (bind && bind.length > 0) {
+      const stmt = this.db.prepare(sql);
+      stmt.run(...bind);
+    } else {
+      this.db.exec(sql);
+    }
+  }
+
+  async select<T>(sql: string, bind?: unknown[]): Promise<T[]> {
+    const stmt = this.db.prepare(sql);
+    return (bind && bind.length > 0 ? stmt.all(...bind) : stmt.all()) as T[];
+  }
+}
+
+class AlternatingNodeSqliteDb implements LocalStoreDb {
+  private readonly databases: [InstanceType<typeof import("node:sqlite").DatabaseSync>, InstanceType<typeof import("node:sqlite").DatabaseSync>];
+  private index = 0;
+
+  constructor(path: string) {
+    const { DatabaseSync } = getNodeSqlite();
+    this.databases = [new DatabaseSync(path), new DatabaseSync(path)];
+  }
+
+  private next(): InstanceType<typeof import("node:sqlite").DatabaseSync> {
+    const database = this.databases[this.index % this.databases.length];
+    this.index += 1;
+    return database;
+  }
+
+  async execute(sql: string, bind?: unknown[]): Promise<void> {
+    const database = this.next();
+    if (bind && bind.length > 0) database.prepare(sql).run(...bind);
+    else database.exec(sql);
+  }
+
+  async select<T>(sql: string, bind?: unknown[]): Promise<T[]> {
+    const statement = this.next().prepare(sql);
+    return (bind && bind.length > 0 ? statement.all(...bind) : statement.all()) as T[];
+  }
+
+  close(): void {
+    for (const database of this.databases) database.close();
+  }
+}
 
 describe("createAppSettingsRepository", () => {
   it("saves settings with correct SQL and bind parameters", async () => {
@@ -33,13 +97,14 @@ describe("createAppSettingsRepository", () => {
   it("maps select rows to camelCase records", async () => {
     const db = new FakeLocalStoreDb();
     db.whenSelect(
-      `SELECT id, theme, output_paths_json as outputPathsJson, rewrite_provider_config_id as rewriteProviderConfigId, created_at as createdAt, updated_at as updatedAt FROM app_settings WHERE id = ?`,
+      `SELECT id, theme, output_paths_json as outputPathsJson, rewrite_provider_config_id as rewriteProviderConfigId, active_voice_sample_storage_root_id as activeVoiceSampleStorageRootId, created_at as createdAt, updated_at as updatedAt FROM app_settings WHERE id = ?`,
       [
         {
           id: "default",
           theme: "light",
           outputPathsJson: "{}",
           rewriteProviderConfigId: "openai-1",
+          activeVoiceSampleStorageRootId: null,
           createdAt: "2026-01-01T00:00:00.000Z",
           updatedAt: "2026-01-01T00:00:00.000Z",
         },
@@ -302,5 +367,220 @@ describe("createTaskHistoryRepository", () => {
     const call = db.calls[0];
     expect(call.sql).toContain("DELETE FROM task_history");
     expect(call.bind).toEqual(["h1"]);
+  });
+});
+
+describe("createVoiceSampleStorageRootRepository", () => {
+  it("saves a storage root", async () => {
+    const db = new FakeLocalStoreDb();
+    const repo = createVoiceSampleStorageRootRepository(db);
+
+    await repo.save({
+      id: "root-1",
+      path: "/tmp/mirax-samples",
+      createdAt: "2026-01-01T00:00:00.000Z",
+    });
+
+    const call = db.calls[0];
+    expect(call.sql).toContain("INSERT OR REPLACE INTO voice_sample_storage_roots");
+    expect(call.bind).toContain("root-1");
+    expect(call.bind).toContain("/tmp/mirax-samples");
+  });
+});
+
+describe("createVoiceSampleRepository", () => {
+  it("saves a voice sample with consent audit", async () => {
+    const db = new FakeLocalStoreDb();
+    const repo = createVoiceSampleRepository(db);
+
+    await repo.save({
+      id: "sample-1",
+      storageRootId: "root-1",
+      relativePath: "s1/voice.wav",
+      originalFileName: "voice.wav",
+      mimeType: "audio/wav",
+      sizeBytes: 1024,
+      consentedAt: "2026-01-01T00:00:00.000Z",
+      consentPolicyVersion: "2026-07-11",
+      state: "available",
+      createdAt: "2026-01-01T00:00:00.000Z",
+    });
+
+    const call = db.calls[0];
+    expect(call.sql).toContain("INSERT OR REPLACE INTO voice_samples");
+    expect(call.bind).toContain("sample-1");
+    expect(call.bind).toContain("audio/wav");
+  });
+});
+
+describe("createProjectVoiceCloneRepository", () => {
+  function makeClone(overrides: Partial<ProjectVoiceCloneRecord>): ProjectVoiceCloneRecord {
+    return {
+      id: "clone-1",
+      projectId: "project-1",
+      sampleId: "sample-1",
+      providerConfigId: "cfg-1",
+      provider: "elevenlabs-tts",
+      remoteVoiceId: "vc-123",
+      requestStartedAt: "2026-01-01T00:00:00.000Z",
+      remoteCreatedAt: "2026-01-01T00:00:01.000Z",
+      state: "active",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      ...overrides,
+    };
+  }
+
+  it("findActiveByProjectId returns only active clones", async () => {
+    const db = new FakeLocalStoreDb();
+    db.whenSelect(
+      `SELECT id, project_id as projectId, sample_id as sampleId, provider_config_id as providerConfigId, provider, remote_voice_id as remoteVoiceId, request_started_at as requestStartedAt, remote_created_at as remoteCreatedAt, state, created_at as createdAt FROM project_voice_clones WHERE project_id = ? AND state = 'active'`,
+      [
+        {
+          id: "clone-1",
+          projectId: "project-1",
+          sampleId: "sample-1",
+          providerConfigId: "cfg-1",
+          provider: "elevenlabs-tts",
+          remoteVoiceId: "vc-123",
+          requestStartedAt: "2026-01-01T00:00:00.000Z",
+          remoteCreatedAt: "2026-01-01T00:00:01.000Z",
+          state: "active",
+          createdAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+    );
+    const repo = createProjectVoiceCloneRepository(db);
+    const record = await repo.findActiveByProjectId("project-1");
+
+    expect(record?.state).toBe("active");
+  });
+
+  it("findActiveByProjectId ignores pending-verification clones", async () => {
+    const db = new FakeLocalStoreDb();
+    db.whenSelect(
+      `SELECT id, project_id as projectId, sample_id as sampleId, provider_config_id as providerConfigId, provider, remote_voice_id as remoteVoiceId, request_started_at as requestStartedAt, remote_created_at as remoteCreatedAt, state, created_at as createdAt FROM project_voice_clones WHERE project_id = ? AND state = 'active'`,
+      [],
+    );
+    const repo = createProjectVoiceCloneRepository(db);
+    const record = await repo.findActiveByProjectId("project-1");
+
+    expect(record).toBeUndefined();
+  });
+
+  it("finds the latest recoverable remote clone for the same project and provider", async () => {
+    const db = new FakeLocalStoreDb();
+    const sql = `SELECT id, project_id as projectId, sample_id as sampleId, provider_config_id as providerConfigId, provider, remote_voice_id as remoteVoiceId, request_started_at as requestStartedAt, remote_created_at as remoteCreatedAt, state, created_at as createdAt FROM project_voice_clones WHERE project_id = ? AND provider_config_id = ? AND state = 'remote-created' AND remote_voice_id IS NOT NULL ORDER BY COALESCE(remote_created_at, created_at) DESC LIMIT 1`;
+    db.whenSelect(sql, [makeClone({ id: "recoverable", state: "remote-created" })]);
+
+    const record = await createProjectVoiceCloneRepository(db).findLatestRecoverable("project-1", "cfg-1");
+
+    expect(record?.id).toBe("recoverable");
+    expect(db.calls.at(-1)?.bind).toEqual(["project-1", "cfg-1"]);
+  });
+
+  it("saves a project voice clone", async () => {
+    const db = new FakeLocalStoreDb();
+    const repo = createProjectVoiceCloneRepository(db);
+
+    await repo.save(makeClone({ state: "remote-created" }));
+
+    const call = db.calls[0];
+    expect(call.sql).toContain("INSERT OR REPLACE INTO project_voice_clones");
+    expect(call.bind).toContain("clone-1");
+    expect(call.bind).toContain("remote-created");
+  });
+});
+
+describe("replaceActiveProjectVoiceClone", () => {
+  it("uses one trigger-backed activation statement so pooled connections cannot split the transaction", async () => {
+    const db = new FakeLocalStoreDb();
+    const sql = "UPDATE project_voice_clones SET state = 'active' WHERE id = ? AND project_id = ? AND state = 'remote-created' RETURNING id";
+    db.whenSelect(sql, [{ id: "clone-2" }]);
+
+    await replaceActiveProjectVoiceClone(db, "project-1", "clone-2");
+
+    expect(db.calls[0]).toEqual({
+      sql,
+      bind: ["clone-2", "project-1"],
+    });
+    expect(db.calls).toHaveLength(1);
+    expect(db.calls.map((call) => call.sql)).not.toContain("BEGIN IMMEDIATE");
+    expect(db.calls.map((call) => call.sql)).not.toContain("COMMIT");
+  });
+
+  it("preserves the old active clone when the trigger-backed activation statement fails", async () => {
+    const db = new FakeLocalStoreDb();
+    db.setNextFailure("activation");
+
+    await expect(replaceActiveProjectVoiceClone(db, "project-1", "clone-2")).rejects.toThrow(
+      "simulated db failure",
+    );
+
+    expect(db.calls.map((call) => call.sql)).not.toContain("BEGIN IMMEDIATE");
+    expect(db.calls.map((call) => call.sql)).not.toContain("ROLLBACK");
+  });
+});
+
+describe("replaceActiveProjectVoiceClone with real SQLite", () => {
+  function makeClone(overrides: Partial<ProjectVoiceCloneRecord>): ProjectVoiceCloneRecord {
+    return {
+      id: "clone-1",
+      projectId: "project-1",
+      sampleId: "sample-1",
+      providerConfigId: "cfg-1",
+      provider: "elevenlabs-tts",
+      remoteVoiceId: "vc-123",
+      requestStartedAt: "2026-01-01T00:00:00.000Z",
+      remoteCreatedAt: "2026-01-01T00:00:01.000Z",
+      state: "active",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      ...overrides,
+    };
+  }
+
+  it("atomically replaces active clone on a real in-memory SQLite database", async () => {
+    const db = new NodeSqliteDb();
+    await migrateLocalStore(db);
+
+    const repo = createProjectVoiceCloneRepository(db);
+    await repo.save(makeClone({ id: "old", state: "active", remoteVoiceId: "vc-old" }));
+    await repo.save(makeClone({ id: "new", state: "remote-created", remoteVoiceId: "vc-new" }));
+
+    await replaceActiveProjectVoiceClone(db, "project-1", "new");
+
+    const oldRecord = await repo.getById("old");
+    const newRecord = await repo.getById("new");
+
+    expect(oldRecord?.state).toBe("replaced");
+    expect(newRecord?.state).toBe("active");
+  });
+
+  it("rolls back when the requested remote-created clone cannot be activated", async () => {
+    const db = new NodeSqliteDb();
+    await migrateLocalStore(db);
+    const clones = createProjectVoiceCloneRepository(db);
+    await clones.save({ id: "active-1", projectId: "project-1", sampleId: "sample-1", providerConfigId: "provider-1", provider: "elevenlabs-tts", state: "active", createdAt: "now" });
+
+    await expect(replaceActiveProjectVoiceClone(db, "project-1", "missing-clone")).rejects.toThrow("activation");
+    expect((await clones.getById("active-1"))?.state).toBe("active");
+  });
+
+  it("does not split activation across pooled SQLite connections", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "mirax-sqlite-pool-"));
+    const db = new AlternatingNodeSqliteDb(join(directory, "mirax.db"));
+    try {
+      await migrateLocalStore(db);
+      const clones = createProjectVoiceCloneRepository(db);
+      await clones.save(makeClone({ id: "old", state: "active", remoteVoiceId: "vc-old" }));
+      await clones.save(makeClone({ id: "new", state: "remote-created", remoteVoiceId: "vc-new" }));
+
+      await replaceActiveProjectVoiceClone(db, "project-1", "new");
+
+      expect((await clones.getById("old"))?.state).toBe("replaced");
+      expect((await clones.getById("new"))?.state).toBe("active");
+    } finally {
+      db.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
   });
 });

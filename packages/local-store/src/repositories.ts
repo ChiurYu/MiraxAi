@@ -5,6 +5,7 @@ export interface ProviderConfigRecord {
   baseUrl?: string;
   pythonPath?: string;
   model?: string;
+  voiceId?: string;
   enabled: boolean;
   credentialRef?: string;
   createdAt: string;
@@ -99,6 +100,7 @@ export interface AppSettingsRecord {
   theme: string;
   outputPathsJson: string;
   rewriteProviderConfigId?: string;
+  activeVoiceSampleStorageRootId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -116,6 +118,55 @@ export interface SidecarConfigRecord {
 
 export type AppSettingsRepository = Repository<AppSettingsRecord>;
 export type SidecarConfigRepository = Repository<SidecarConfigRecord>;
+
+export type ProjectVoiceCloneState =
+  | "creating"
+  | "remote-created"
+  | "pending-verification"
+  | "active"
+  | "replaced"
+  | "removed"
+  | "remote-cleanup-required"
+  | "failed";
+
+export interface VoiceSampleStorageRootRecord {
+  id: string;
+  path: string;
+  createdAt: string;
+}
+
+export interface VoiceSampleRecord {
+  id: string;
+  storageRootId: string;
+  relativePath: string;
+  originalFileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  consentedAt: string;
+  consentPolicyVersion: string;
+  state: string;
+  createdAt: string;
+}
+
+export interface ProjectVoiceCloneRecord {
+  id: string;
+  projectId: string;
+  sampleId: string;
+  providerConfigId: string;
+  provider: string;
+  remoteVoiceId?: string;
+  requestStartedAt?: string;
+  remoteCreatedAt?: string;
+  state: ProjectVoiceCloneState;
+  createdAt: string;
+}
+
+export interface VoiceSampleStorageRootRepository extends Repository<VoiceSampleStorageRootRecord> {}
+export interface VoiceSampleRepository extends Repository<VoiceSampleRecord> {}
+export interface ProjectVoiceCloneRepository extends Repository<ProjectVoiceCloneRecord> {
+  findActiveByProjectId(projectId: string): Promise<ProjectVoiceCloneRecord | undefined>;
+  findLatestRecoverable(projectId: string, providerConfigId: string): Promise<ProjectVoiceCloneRecord | undefined>;
+}
 
 export interface PublishTaskRecord {
   id: string;
@@ -163,7 +214,7 @@ export function createAppSettingsRepository(db: LocalStoreDb): AppSettingsReposi
   return {
     async getById(id: string): Promise<AppSettingsRecord | undefined> {
       const rows = await db.select<AppSettingsRecord>(
-        `SELECT id, theme, output_paths_json as outputPathsJson, rewrite_provider_config_id as rewriteProviderConfigId, created_at as createdAt, updated_at as updatedAt FROM app_settings WHERE id = ?`,
+        `SELECT id, theme, output_paths_json as outputPathsJson, rewrite_provider_config_id as rewriteProviderConfigId, active_voice_sample_storage_root_id as activeVoiceSampleStorageRootId, created_at as createdAt, updated_at as updatedAt FROM app_settings WHERE id = ?`,
         [id],
       );
       return rows[0];
@@ -171,13 +222,13 @@ export function createAppSettingsRepository(db: LocalStoreDb): AppSettingsReposi
     async save(record: AppSettingsRecord): Promise<void> {
       const t = nowIso();
       await db.execute(
-        `INSERT OR REPLACE INTO app_settings (id, theme, output_paths_json, rewrite_provider_config_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`,
-        [record.id, record.theme, record.outputPathsJson, record.rewriteProviderConfigId ?? null, record.createdAt ?? t, record.updatedAt ?? t],
+        `INSERT OR REPLACE INTO app_settings (id, theme, output_paths_json, rewrite_provider_config_id, active_voice_sample_storage_root_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [record.id, record.theme, record.outputPathsJson, record.rewriteProviderConfigId ?? null, record.activeVoiceSampleStorageRootId ?? null, record.createdAt ?? t, record.updatedAt ?? t],
       );
     },
     async list(): Promise<AppSettingsRecord[]> {
       return db.select<AppSettingsRecord>(
-        `SELECT id, theme, output_paths_json as outputPathsJson, rewrite_provider_config_id as rewriteProviderConfigId, created_at as createdAt, updated_at as updatedAt FROM app_settings`,
+        `SELECT id, theme, output_paths_json as outputPathsJson, rewrite_provider_config_id as rewriteProviderConfigId, active_voice_sample_storage_root_id as activeVoiceSampleStorageRootId, created_at as createdAt, updated_at as updatedAt FROM app_settings`,
       );
     },
   };
@@ -220,7 +271,7 @@ export function createProviderConfigRepository(db: LocalStoreDb): ProviderConfig
   return {
     async getById(id: string): Promise<ProviderConfigRecord | undefined> {
       const rows = await db.select<ProviderConfigRecord>(
-        `SELECT id, provider, label, base_url as baseUrl, python_path as pythonPath, model, enabled, credential_ref as credentialRef, created_at as createdAt, updated_at as updatedAt FROM provider_configs WHERE id = ?`,
+        `SELECT id, provider, label, base_url as baseUrl, python_path as pythonPath, model, voice_id as voiceId, enabled, credential_ref as credentialRef, created_at as createdAt, updated_at as updatedAt FROM provider_configs WHERE id = ?`,
         [id],
       );
       return rows[0];
@@ -228,7 +279,7 @@ export function createProviderConfigRepository(db: LocalStoreDb): ProviderConfig
     async save(record: ProviderConfigRecord): Promise<void> {
       const t = nowIso();
       await db.execute(
-        `INSERT OR REPLACE INTO provider_configs (id, provider, label, base_url, python_path, model, enabled, credential_ref, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT OR REPLACE INTO provider_configs (id, provider, label, base_url, python_path, model, voice_id, enabled, credential_ref, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           record.id,
           record.provider,
@@ -236,6 +287,7 @@ export function createProviderConfigRepository(db: LocalStoreDb): ProviderConfig
           record.baseUrl ?? null,
           record.pythonPath ?? null,
           record.model ?? null,
+          record.voiceId ?? null,
           record.enabled ? 1 : 0,
           record.credentialRef ?? record.id,
           record.createdAt ?? t,
@@ -245,7 +297,7 @@ export function createProviderConfigRepository(db: LocalStoreDb): ProviderConfig
     },
     async list(): Promise<ProviderConfigRecord[]> {
       return db.select<ProviderConfigRecord>(
-        `SELECT id, provider, label, base_url as baseUrl, python_path as pythonPath, model, enabled, credential_ref as credentialRef, created_at as createdAt, updated_at as updatedAt FROM provider_configs`,
+        `SELECT id, provider, label, base_url as baseUrl, python_path as pythonPath, model, voice_id as voiceId, enabled, credential_ref as credentialRef, created_at as createdAt, updated_at as updatedAt FROM provider_configs`,
       );
     },
     async deleteById(id: string): Promise<void> {
@@ -369,4 +421,123 @@ export function createTaskHistoryRepository(db: LocalStoreDb): TaskHistoryReposi
       await db.execute(`DELETE FROM task_history WHERE id = ?`, [id]);
     },
   };
+}
+
+export function createVoiceSampleStorageRootRepository(db: LocalStoreDb): VoiceSampleStorageRootRepository {
+  return {
+    async getById(id: string): Promise<VoiceSampleStorageRootRecord | undefined> {
+      const rows = await db.select<VoiceSampleStorageRootRecord>(
+        `SELECT id, path, created_at as createdAt FROM voice_sample_storage_roots WHERE id = ?`,
+        [id],
+      );
+      return rows[0];
+    },
+    async save(record: VoiceSampleStorageRootRecord): Promise<void> {
+      await db.execute(
+        `INSERT OR REPLACE INTO voice_sample_storage_roots (id, path, created_at) VALUES (?, ?, ?)`,
+        [record.id, record.path, record.createdAt],
+      );
+    },
+    async list(): Promise<VoiceSampleStorageRootRecord[]> {
+      return db.select<VoiceSampleStorageRootRecord>(
+        `SELECT id, path, created_at as createdAt FROM voice_sample_storage_roots`,
+      );
+    },
+  };
+}
+
+export function createVoiceSampleRepository(db: LocalStoreDb): VoiceSampleRepository {
+  return {
+    async getById(id: string): Promise<VoiceSampleRecord | undefined> {
+      const rows = await db.select<VoiceSampleRecord>(
+        `SELECT id, storage_root_id as storageRootId, relative_path as relativePath, original_file_name as originalFileName, mime_type as mimeType, size_bytes as sizeBytes, consented_at as consentedAt, consent_policy_version as consentPolicyVersion, state, created_at as createdAt FROM voice_samples WHERE id = ?`,
+        [id],
+      );
+      return rows[0];
+    },
+    async save(record: VoiceSampleRecord): Promise<void> {
+      await db.execute(
+        `INSERT OR REPLACE INTO voice_samples (id, storage_root_id, relative_path, original_file_name, mime_type, size_bytes, consented_at, consent_policy_version, state, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          record.id,
+          record.storageRootId,
+          record.relativePath,
+          record.originalFileName,
+          record.mimeType,
+          record.sizeBytes,
+          record.consentedAt,
+          record.consentPolicyVersion,
+          record.state,
+          record.createdAt,
+        ],
+      );
+    },
+    async list(): Promise<VoiceSampleRecord[]> {
+      return db.select<VoiceSampleRecord>(
+        `SELECT id, storage_root_id as storageRootId, relative_path as relativePath, original_file_name as originalFileName, mime_type as mimeType, size_bytes as sizeBytes, consented_at as consentedAt, consent_policy_version as consentPolicyVersion, state, created_at as createdAt FROM voice_samples`,
+      );
+    },
+  };
+}
+
+export function createProjectVoiceCloneRepository(db: LocalStoreDb): ProjectVoiceCloneRepository {
+  return {
+    async getById(id: string): Promise<ProjectVoiceCloneRecord | undefined> {
+      const rows = await db.select<ProjectVoiceCloneRecord>(
+        `SELECT id, project_id as projectId, sample_id as sampleId, provider_config_id as providerConfigId, provider, remote_voice_id as remoteVoiceId, request_started_at as requestStartedAt, remote_created_at as remoteCreatedAt, state, created_at as createdAt FROM project_voice_clones WHERE id = ?`,
+        [id],
+      );
+      return rows[0];
+    },
+    async save(record: ProjectVoiceCloneRecord): Promise<void> {
+      await db.execute(
+        `INSERT OR REPLACE INTO project_voice_clones (id, project_id, sample_id, provider_config_id, provider, remote_voice_id, request_started_at, remote_created_at, state, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          record.id,
+          record.projectId,
+          record.sampleId,
+          record.providerConfigId,
+          record.provider,
+          record.remoteVoiceId ?? null,
+          record.requestStartedAt ?? null,
+          record.remoteCreatedAt ?? null,
+          record.state,
+          record.createdAt,
+        ],
+      );
+    },
+    async list(): Promise<ProjectVoiceCloneRecord[]> {
+      return db.select<ProjectVoiceCloneRecord>(
+        `SELECT id, project_id as projectId, sample_id as sampleId, provider_config_id as providerConfigId, provider, remote_voice_id as remoteVoiceId, request_started_at as requestStartedAt, remote_created_at as remoteCreatedAt, state, created_at as createdAt FROM project_voice_clones`,
+      );
+    },
+    async findActiveByProjectId(projectId: string): Promise<ProjectVoiceCloneRecord | undefined> {
+      const rows = await db.select<ProjectVoiceCloneRecord>(
+        `SELECT id, project_id as projectId, sample_id as sampleId, provider_config_id as providerConfigId, provider, remote_voice_id as remoteVoiceId, request_started_at as requestStartedAt, remote_created_at as remoteCreatedAt, state, created_at as createdAt FROM project_voice_clones WHERE project_id = ? AND state = 'active'`,
+        [projectId],
+      );
+      return rows[0];
+    },
+    async findLatestRecoverable(projectId: string, providerConfigId: string): Promise<ProjectVoiceCloneRecord | undefined> {
+      const rows = await db.select<ProjectVoiceCloneRecord>(
+        `SELECT id, project_id as projectId, sample_id as sampleId, provider_config_id as providerConfigId, provider, remote_voice_id as remoteVoiceId, request_started_at as requestStartedAt, remote_created_at as remoteCreatedAt, state, created_at as createdAt FROM project_voice_clones WHERE project_id = ? AND provider_config_id = ? AND state = 'remote-created' AND remote_voice_id IS NOT NULL ORDER BY COALESCE(remote_created_at, created_at) DESC LIMIT 1`,
+        [projectId, providerConfigId],
+      );
+      return rows[0];
+    },
+  };
+}
+
+export async function replaceActiveProjectVoiceClone(
+  db: LocalStoreDb,
+  projectId: string,
+  cloneId: string,
+): Promise<void> {
+  const activatedRows = await db.select<{ id: string }>(
+    `UPDATE project_voice_clones SET state = 'active' WHERE id = ? AND project_id = ? AND state = 'remote-created' RETURNING id`,
+    [cloneId, projectId],
+  );
+  if (activatedRows.length !== 1 || activatedRows[0]?.id !== cloneId) {
+    throw new Error("project voice clone activation failed");
+  }
 }

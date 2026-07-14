@@ -89,7 +89,53 @@ describe("validation domain", () => {
     expect(metadata.baseUrl).toBeUndefined();
   });
 
-  it("validates the minimum project information required before generation starts", () => {
+  it("requires API key for ElevenLabs TTS provider", () => {
+    const config = createApiKeyProviderConfig({
+      id: "elevenlabs-tts",
+      label: "ElevenLabs TTS",
+      provider: "elevenlabs-tts",
+      apiKey: "",
+      voiceId: "pNInz6obpgDQGcFmaJgB",
+      model: "eleven_multilingual_v2",
+    });
+
+    expect(validateProviderConfig(config)).toContain("请填写 API Key");
+    expect(validateProviderConfig({ ...config, apiKey: "el-secret" })).toEqual([]);
+  });
+
+  it("requires API key for BaiLian Qwen-TTS and CosyVoice providers", () => {
+    for (const provider of ["bailian-qwen-tts", "bailian-cosyvoice"] as const) {
+      const config = createApiKeyProviderConfig({
+        id: provider,
+        label: provider,
+        provider,
+        apiKey: "",
+        baseUrl: "https://workspace.cn-beijing.maas.aliyuncs.com/api/v1",
+        model: provider === "bailian-qwen-tts" ? "qwen3-tts-vc-2026-01-22" : "cosyvoice-v3.5-flash",
+      });
+
+      expect(validateProviderConfig(config)).toContain("请填写 API Key");
+      expect(validateProviderConfig({ ...config, apiKey: "bailian-secret" })).toEqual([]);
+    }
+  });
+
+  it("keeps voiceId in storage metadata because it is not sensitive", () => {
+    const config = createApiKeyProviderConfig({
+      id: "elevenlabs-tts",
+      label: "ElevenLabs TTS",
+      provider: "elevenlabs-tts",
+      apiKey: "el-secret",
+      voiceId: "pNInz6obpgDQGcFmaJgB",
+      model: "eleven_multilingual_v2",
+    });
+
+    const metadata = sanitizeProviderConfigForStorage(config);
+
+    expect(metadata).not.toHaveProperty("apiKey");
+    expect(metadata.voiceId).toBe("pNInz6obpgDQGcFmaJgB");
+  });
+
+  it("validates project draft", () => {
     const draft = createProjectDraft({
       name: "女装口播 0611",
       targetPlatforms: ["douyin", "xiaohongshu"],
@@ -100,5 +146,24 @@ describe("validation domain", () => {
     expect(validateProjectDraft(draft)).toEqual([]);
     expect(validateProjectDraft({ ...draft, name: "" })).toContain("请填写项目名称");
     expect(validateProjectDraft({ ...draft, targetPlatforms: [] })).toContain("至少选择一个发布平台");
+  });
+
+  it("creates a stable project id when callers omit one", () => {
+    const project = createProjectDraft({
+      name: "新项目",
+      targetPlatforms: ["douyin"],
+    });
+
+    expect(project.id).toMatch(/^[0-9a-f-]{36}$/i);
+  });
+
+  it("preserves the caller-provided project id", () => {
+    const project = createProjectDraft({
+      id: "custom-project-id",
+      name: "新项目",
+      targetPlatforms: ["douyin"],
+    });
+
+    expect(project.id).toBe("custom-project-id");
   });
 });

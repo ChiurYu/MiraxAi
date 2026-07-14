@@ -17,6 +17,7 @@ export function sanitizeProviderConfigForStorage(config: ApiKeyProviderConfig): 
     baseUrl: sanitizeBaseUrlForStorage(config.baseUrl),
     pythonPath: config.pythonPath,
     model: config.model,
+    voiceId: config.voiceId,
     enabled: config.enabled,
   };
 }
@@ -46,7 +47,7 @@ export function validateProviderConfig(config: ApiKeyProviderConfig): string[] {
     errors.push("请填写配置名称");
   }
 
-  if ((config.provider === "openai" || config.provider === "custom") && !config.apiKey.trim()) {
+  if ((config.provider === "openai" || config.provider === "custom" || config.provider === "elevenlabs-tts" || config.provider === "bailian-qwen-tts" || config.provider === "bailian-cosyvoice") && !config.apiKey.trim()) {
     errors.push("请填写 API Key");
   }
 
@@ -57,11 +58,37 @@ export function validateProviderConfig(config: ApiKeyProviderConfig): string[] {
   return errors;
 }
 
-export function createProjectDraft(draft: ProjectDraft): ProjectDraft {
+export function createProjectDraft(draft: Partial<ProjectDraft> & Pick<ProjectDraft, "name" | "targetPlatforms">): ProjectDraft {
   return {
-    ...draft,
+    id: draft.id ?? generateUuid(),
     name: draft.name.trim(),
+    targetPlatforms: draft.targetPlatforms,
+    sourceVideoPath: draft.sourceVideoPath,
+    voiceSamplePath: draft.voiceSamplePath,
+    notes: draft.notes,
+    audioPath: draft.audioPath,
+    avatarVideoPath: draft.avatarVideoPath,
+    finalVideoPath: draft.finalVideoPath,
+    coverPath: draft.coverPath,
   };
+}
+
+function generateUuid(): string {
+  // 简单的 UUID v4 实现，不引入外部依赖。
+  const hex = "0123456789abcdef";
+  let uuid = "";
+  for (let i = 0; i < 36; i++) {
+    if (i === 8 || i === 13 || i === 18 || i === 23) {
+      uuid += "-";
+    } else if (i === 14) {
+      uuid += "4";
+    } else if (i === 19) {
+      uuid += hex[(Math.random() * 4) | 8];
+    } else {
+      uuid += hex[(Math.random() * 16) | 0];
+    }
+  }
+  return uuid;
 }
 
 export function validateProjectDraft(draft: ProjectDraft): string[] {
@@ -102,6 +129,7 @@ export function createDefaultAppSettings(id = "default"): AppSettings {
       thumbsOutput: "/Users/Shared/MiraxAI/thumbs",
     },
     rewriteProviderConfigId: undefined,
+    activeVoiceSampleStorageRootId: undefined,
   };
 }
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AiProviderError, createOpenAiCompatibleProvider } from "../src/index.js";
-import type { OpenAiCompatibleTransport, RewriteScriptResult } from "../src/index.js";
+import type { OpenAiCompatibleTransport, OpenAiCompatibleTransportRequest, RewriteScriptResult } from "../src/index.js";
 
 function createFakeTransport(
   scenarios: Array<{
@@ -25,6 +25,24 @@ function createFakeTransport(
         json: async () => scenario.response.body,
       };
     },
+  };
+}
+
+function createRecordingTransport(
+  response: { status: number; body: unknown } = { status: 200, body: chatCompletionResponse(JSON.stringify({ script: "ok" })) },
+): { transport: OpenAiCompatibleTransport; requests: OpenAiCompatibleTransportRequest[] } {
+  const requests: OpenAiCompatibleTransportRequest[] = [];
+  return {
+    transport: {
+      async request(req) {
+        requests.push(req);
+        return {
+          status: response.status,
+          json: async () => response.body,
+        };
+      },
+    },
+    requests,
   };
 }
 
@@ -188,4 +206,127 @@ describe("openai-compatible provider", () => {
     expect(caught).toBeInstanceOf(AiProviderError);
     expect((caught as AiProviderError).code).toBe("not-configured");
   });
+
+  it("sends explicit goal, preset and length constraints in the user prompt", async () => {
+    const resultJson: RewriteScriptResult = {
+      script: "口语化种草脚本。",
+      titleSuggestions: ["标题一"],
+      coverTextSuggestions: ["封面一"],
+    };
+    const { transport, requests } = createRecordingTransport({
+      status: 200,
+      body: chatCompletionResponse(JSON.stringify(resultJson)),
+    });
+
+    const provider = createOpenAiCompatibleProvider({
+      apiKey: "sk-test",
+      model: "gpt-4",
+      transport,
+    });
+
+    await provider.rewriteScript({
+      transcript: "原始文案",
+      productName: "通勤包",
+      sellingPoints: ["大容量"],
+      activeGoal: "更口语化",
+      activePreset: "小红书种草风格 (Emoji Enhanced)",
+      targetLength: 80,
+    });
+
+    expect(requests).toHaveLength(1);
+    const userPrompt = extractUserPrompt(requests[0]);
+    expect(userPrompt).toContain("改写目标：更口语化");
+    expect(userPrompt).toContain("句子更短、更顺口");
+    expect(userPrompt).toContain("风格模板：小红书种草风格 (Emoji Enhanced)");
+    expect(userPrompt).toContain("种草感强");
+    expect(userPrompt).toContain("目标长度：约 80 个汉字");
+  });
+
+  it("sends fact boundary that forbids invented product claims", async () => {
+    const { transport, requests } = createRecordingTransport({
+      status: 200,
+      body: chatCompletionResponse(JSON.stringify({ script: "ok" })),
+    });
+
+    const provider = createOpenAiCompatibleProvider({
+      apiKey: "sk-test",
+      model: "gpt-4",
+      transport,
+    });
+
+    await provider.rewriteScript({
+      transcript: "原始文案",
+      productName: "通勤包",
+      sellingPoints: ["大容量"],
+      activeGoal: "更专业",
+      activePreset: "B站测评硬核风格",
+      targetLength: 120,
+    });
+
+    const userPrompt = extractUserPrompt(requests[0]);
+    expect(userPrompt).toContain("事实边界");
+    expect(userPrompt).toContain("不得编造产品参数、价格、资质、效果、销量、用户评价等未提及的内容");
+    expect(userPrompt).toContain("不编造参数或测试数据");
+  });
+
+  it("preserves unknown goal and preset labels with safe fallback", async () => {
+    const { transport, requests } = createRecordingTransport({
+      status: 200,
+      body: chatCompletionResponse(JSON.stringify({ script: "ok" })),
+    });
+
+    const provider = createOpenAiCompatibleProvider({
+      apiKey: "sk-test",
+      model: "gpt-4",
+      transport,
+    });
+
+    await provider.rewriteScript({
+      transcript: "原始文案",
+      productName: "通勤包",
+      sellingPoints: ["大容量"],
+      activeGoal: "未来目标",
+      activePreset: "未来风格",
+    });
+
+    const userPrompt = extractUserPrompt(requests[0]);
+    expect(userPrompt).toContain("改写目标：未来目标");
+    expect(userPrompt).toContain("用户选择「未来目标」");
+    expect(userPrompt).toContain("风格模板：未来风格");
+    expect(userPrompt).toContain("用户选择「未来风格」");
+  });
+
+  it("uses relaxed length guidance when targetLength is omitted", async () => {
+    const { transport, requests } = createRecordingTransport({
+      status: 200,
+      body: chatCompletionResponse(JSON.stringify({ script: "ok" })),
+    });
+
+    const provider = createOpenAiCompatibleProvider({
+      apiKey: "sk-test",
+      model: "gpt-4",
+      transport,
+    });
+
+    await provider.rewriteScript({
+      transcript: "原始文案",
+      productName: "通勤包",
+      sellingPoints: ["大容量"],
+      activeGoal: "保持原意",
+      activePreset: "高端奢侈品发布语调",
+    });
+
+    const userPrompt = extractUserPrompt(requests[0]);
+    expect(userPrompt).toContain("目标长度：不强制精确字数");
+    expect(userPrompt).not.toContain("约 0 个汉字");
+  });
 });
+
+function extractUserPrompt(req: OpenAiCompatibleTransportRequest): string {
+  const body = req.body as { messages?: Array<{ role: string; content?: string }> } | undefined;
+  const message = body?.messages?.find((m) => m.role === "user");
+  if (!message?.content || typeof message.content !== "string") {
+    throw new Error("User prompt not found in request body");
+  }
+  return message.content;
+}

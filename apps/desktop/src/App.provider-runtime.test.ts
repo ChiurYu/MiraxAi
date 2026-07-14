@@ -28,6 +28,32 @@ describe("App provider runtime wiring", () => {
     expect(source).not.toContain('rewrite: findEnabledRewriteProviderConfig(providerConfigs.value) ? "real" : "mock"');
   });
 
+  it("lets ElevenLabs TTS run when ready without requiring a manual connection test", () => {
+    const body = source.match(/function hasExecutableSpeechProvider\(\): boolean \{([\s\S]*?)\n\}/)?.[1] ?? "";
+    expect(body).toContain('config.provider === "elevenlabs-tts"');
+    expect(body).toContain('getProviderReadiness(config) !== "ready"');
+    expect(body).toContain('if (config.provider === "elevenlabs-tts")');
+    expect(body).toContain("return true;");
+  });
+
+  it("lets ready BaiLian Qwen-TTS and CosyVoice run without a synthetic connection test", () => {
+    const speech = source.match(/function hasExecutableSpeechProvider\(\): boolean \{([\s\S]*?)\n\}/)?.[1] ?? "";
+    const voiceClone = source.match(/function hasExecutableVoiceCloneProvider\(\): boolean \{([\s\S]*?)\n\}/)?.[1] ?? "";
+    expect(speech).toContain('config.provider === "bailian-qwen-tts"');
+    expect(speech).toContain('config.provider === "bailian-cosyvoice"');
+    expect(voiceClone).toContain('config.provider === "bailian-qwen-tts"');
+    expect(voiceClone).toContain('config.provider === "bailian-cosyvoice"');
+  });
+
+  it("routes BaiLian voice clone JSON requests through the native Tauri transport", () => {
+    const voiceCloneCase = source.match(/case "voice-clone": \{([\s\S]*?)case "speech":/)?.[1] ?? "";
+    const speechCase = source.match(/case "speech": \{([\s\S]*?)case "avatar":/)?.[1] ?? "";
+    expect(source).toContain('import { createTauriBaiLianFetchBinary, createTauriBaiLianFetchJson } from "./runtime/tauriBaiLianHttp.js"');
+    expect(voiceCloneCase).toContain("baiLianFetchJson: createTauriBaiLianFetchJson()");
+    expect(speechCase).toContain("baiLianFetchJson: createTauriBaiLianFetchJson()");
+    expect(speechCase).toContain("baiLianFetchBinary: createTauriBaiLianFetchBinary()");
+  });
+
   it("lets local whisper run when its config is ready without requiring a manual test", () => {
     const body = source.match(/function hasExecutableTranscribeProvider\(\): boolean \{([\s\S]*?)\n\}/)?.[1] ?? "";
     expect(body).toContain('config.provider === "local-whisper"');
@@ -74,10 +100,44 @@ describe("App provider runtime wiring", () => {
     expect(source).toContain("请选择 HeyGem provider 可识别的真实形象。");
   });
 
-  it("writes selected voice samplePath into project.voiceSamplePath for mock flow", () => {
+  it("keeps selected voice sample paths in session-only voice clone state", () => {
     expect(source).toContain("function handleVoiceSelect(item: AssetListItem)");
+    expect(source).toContain("const pendingVoiceSamplePath = ref");
+    expect(source).toContain("const pendingVoiceSampleName = ref");
     expect(source).toContain("if (item.samplePath)");
-    expect(source).toContain("voiceSamplePath: item.samplePath");
+    expect(source).toContain("pendingVoiceSamplePath.value = item.samplePath");
+    expect(source).not.toContain("voiceSamplePath: item.samplePath");
+  });
+
+  it("keeps the latest ten voice-clone diagnostics in the current session only", () => {
+    expect(source).toContain("const voiceCloneDiagnosticLogs = ref");
+    expect(source).toContain(".slice(0, 10)");
+    expect(source).toContain("function clearVoiceCloneDiagnosticLogs()");
+    expect(source).toContain(':diagnostic-logs="voiceCloneDiagnosticLogs"');
+    expect(source).toContain('@clear-diagnostic-logs="clearVoiceCloneDiagnosticLogs"');
+  });
+
+  it("keeps completed voice cloning visible and records safely readable non-Error failures", () => {
+    expect(source).toContain('@run="runtime.runStage(\'voice-clone\', { autoAdvance: false })"');
+    expect(source).toContain("function readSafeVoiceCloneError(error: unknown)");
+    expect(source).toContain('typeof error === "string"');
+    expect(source).toContain("声音克隆失败，诊断包含敏感内容，已隐藏。请查看本次会话诊断日志后重试。");
+  });
+
+  it("recovers an existing remote-created clone before creating another paid remote voice", () => {
+    const cloneCase = source.match(/case "voice-clone": \{([\s\S]*?)case "speech":/)?.[1] ?? "";
+    expect(cloneCase).toContain("findLatestRecoverable");
+    expect(cloneCase.indexOf("findLatestRecoverable")).toBeLessThan(cloneCase.indexOf("runVoiceClone"));
+  });
+
+  it("wires the clone stage to session-only sample and consent state", () => {
+    const stage = source.match(/<VoiceCloningStage[\s\S]*?\/>/)?.[0] ?? "";
+    expect(stage).toContain(':pending-sample-path="pendingVoiceSamplePath"');
+    expect(stage).toContain(':pending-sample-name="pendingVoiceSampleName"');
+    expect(stage).toContain(':voice-name="pendingVoiceName"');
+    expect(stage).toContain(':consent-accepted="voiceCloneConsentAccepted"');
+    expect(stage).toContain('@choose-sample="choosePendingVoiceSample"');
+    expect(stage).not.toContain('v-model="project"');
   });
 
   it("passes publish task statuses into history instead of assuming success", () => {
@@ -103,15 +163,85 @@ describe("App provider runtime wiring", () => {
     expect(source).toContain('v-model:target-length="draft.targetLength"');
   });
 
-  it("syncs async restored draft state into workflow runtime", () => {
+  it("syncs async restored draft state into workflow runtime and restores speech artifact", () => {
     expect(source).toContain("ready: draftReady");
     expect(source).toContain("function syncRuntimeFromDraft()");
-    expect(source).toContain("void draftReady.then(syncRuntimeFromDraft)");
+    expect(source).toContain("void draftReady.then(() => {");
+    expect(source).toContain("syncRuntimeFromDraft();");
+    expect(source).toContain("return Promise.all([restoreSpeechArtifact(), restoreActiveProjectVoiceClone()]);");
+  });
+
+  it("restores an active project voice clone from SQLite without restoring an absolute sample path", () => {
+    const restoreBody = source.match(/async function restoreActiveProjectVoiceClone\(\)[\s\S]*?\n\}/)?.[0] ?? "";
+    expect(restoreBody).toContain("findActiveByProjectId(project.value.id)");
+    expect(restoreBody).toContain("clone.remoteVoiceId");
+    expect(restoreBody).toContain("sample?.originalFileName");
+    expect(restoreBody).toContain("selectedVoiceCloneProviderConfigId.value = clone.providerConfigId");
+    expect(restoreBody).not.toContain("pendingVoiceSamplePath.value");
+    expect(source).toContain("restoreActiveProjectVoiceClone()");
   });
 
   it("extracts audio before real transcribe when sourceVideoPath is present", () => {
     expect(source).toContain("selectAudioExtractor");
     expect(source).toContain("extract_audio");
     expect(source).toContain("audioPath");
+  });
+
+  it("routes the bottom next button through a stage-aware handler", () => {
+    const appScript = source.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)?.[1] ?? "";
+    expect(appScript).toContain("function handleNextStage()");
+    expect(appScript).toContain("runtime.activeStageId.value");
+    expect(appScript).toContain('"rewrite"');
+    expect(appScript).toContain("handleAdoptScript()");
+    expect(appScript).toContain("runtime.goToNextStage()");
+  });
+
+  it("binds the workbench next event to the stage-aware handler", () => {
+    expect(source).toContain('@next="handleNextStage"');
+    expect(source).not.toContain('@next="runtime.goToNextStage"');
+  });
+
+  it("adopts the rewritten script before advancing when next is pressed on a completed rewrite stage", () => {
+    const appScript = source.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)?.[1] ?? "";
+    const handlerBody = appScript.match(/function handleNextStage\(\)[\s\S]*?\n\}/)?.[0] ?? "";
+    expect(handlerBody).toContain('"rewrite"');
+    expect(handlerBody).toContain("completed");
+    expect(handlerBody).toContain("project.value.notes");
+    expect(handlerBody).toContain("handleAdoptScript()");
+  });
+
+  it("records relative speech artifact metadata after real speech success and persists immediately", () => {
+    const appScript = source.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)?.[1] ?? "";
+    const speechCaseBody = appScript.match(/case "speech": \{([\s\S]*?)case "avatar":/)?.[1] ?? "";
+    expect(speechCaseBody).toContain('speechMode === "real"');
+    expect(speechCaseBody).toContain("recordSpeechArtifact(result.audioPath, result.durationSeconds)");
+    expect(speechCaseBody).toContain("await persist()");
+    expect(appScript).toContain("draft.speechArtifact");
+    expect(appScript).toContain("relativePath");
+    expect(appScript).toContain("durationSeconds");
+    const recordBody = appScript.match(/function recordSpeechArtifact\([\s\S]*?\n\}/)?.[0] ?? "";
+    expect(recordBody).toContain("format: getAudioFormat(absolutePath)");
+  });
+
+  it("clears speech artifact after mock speech success", () => {
+    const appScript = source.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)?.[1] ?? "";
+    const speechCaseBody = appScript.match(/case "speech": \{([\s\S]*?)case "avatar":/)?.[1] ?? "";
+    expect(speechCaseBody).toContain('speechMode === "real"');
+    expect(speechCaseBody).toContain("draft.speechArtifact = undefined");
+  });
+
+  it("restores speech artifact from draft after startup using a restricted Rust check", () => {
+    const appScript = source.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)?.[1] ?? "";
+    expect(appScript).toContain("async function restoreSpeechArtifact()");
+    expect(appScript).toContain('"check_audio_file"');
+    expect(appScript).toContain("generatedAudioPath.value = absolutePath");
+    expect(appScript).toContain("generatedAudioDuration.value = artifact.durationSeconds");
+  });
+
+  it("does not store API Key or absolute paths in speech artifact metadata", () => {
+    const appScript = source.match(/<script setup lang="ts">([\s\S]*?)<\/script>/)?.[1] ?? "";
+    const recordBody = appScript.match(/function recordSpeechArtifact\([\s\S]*?\n\}/)?.[0] ?? "";
+    expect(recordBody).not.toContain("apiKey");
+    expect(recordBody).toContain("toRelativeAudioPath(appSettings.outputPaths.audioOutput, absolutePath)");
   });
 });

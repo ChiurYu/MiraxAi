@@ -13,9 +13,9 @@ import {
   Waypoints,
 } from "lucide-vue-next";
 import { ChevronDown } from "lucide-vue-next";
-import { computed, ref } from "vue";
+import { computed, onUnmounted, ref, watch } from "vue";
 import type { ProjectDraft, WorkflowStageRuntimeMode, WorkflowStageStatus } from "@mirax/core";
-import { convertFileSrc } from "@tauri-apps/api/core";
+import { invoke } from "@tauri-apps/api/core";
 
 const props = defineProps<{
   modelValue: ProjectDraft;
@@ -24,6 +24,7 @@ const props = defineProps<{
   status: WorkflowStageStatus;
   audioPath: string;
   audioDuration: number;
+  audioOutputRoot: string;
   mode?: WorkflowStageRuntimeMode;
   errorMessage?: string;
 }>();
@@ -47,6 +48,10 @@ const emotion = ref<(typeof emotions)[number]>(EMOTION_DEFAULT);
 const advancedOpen = ref(false);
 const pitch = ref(50);
 const pauseStrength = ref(50);
+const settingsMessage = ref("");
+const fileActionMessage = ref("");
+const fileActionError = ref(false);
+const fileActionRunning = ref<"export" | "reveal" | null>(null);
 
 const estimatedSeconds = computed(() => {
   const base = Math.max(3, Math.ceil((scriptLength.value || 245) / 5));
@@ -79,23 +84,68 @@ function basename(filePath: string): string {
   return trimmed.split(/[\\/]/).filter(Boolean).at(-1) ?? trimmed;
 }
 
+const fileExtension = computed(() => {
+  const ext = props.audioPath.split(".").pop()?.toUpperCase();
+  return ext === "MP3" ? "MP3" : "WAV";
+});
+
 const fileName = computed(() =>
-  hasResult.value ? basename(props.audioPath) : `${props.modelValue.name || "口播视频"}_${props.voiceName}_v1.wav`,
+  hasResult.value ? basename(props.audioPath) : `${props.modelValue.name || "口播视频"}_${props.voiceName}_v1.${fileExtension.value.toLowerCase()}`,
 );
 
 function isTauriAvailable(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
 
+const audioBlobUrl = ref("");
+
+const audioMimeType = computed(() => {
+  const ext = props.audioPath.split(".").pop()?.toLowerCase();
+  if (ext === "wav") return "audio/wav";
+  return "audio/mpeg";
+});
+
+async function loadAudio() {
+  if (!props.audioPath || !isTauriAvailable() || !props.audioOutputRoot) {
+    audioBlobUrl.value = "";
+    return;
+  }
+
+  try {
+    const bytes = (await invoke("read_binary_file", {
+      path: props.audioPath,
+      allowedRoot: props.audioOutputRoot,
+    })) as number[];
+    const blob = new Blob([new Uint8Array(bytes)], { type: audioMimeType.value });
+    audioBlobUrl.value = URL.createObjectURL(blob);
+  } catch {
+    audioBlobUrl.value = "";
+  }
+}
+
+watch(
+  () => props.audioPath,
+  () => {
+    URL.revokeObjectURL(audioBlobUrl.value);
+    void loadAudio();
+  },
+  { immediate: true },
+);
+
+onUnmounted(() => {
+  URL.revokeObjectURL(audioBlobUrl.value);
+});
+
 const audioSrc = computed(() => {
   if (!props.audioPath) return "";
   if (isTauriAvailable()) {
-    return convertFileSrc(props.audioPath, "asset");
+    return audioBlobUrl.value;
   }
   return props.audioPath;
 });
 
-const canPlay = computed(() => hasResult.value && isTauriAvailable() && Boolean(audioSrc.value));
+const canPlay = computed(() => hasResult.value && isTauriAvailable() && Boolean(audioBlobUrl.value));
+const canManageResult = computed(() => hasResult.value && isTauriAvailable() && Boolean(props.audioOutputRoot));
 
 function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60)
@@ -110,11 +160,51 @@ function resetSettings() {
   emotion.value = EMOTION_DEFAULT;
   pitch.value = 50;
   pauseStrength.value = 50;
+  settingsMessage.value = "已恢复默认设置";
 }
 
 function handleSynthesize() {
   if (!canRun.value) return;
+  fileActionMessage.value = "";
   emit("run");
+}
+
+async function exportAudio() {
+  if (!canManageResult.value || fileActionRunning.value) return;
+  fileActionRunning.value = "export";
+  fileActionMessage.value = "";
+  fileActionError.value = false;
+  try {
+    const saved = await invoke<boolean>("export_audio_file", {
+      path: props.audioPath,
+      allowedRoot: props.audioOutputRoot,
+    });
+    fileActionMessage.value = saved ? "音频已保存" : "已取消保存";
+  } catch {
+    fileActionError.value = true;
+    fileActionMessage.value = "音频保存失败，请重试";
+  } finally {
+    fileActionRunning.value = null;
+  }
+}
+
+async function revealAudio() {
+  if (!canManageResult.value || fileActionRunning.value) return;
+  fileActionRunning.value = "reveal";
+  fileActionMessage.value = "";
+  fileActionError.value = false;
+  try {
+    await invoke("reveal_audio_file", {
+      path: props.audioPath,
+      allowedRoot: props.audioOutputRoot,
+    });
+    fileActionMessage.value = "已在文件夹中定位音频";
+  } catch {
+    fileActionError.value = true;
+    fileActionMessage.value = "无法打开音频所在文件夹";
+  } finally {
+    fileActionRunning.value = null;
+  }
 }
 </script>
 
@@ -166,7 +256,7 @@ function handleSynthesize() {
 
         <div v-if="isNotConnected" class="status-banner status-warning">
           <Info :size="14" />
-          <span>真实 TTS 未连接。请在设置中配置并启用 CosyVoice provider 后再试。</span>
+          <span>真实 TTS 未连接。请在设置中配置并启用 CosyVoice 或 ElevenLabs TTS provider 后再试。</span>
         </div>
         <div v-else-if="isReal && hasError" class="status-banner status-error">
           <Info :size="14" />
@@ -289,6 +379,9 @@ function handleSynthesize() {
             <span>{{ running ? "合成中" : "开始合成" }}</span>
           </button>
         </div>
+        <p v-if="settingsMessage" class="action-feedback" role="status">
+          {{ settingsMessage }}
+        </p>
       </section>
     </div>
 
@@ -306,7 +399,7 @@ function handleSynthesize() {
             <span class="file-icon"><FileAudio :size="20" /></span>
             <div class="file-meta">
               <span class="file-name">{{ fileName }}</span>
-              <span class="file-sub">{{ resultDurationLabel }} · WAV</span>
+              <span class="file-sub">{{ resultDurationLabel }} · {{ fileExtension }}</span>
             </div>
           </div>
 
@@ -332,33 +425,36 @@ function handleSynthesize() {
               <RotateCcw :size="14" />
               <span>重新合成</span>
             </button>
-            <a
-              v-if="canPlay"
-              class="secondary download-link"
-              :href="audioSrc"
-              :download="fileName"
-            >
-              <Download :size="14" />
-              <span>下载音频</span>
-            </a>
-            <span
-              v-else
-              class="secondary download-link disabled"
-              aria-disabled="true"
-            >
-              <Download :size="14" />
-              <span>下载音频</span>
-            </span>
             <button
               class="secondary"
               type="button"
-              disabled
-              title="本地文件夹访问待接入"
+              :disabled="!canManageResult || fileActionRunning !== null"
+              @click="exportAudio"
             >
-              <FolderOpen :size="14" />
+              <Loader2 v-if="fileActionRunning === 'export'" :size="14" class="spin" />
+              <Download v-else :size="14" />
+              <span>下载音频</span>
+            </button>
+            <button
+              class="secondary"
+              type="button"
+              :disabled="!canManageResult || fileActionRunning !== null"
+              @click="revealAudio"
+            >
+              <Loader2 v-if="fileActionRunning === 'reveal'" :size="14" class="spin" />
+              <FolderOpen v-else :size="14" />
               <span>在文件夹中显示</span>
             </button>
           </div>
+
+          <p
+            v-if="fileActionMessage"
+            class="action-feedback"
+            :class="{ error: fileActionError }"
+            role="status"
+          >
+            {{ fileActionMessage }}
+          </p>
 
           <p class="result-note">
             修改文案、声音、语速或语气后，需重新合成音频。
@@ -543,8 +639,7 @@ function handleSynthesize() {
 
 .summary-actions .secondary,
 .settings-actions .secondary,
-.result-actions .secondary,
-.download-link {
+.result-actions .secondary {
   height: 34px;
   padding: 0 14px;
 }
@@ -737,8 +832,7 @@ function handleSynthesize() {
   gap: 10px;
 }
 
-.result-actions .secondary,
-.download-link {
+.result-actions .secondary {
   flex: 1;
   display: inline-flex;
   align-items: center;
@@ -750,12 +844,6 @@ function handleSynthesize() {
   background: var(--mx-bg-elevated);
   font-size: 12px;
   font-weight: 500;
-  text-decoration: none;
-}
-
-.download-link.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .result-actions .secondary:disabled {
@@ -768,6 +856,17 @@ function handleSynthesize() {
   font-size: 11px;
   line-height: 1.5;
   color: var(--mx-text-tertiary);
+}
+
+.action-feedback {
+  margin: 0;
+  color: var(--mx-success);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.action-feedback.error {
+  color: var(--mx-error);
 }
 
 .result-empty {

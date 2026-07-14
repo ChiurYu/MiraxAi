@@ -15,6 +15,12 @@ import { SUPPORTED_PLATFORM_PROFILES } from "@mirax/provider-publish";
 
 export const DESKTOP_DRAFT_STORAGE_KEY = "mirax-ai.desktop-draft.v1";
 
+export interface SpeechArtifactMetadata {
+  relativePath: string;
+  durationSeconds: number;
+  format: "mp3" | "wav";
+}
+
 export interface DesktopDraft {
   project: ProjectDraft;
   providerConfig: ApiKeyProviderConfig;
@@ -24,6 +30,7 @@ export interface DesktopDraft {
   activeGoal: string;
   activePreset: string;
   targetLength: number;
+  speechArtifact?: SpeechArtifactMetadata;
 }
 
 export interface PersistedDesktopDraft {
@@ -35,17 +42,20 @@ export interface PersistedDesktopDraft {
   activeGoal?: string;
   activePreset?: string;
   targetLength?: number;
+  speechArtifact?: SpeechArtifactMetadata;
 }
 
 export function createDefaultDesktopDraft(): DesktopDraft {
+  const project = createProjectDraft({
+    name: "未命名项目",
+    targetPlatforms: ["douyin", "xiaohongshu"],
+    sourceVideoPath: "",
+    voiceSamplePath: "",
+    notes: "",
+  });
+
   return {
-    project: createProjectDraft({
-      name: "未命名项目",
-      targetPlatforms: ["douyin", "xiaohongshu"],
-      sourceVideoPath: "",
-      voiceSamplePath: "",
-      notes: "",
-    }),
+    project,
     providerConfig: createApiKeyProviderConfig({
       id: "main-ai",
       label: "主模型配置",
@@ -55,7 +65,7 @@ export function createDefaultDesktopDraft(): DesktopDraft {
       model: "gpt-4.1",
     }),
     activeStageId: "transcribe",
-    workflow: createDefaultWorkflow("demo-project"),
+    workflow: createDefaultWorkflow(project.id),
     transcriptText: "",
     activeGoal: "更口语化",
     activePreset: "小红书种草风格 (Emoji Enhanced)",
@@ -64,8 +74,10 @@ export function createDefaultDesktopDraft(): DesktopDraft {
 }
 
 export function sanitizeDesktopDraftForStorage(draft: DesktopDraft): PersistedDesktopDraft {
+  const { voiceSamplePath: _omitVoiceSamplePath, ...projectWithoutVoiceSamplePath } = draft.project;
+
   return {
-    project: draft.project,
+    project: projectWithoutVoiceSamplePath,
     providerConfig: sanitizeProviderConfigForStorage(draft.providerConfig),
     activeStageId: draft.activeStageId,
     workflow: sanitizeWorkflowForPersistence(draft.workflow),
@@ -73,6 +85,21 @@ export function sanitizeDesktopDraftForStorage(draft: DesktopDraft): PersistedDe
     activeGoal: draft.activeGoal,
     activePreset: draft.activePreset,
     targetLength: draft.targetLength,
+    speechArtifact: sanitizeSpeechArtifact(draft.speechArtifact),
+  };
+}
+
+function sanitizeSpeechArtifact(
+  artifact: SpeechArtifactMetadata | undefined,
+): SpeechArtifactMetadata | undefined {
+  if (!artifact) return undefined;
+  const relativePath = typeof artifact.relativePath === "string" ? artifact.relativePath.trim() : "";
+  if (!relativePath) return undefined;
+  const format = artifact.format === "wav" ? "wav" : "mp3";
+  return {
+    relativePath,
+    durationSeconds: typeof artifact.durationSeconds === "number" ? artifact.durationSeconds : 0,
+    format,
   };
 }
 
@@ -133,16 +160,25 @@ function normalizePersistedStageStatus(status: unknown): WorkflowStageStatus {
 export function restoreDesktopDraft(saved: Partial<PersistedDesktopDraft>): DesktopDraft {
   const defaults = createDefaultDesktopDraft();
 
+  const project = saved.project
+    ? {
+        id: saved.project.id ?? defaults.project.id,
+        name: saved.project.name ?? defaults.project.name,
+        sourceVideoPath: saved.project.sourceVideoPath ?? defaults.project.sourceVideoPath,
+        voiceSamplePath: saved.project.voiceSamplePath ?? defaults.project.voiceSamplePath,
+        notes: saved.project.notes ?? defaults.project.notes,
+        targetPlatforms: sanitizePlatforms(saved.project.targetPlatforms),
+      }
+    : defaults.project;
+
+  const restoredWorkflow = sanitizeWorkflow(saved.workflow, defaults.workflow);
+  const workflow = {
+    ...restoredWorkflow,
+    projectId: project.id,
+  };
+
   return {
-    project: saved.project
-      ? {
-          name: saved.project.name ?? defaults.project.name,
-          sourceVideoPath: saved.project.sourceVideoPath ?? defaults.project.sourceVideoPath,
-          voiceSamplePath: saved.project.voiceSamplePath ?? defaults.project.voiceSamplePath,
-          notes: saved.project.notes ?? defaults.project.notes,
-          targetPlatforms: sanitizePlatforms(saved.project.targetPlatforms),
-        }
-      : defaults.project,
+    project,
     providerConfig: saved.providerConfig
       ? createApiKeyProviderConfig({
           ...sanitizeProviderConfigForStorage({
@@ -158,11 +194,12 @@ export function restoreDesktopDraft(saved: Partial<PersistedDesktopDraft>): Desk
         })
       : defaults.providerConfig,
     activeStageId: sanitizeActiveStageId(saved.activeStageId),
-    workflow: sanitizeWorkflow(saved.workflow, defaults.workflow),
+    workflow,
     transcriptText: typeof saved.transcriptText === "string" ? saved.transcriptText : defaults.transcriptText,
     activeGoal: typeof saved.activeGoal === "string" ? saved.activeGoal : defaults.activeGoal,
     activePreset: typeof saved.activePreset === "string" ? saved.activePreset : defaults.activePreset,
     targetLength: typeof saved.targetLength === "number" ? saved.targetLength : defaults.targetLength,
+    speechArtifact: sanitizeSpeechArtifact(saved.speechArtifact),
   };
 }
 

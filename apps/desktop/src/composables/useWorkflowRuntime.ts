@@ -211,7 +211,7 @@ export function useWorkflowRuntime(options: UseWorkflowRuntimeOptions) {
     }
   }
 
-  async function runStage(stageId: WorkflowStageId) {
+  async function runStage(stageId: WorkflowStageId, options?: { autoAdvance?: boolean }) {
     if (running.value) {
       return;
     }
@@ -231,7 +231,11 @@ export function useWorkflowRuntime(options: UseWorkflowRuntimeOptions) {
 
     try {
       await processStage(stageId, stage.title);
-      if (stageStatus.value[stageId] === "completed" && activeStageId.value === stageId) {
+      if (
+        stageStatus.value[stageId] === "completed" &&
+        activeStageId.value === stageId &&
+        options?.autoAdvance !== false
+      ) {
         const nextId = WORKFLOW_STAGES[stageIndex(stageId) + 1];
         if (nextId) {
           activeStageId.value = nextId;

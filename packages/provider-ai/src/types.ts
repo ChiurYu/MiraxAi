@@ -36,11 +36,17 @@ export interface RewriteScriptResult {
 export interface CloneVoiceInput {
   voiceSamplePath: string;
   projectId: string;
+  sampleId?: string;
+  voiceName?: string;
+  description?: string;
+  /** CosyVoice 手工 OSS 流程的单次 HTTPS 样本 URL；不得持久化。 */
+  externalSampleUrl?: string;
 }
 
 export interface CloneVoiceResult {
   voiceId: string;
   samplePath: string;
+  requiresVerification?: boolean;
 }
 
 export interface SynthesizeSpeechInput {
@@ -240,4 +246,73 @@ export interface HeyGemProviderOptions {
   apiKey?: string;
   model?: string;
   transport?: OpenAiCompatibleTransport;
+}
+
+/**
+ * 写入二进制音频文件字节的抽象；桌面端注入 Rust command，单测注入 fake。
+ */
+export type WriteAudioFile = (path: string, data: Uint8Array) => Promise<void>;
+
+/**
+ * 读取本地音频文件时长（秒）的抽象；桌面端注入 ffprobe Rust command，单测注入 fake。
+ */
+export type ReadAudioDuration = (path: string) => Promise<number>;
+
+/**
+ * 发起二进制 HTTP 请求的抽象；桌面端可注入受限原生下载器，单测注入 fake。
+ */
+export type FetchBinary = (
+  url: string,
+  init: { method: string; headers: Record<string, string>; body?: string },
+) => Promise<{ status: number; arrayBuffer(): Promise<ArrayBuffer> }>;
+
+export type FetchJson = (
+  url: string,
+  init: { method: string; headers: Record<string, string>; body?: string },
+) => Promise<{
+  status: number;
+  json(): Promise<unknown>;
+  diagnostic?: {
+    code?: string;
+    message?: string;
+    requestId?: string;
+  };
+}>;
+
+export interface UploadVoiceSampleInput {
+  apiKey: string;
+  name: string;
+  description?: string;
+  fileName: string;
+  data: Uint8Array;
+}
+
+export type UploadVoiceSample = (input: UploadVoiceSampleInput) => Promise<{ status: number; json(): Promise<unknown> }>;
+export type DeleteRemoteVoice = (input: { apiKey: string; voiceId: string }) => Promise<{ status: number }>;
+
+/**
+ * ElevenLabs TTS provider 的内存配置。`apiKey` 为敏感字段，禁止持久化或打印。
+ */
+export interface ElevenLabsTtsProviderOptions {
+  apiKey: string;
+  voiceId?: string;
+  model: string;
+  writeFile?: WriteAudioFile;
+  readDuration?: ReadAudioDuration;
+  fetchBinary?: FetchBinary;
+  readAudioFile?: ReadAudioFile;
+  uploadVoiceSample?: UploadVoiceSample;
+  deleteRemoteVoice?: DeleteRemoteVoice;
+}
+
+export interface BaiLianTtsProviderOptions {
+  kind: "qwen" | "cosyvoice";
+  apiKey: string;
+  baseUrl: string;
+  model: string;
+  readAudioFile?: ReadAudioFile;
+  writeFile?: WriteAudioFile;
+  readDuration?: ReadAudioDuration;
+  fetchJson?: FetchJson;
+  fetchBinary?: FetchBinary;
 }

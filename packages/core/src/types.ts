@@ -21,7 +21,7 @@ export type WorkflowStageRuntimeMode = "mock" | "real" | "not-connected";
 
 export type PublishPlatform = "douyin" | "xiaohongshu" | "kuaishou" | "shipinhao" | "bilibili";
 
-export type ApiKeyProvider = "openai" | "whisper" | "local-whisper" | "cosyvoice" | "heygem" | "custom";
+export type ApiKeyProvider = "openai" | "whisper" | "local-whisper" | "cosyvoice" | "elevenlabs-tts" | "bailian-qwen-tts" | "bailian-cosyvoice" | "heygem" | "custom";
 
 export interface WorkflowStage {
   id: WorkflowStageId;
@@ -52,10 +52,12 @@ export interface ApiKeyProviderConfig {
   baseUrl?: string;
   pythonPath?: string;
   model?: string;
+  voiceId?: string;
   enabled: boolean;
 }
 
 export interface ProjectDraft {
+  id: string;
   name: string;
   targetPlatforms: PublishPlatform[];
   sourceVideoPath?: string;
@@ -111,6 +113,7 @@ export interface AppSettings {
   theme: AppTheme;
   outputPaths: AppOutputPaths;
   rewriteProviderConfigId?: string;
+  activeVoiceSampleStorageRootId?: string;
 }
 
 export interface PublishMetadata {

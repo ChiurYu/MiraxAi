@@ -5,6 +5,13 @@ import path from "node:path";
 const source = fs.readFileSync(path.resolve(__dirname, "AiServicesSettings.vue"), "utf-8");
 
 describe("AiServicesSettings connection test wiring", () => {
+  it("offers BaiLian Qwen-TTS and CosyVoice with constrained model presets", () => {
+    expect(source).toContain('value: "bailian-qwen-tts"');
+    expect(source).toContain('value: "bailian-cosyvoice"');
+    expect(source).toContain('value: "qwen3-tts-vc-2026-01-22"');
+    expect(source).toContain('value: "cosyvoice-v3.5-flash"');
+  });
+
   it("tests real service modes for Whisper, CosyVoice and HeyGem", () => {
     expect(source).toContain('mode: "whisper"');
     expect(source).toContain('mode: "cosyvoice"');
@@ -121,6 +128,24 @@ describe("AiServicesSettings API key editing boundary", () => {
     expect(source).toContain('autocomplete="new-password"');
     expect(source).toContain("已保存在本机，可留空保留，输入新值则替换");
     expect(source).not.toContain('autocomplete="off"');
+  });
+
+  it("shows a preserved-key hint only when editing an existing provider with a saved key", () => {
+    expect(source).toContain("hasExistingApiKey");
+    expect(source).toContain("API Key 已保存在本机，不会回显；留空将保留当前 Key。");
+    expect(source).toContain('v-if="hasExistingApiKey"');
+  });
+
+  it("awaits explicit persistence before closing the drawer", () => {
+    expect(source).toContain("async function saveProvider");
+    expect(source).toContain("await persistNow()");
+    expect(source).toContain("closeDrawer()");
+  });
+
+  it("stays in the drawer and shows an error when persistence fails", () => {
+    expect(source).toContain("drawerError");
+    expect(source).toContain("本地保存失败，请重试");
+    expect(source).not.toContain("closeDrawer()\n  } catch");
   });
 });
 

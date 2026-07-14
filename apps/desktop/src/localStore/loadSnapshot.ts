@@ -22,6 +22,7 @@ function recordToProviderConfig(
     baseUrl: sanitizeBaseUrlForStorage(record.baseUrl),
     pythonPath: record.pythonPath,
     model: record.model,
+    voiceId: record.voiceId,
     enabled: record.enabled,
   });
 }
@@ -47,6 +48,7 @@ export async function loadAppSettingsSnapshotFromDb(
         theme: appSettingsRecord.theme as AppSettings["theme"],
         outputPaths: JSON.parse(appSettingsRecord.outputPathsJson) as AppSettings["outputPaths"],
         rewriteProviderConfigId: appSettingsRecord.rewriteProviderConfigId,
+        activeVoiceSampleStorageRootId: appSettingsRecord.activeVoiceSampleStorageRootId,
       };
     } catch {
       // ignore corrupted output paths

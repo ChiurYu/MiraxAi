@@ -69,6 +69,74 @@ describe("useWorkbenchDraft", () => {
     expect(draft.providerConfig.apiKey).toBe("");
   });
 
+  it("generates a stable project id for legacy drafts missing id and persists it to SQLite immediately", async () => {
+    const db = new FakeLocalStoreDb();
+    const storage = createFakeStorage();
+    storage.setItem(
+      DESKTOP_DRAFT_STORAGE_KEY,
+      JSON.stringify({
+        project: {
+          name: "旧草稿",
+          sourceVideoPath: "",
+          voiceSamplePath: "",
+          notes: "",
+          targetPlatforms: ["douyin"],
+        },
+        providerConfig: {
+          id: "main-ai",
+          label: "主模型配置",
+          provider: "openai",
+          baseUrl: "https://api.openai.com/v1",
+          model: "gpt-4.1",
+          enabled: true,
+        },
+      }),
+    );
+
+    const { draft, ready } = useWorkbenchDraft({ storage, db, persistDelayMs: 0 });
+    await ready;
+
+    expect(draft.project.id).toMatch(/^[0-9a-f-]{36}$/i);
+    expect(draft.workflow.projectId).toBe(draft.project.id);
+
+    const call = db.calls.find((c) => c.sql.includes("INSERT OR REPLACE INTO workbench_drafts"));
+    expect(call).toBeTruthy();
+    const payloadJson = call?.bind?.find((b) => typeof b === "string" && b.includes(draft.project.id));
+    expect(payloadJson).toBeTruthy();
+  });
+
+  it("keeps a restored project id stable across localStorage and SQLite", async () => {
+    const db = new FakeLocalStoreDb();
+    const storage = createFakeStorage();
+    storage.setItem(
+      DESKTOP_DRAFT_STORAGE_KEY,
+      JSON.stringify({
+        project: {
+          id: "legacy-project-id",
+          name: "旧草稿",
+          sourceVideoPath: "",
+          voiceSamplePath: "",
+          notes: "",
+          targetPlatforms: ["douyin"],
+        },
+        providerConfig: {
+          id: "main-ai",
+          label: "主模型配置",
+          provider: "openai",
+          baseUrl: "https://api.openai.com/v1",
+          model: "gpt-4.1",
+          enabled: true,
+        },
+      }),
+    );
+
+    const { draft, ready } = useWorkbenchDraft({ storage, db, persistDelayMs: 0 });
+    await ready;
+
+    expect(draft.project.id).toBe("legacy-project-id");
+    expect(draft.workflow.projectId).toBe("legacy-project-id");
+  });
+
   it("does not persist apiKey to storage", async () => {
     const storage = createFakeStorage();
     const { draft } = useWorkbenchDraft({ storage, persistDelayMs: 0 });

@@ -1,9 +1,31 @@
 <script setup lang="ts">
-import { FolderOpen, HardDrive, Save } from "lucide-vue-next";
+import { AlertCircle, FolderOpen, HardDrive, Save } from "lucide-vue-next";
 import { computed, ref } from "vue";
-import { useAppSettings } from "../../composables/useAppSettings.js";
+import { useAppSettings, getLocalStoreDb } from "../../composables/useAppSettings.js";
+import { useVoiceSampleStorage } from "../../features/voice-clone/useVoiceSampleStorage.js";
+import PathPickerButton from "../PathPickerButton.vue";
 
 const { appSettings } = useAppSettings();
+const db = getLocalStoreDb();
+const voiceStorage = useVoiceSampleStorage({ db });
+const voiceSampleError = ref("");
+
+function isTauriAvailable(): boolean {
+  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+}
+
+const voiceSamplePickerDisabled = computed(() => !isTauriAvailable() || !db);
+
+async function onVoiceSampleRootSelected(path: string) {
+  voiceSampleError.value = "";
+  try {
+    await voiceStorage.selectRoot(path);
+    appSettings.activeVoiceSampleStorageRootId = voiceStorage.activeRoot.value?.id;
+  } catch (error) {
+    const code = typeof error === "object" && error !== null ? (error as { code?: string }).code : undefined;
+    voiceSampleError.value = code === "local-store-unavailable" ? "本地 SQLite 不可用，无法保存声音样本目录" : "保存声音样本目录失败";
+  }
+}
 
 const organizationMode = ref<"flat" | "by-project" | "by-stage">("by-project");
 const folderTemplate = ref("{{project}}/{{stage}}/{{date}}");
@@ -82,6 +104,40 @@ function simulateSaveOrganization() {
             <HardDrive :size="14" />
             检测空间
           </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="settings-card">
+      <div class="settings-card-header">
+        <h3>声音样本存储目录</h3>
+      </div>
+      <div class="settings-card-body">
+        <p class="field-hint">
+          选择本地目录用于托管授权声音样本。目录路径只保存在本地 SQLite，不会写入浏览器本地存储或云端。
+        </p>
+        <label class="field">
+          <span class="field-label">根目录</span>
+          <PathPickerButton
+            :model-value="voiceStorage.activeRoot.value?.path ?? ''"
+            label="选择声音样本存储目录"
+            :directory="true"
+            :disabled="voiceSamplePickerDisabled"
+            placeholder="请选择本地目录"
+            @selected="onVoiceSampleRootSelected"
+          />
+        </label>
+        <div v-if="!voiceStorage.activeRoot.value && voiceSamplePickerDisabled" class="voice-root-status status-unavailable">
+          <span class="status-row">
+            <AlertCircle :size="14" />
+            {{ !isTauriAvailable() ? "Tauri 环境不可用，无法选择目录" : "本地 SQLite 未初始化，无法保存目录" }}
+          </span>
+        </div>
+        <div v-if="voiceSampleError" class="voice-root-status status-error">
+          <span class="status-row">
+            <AlertCircle :size="14" />
+            {{ voiceSampleError }}
+          </span>
         </div>
       </div>
     </section>
@@ -285,6 +341,31 @@ function simulateSaveOrganization() {
 
 .output-path-actions button {
   min-height: 30px;
+}
+
+.field-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--mx-text-tertiary);
+}
+
+.voice-root-status {
+  font-size: 12px;
+}
+
+.voice-root-status .status-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.voice-root-status.status-unavailable {
+  color: var(--mx-text-tertiary);
+}
+
+.voice-root-status.status-error {
+  color: var(--mx-error, #ef4444);
 }
 
 .template-variables {

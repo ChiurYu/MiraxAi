@@ -83,7 +83,7 @@ Mirax AI 目前处在 **first usable release / 真实能力逐步接入** 阶段
   - `ProjectDraft` 已具备稳定 UUID；旧 desktop draft 恢复时保留已存项目 ID。
   - 已建立声音样本根、托管样本和项目克隆绑定三张 SQLite 表；每项目一条 active 绑定由 partial unique index 约束。
   - 迁移先建表、以 `PRAGMA table_info` 补列、再建索引；迁移不读写 `provider_secrets` 或 API Key。
-  - `replaceActiveProjectVoiceClone` 在同一 SQLite 连接上执行 `BEGIN IMMEDIATE → replaced → active → COMMIT/ROLLBACK`。
+  - `replaceActiveProjectVoiceClone` 使用触发器支持的单条 `UPDATE ... RETURNING` 完成旧 active 替换、新声音激活与结果确认，避免 Tauri SQLite 连接池把手写事务拆到不同连接。
   - 已补真实内存 SQLite 回归：实际执行迁移后验证旧 active 记录变为 `replaced`、新 `remote-created` 记录变为 `active`；聚焦测试 62/62、全仓 typecheck 与 diff 空白检查均通过。
   - **明确：这仅完成声音克隆的持久化基础，不代表样本导入、远端 IVC、speech resolver 或 Workbench UI 已完成。**
 
@@ -125,6 +125,24 @@ Mirax AI 目前处在 **first usable release / 真实能力逐步接入** 阶段
   - 百炼非实时合成返回的临时音频 URL 会立即下载并写入既有受限本地 audioOutput，项目草稿只保存本地产物路径。
   - 已验证：相关测试 184/184、`pnpm typecheck`、`pnpm --filter @mirax/desktop build:web`、`git diff --check`；尚未使用用户的真实百炼 Key / Workspace / OSS URL 发起远端 dogfood，不能宣称远端调用已验收。
 
+- [x] **百炼桌面端原生 JSON 网络桥接（代码验证）**
+  - 已确认百炼北京业务空间接口拒绝 WebView 的跨域预检；声音克隆和语音合成的 JSON POST 现通过 Tauri Rust `reqwest` 发出，不再依赖浏览器 `fetch`。
+  - 原生命令仅接受 `https://*.cn-beijing.maas.aliyuncs.com/api/v1/services/...`，不记录 API Key、样本 data URI 或完整远端响应体；非 2xx 只提取并脱敏 `code`、`message`、`request_id` 供当前会话诊断使用。
+  - 声音克隆页面保留最近 10 条可清除的本次会话诊断；不写入 SQLite、browser storage 或项目草稿。服务端字段若含 URL、路径、data URI、Bearer、签名等敏感标记会被隐藏。
+  - 已按百炼接口限制修复自动命名：Qwen `preferred_name` 只使用字母、数字、下划线且最多 16 字符；CosyVoice `prefix` 只使用字母数字且最多 10 字符。
+  - 克隆成功后停留在当前阶段显示“已就绪”和 Voice ID；失败状态即使没有标准 Error 也会显示可读的兜底提示和诊断，不会误显示为“待克隆”。
+  - 非 Error 形式的底层失败会安全提取字符串或对象 `message`；含路径、URL、data URI、签名或凭据的诊断仍会隐藏，不会进入页面或会话日志。
+  - 已定位 SQLite code 5 根因：Tauri SQL 使用连接池，旧版 `BEGIN IMMEDIATE` 与后续更新是多次插件调用，可能落在不同连接；持锁连接与执行更新的连接因此互相冲突。现已移除无效的 `busy_timeout` 延迟方案。
+  - 项目声音激活改为 SQLite trigger + 单条 `UPDATE ... RETURNING`，旧 active 替换、新声音激活和结果确认在同一连接、同一语句内原子完成；双真实连接交替执行回归已覆盖该场景。
+  - 本地激活失败后重试会优先恢复同项目、同 Provider 配置下最新的 `remote-created` 结果，不再次创建付费远端声音；等待清理的远端记录不会被恢复。
+  - 已确认当前真实 Qwen 记录在 SQLite 中为唯一 `active` 绑定；完成页现明确显示“声音克隆已完成”和远端已绑定状态，禁止重复克隆，删除操作默认折叠且不会向 Qwen 展示 ElevenLabs 专用远端删除入口。应用重启后会从 SQLite 恢复 Voice ID、Provider 与安全文件名，但不会恢复原始样本绝对路径。
+  - 已确认 Qwen-TTS 成功响应可能在 `output.audio.data` 为空时返回 `http://dashscope-result-*.oss-*.aliyuncs.com/...` 签名结果 URL；此前前端只接受 HTTPS，因而把真实成功结果误报为“未返回有效音频地址”。
+  - 合成结果现仅允许百炼专用 DashScope 结果 OSS 主机名的 HTTP/HTTPS URL，并通过独立 Tauri Rust 命令下载；原生下载禁用重定向、限制 50 MiB，随后继续写入既有受限本地 audioOutput，不开放通用 URL 下载能力。
+  - 本轮已验证：聚焦前端测试 69/69、Rust 测试 23/23、`pnpm typecheck`、`pnpm --filter @mirax/desktop build:web`。
+  - 2026-07-14 用户已完成真实 Qwen 合成、受限本地落盘与页面播放 dogfood，并确认听到克隆声音；百炼 Qwen 克隆与合成主链路已通过人工验收。
+  - 语音结果页已补齐真实桌面动作：重复合成停留在当前阶段；“下载音频”使用原生另存为对话框；“在文件夹中显示”通过系统文件管理器定位受限 audioOutput 内的产物；恢复默认设置和文件操作均显示结果反馈。
+  - 结果页动作本轮已完成代码验证（聚焦前端测试 60/60、Rust 测试 23/23），仍需重启桌面应用后逐项完成人工交互验收。
+
 - [x] **mock / 未接入能力的诚实标识**
   - Review 阶段显示「Mock 复核」。
   - Publish 阶段显示「Mock 发布」。
@@ -154,7 +172,7 @@ Mirax AI 目前处在 **first usable release / 真实能力逐步接入** 阶段
 
 ## 下一步
 
-当前最新任务：**百炼 Qwen-TTS + CosyVoice（手工 OSS URL）已完成代码接入，等待真实 BYOK dogfood。**
+当前最新任务：**百炼 Qwen-TTS 克隆、合成、落盘和播放已通过真实 dogfood；语音结果页按钮已接入实际动作，等待重启应用后逐项手测。**
 
 - ElevenLabs TTS Provider 已实现并接入设置页与 App.vue 执行流程 ✅
 - API Key 走现有 SQLite `provider_secrets`，Voice ID / model 持久化到 `provider_configs` ✅
@@ -177,7 +195,7 @@ Mirax AI 目前处在 **first usable release / 真实能力逐步接入** 阶段
 8. [x] 文案改写提示词增强（已移除 `buildUserPrompt` 公共导出，保持模块内部函数）。
 9. [x] ElevenLabs 普通 TTS 接入 Workbench 第 4 阶段（已完成）。
 
-当前进行中：**声音克隆真实 BYOK dogfood。**ElevenLabs Task 1–6 与百炼 Qwen-TTS / CosyVoice（手工 OSS URL）均已完成代码接线；本轮不接入 OSS 自动上传。Qwen 使用本地受管样本直传百炼，CosyVoice 仅接受当前会话填写的短期 HTTPS OSS URL。声音样本必须为本人或已获授权并经用户显式确认；API Key、原始样本路径、OSS URL 均不得写入前端 snapshot、普通 SQLite 表或错误信息。SQLite 不可用时必须停止上传、克隆和本地降级写入。下一步是配置真实百炼 BYOK 并手工验收 Qwen，再用同一份样本的 OSS URL 验收 CosyVoice；OSS 自动上传/对象管理和 MiniMax 仍为后续独立任务。实施计划为 `docs/superpowers/plans/2026-07-13-bailian-qwen-cosyvoice.md`。
+当前进行中：**语音合成结果页动作人工验收。**百炼 Qwen-TTS 的真实声音克隆、合成、受限本地落盘与播放已由用户确认成功。结果页的重新合成、原生另存为、系统文件夹定位及操作反馈已完成代码验证；下一步是重启桌面应用逐项手测这些动作，通过后再验收 CosyVoice 手工 OSS URL。OSS 自动上传/对象管理和 MiniMax 仍为后续独立任务。当前修复计划为 `docs/codex/plans/2026-07-14-bailian-native-http-bridge.md`。
 
 下一步候选：
 

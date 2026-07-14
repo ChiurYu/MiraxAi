@@ -418,6 +418,50 @@ describe("useAppSettings", () => {
     expect(parsed.providerConfigs[0].enabled).toBe(false);
   });
 
+  it("does not persist active voice sample storage root id or path to browser snapshot", async () => {
+    const storage = createFakeStorage();
+    const { appSettings } = useAppSettings({ storage });
+
+    appSettings.activeVoiceSampleStorageRootId = "root-1";
+
+    await nextTick();
+
+    const raw = storage.getItem("mirax-ai.app-settings.v1");
+    expect(raw).toBeTruthy();
+    const parsed = JSON.parse(raw!);
+    expect(parsed.appSettings).not.toHaveProperty("activeVoiceSampleStorageRootId");
+    expect(raw).not.toContain("root-1");
+  });
+
+  it("rejects activeVoiceSampleStorageRootId injected into browser localStorage snapshot", async () => {
+    const storage = createFakeStorage();
+    storage.setItem(
+      "mirax-ai.app-settings.v1",
+      JSON.stringify({
+        appSettings: {
+          id: "default",
+          theme: "dark",
+          outputPaths: { baseOutput: "/tmp/mirax" },
+          activeVoiceSampleStorageRootId: "browser-injected-root",
+        },
+      }),
+    );
+
+    const { appSettings } = useAppSettings({ storage });
+
+    expect(appSettings.activeVoiceSampleStorageRootId).toBeUndefined();
+    expect(appSettings.theme).toBe("dark");
+
+    appSettings.theme = "light";
+
+    await nextTick();
+
+    const raw = storage.getItem("mirax-ai.app-settings.v1")!;
+    const parsed = JSON.parse(raw);
+    expect(parsed.appSettings).not.toHaveProperty("activeVoiceSampleStorageRootId");
+    expect(raw).not.toContain("browser-injected-root");
+  });
+
   it("does not leak apiKey, token, cookie or credential into the snapshot", async () => {
     const storage = createFakeStorage();
     const { addProviderConfig } = useAppSettings({ storage });
@@ -669,7 +713,7 @@ describe("findEnabledSpeechProviderConfig", () => {
     };
   }
 
-  it("returns the first enabled cosyvoice config", () => {
+  it("returns the first enabled speech provider config (cosyvoice or elevenlabs-tts)", () => {
     const configs = [
       makeConfig({ id: "o", provider: "openai", enabled: true }),
       makeConfig({ id: "c", provider: "cosyvoice", enabled: true }),
@@ -682,8 +726,24 @@ describe("findEnabledSpeechProviderConfig", () => {
     expect(found!.id).toBe("c");
   });
 
-  it("returns undefined when cosyvoice config is disabled", () => {
-    const configs = [makeConfig({ id: "c", provider: "cosyvoice", enabled: false })];
+  it("returns elevenlabs-tts config when no cosyvoice is enabled", () => {
+    const configs = [
+      makeConfig({ id: "o", provider: "openai", enabled: true }),
+      makeConfig({ id: "e", provider: "elevenlabs-tts", enabled: true, apiKey: "el-key", voiceId: "vid", model: "m" }),
+      makeConfig({ id: "h", provider: "heygem", enabled: true }),
+    ];
+
+    const found = findEnabledSpeechProviderConfig(configs);
+
+    expect(found).toBeDefined();
+    expect(found!.id).toBe("e");
+  });
+
+  it("returns undefined when speech providers are disabled", () => {
+    const configs = [
+      makeConfig({ id: "c", provider: "cosyvoice", enabled: false }),
+      makeConfig({ id: "e", provider: "elevenlabs-tts", enabled: false, apiKey: "el-key", voiceId: "vid", model: "m" }),
+    ];
 
     expect(findEnabledSpeechProviderConfig(configs)).toBeUndefined();
   });
@@ -722,6 +782,14 @@ describe("findEnabledVoiceCloneProviderConfig", () => {
 
     expect(found).toBeDefined();
     expect(found!.id).toBe("c");
+  });
+
+  it("does not return elevenlabs-tts as a voice-clone provider", () => {
+    const configs = [
+      makeConfig({ id: "e", provider: "elevenlabs-tts", enabled: true, apiKey: "el-key", voiceId: "vid", model: "m" }),
+    ];
+
+    expect(findEnabledVoiceCloneProviderConfig(configs)).toBeUndefined();
   });
 
   it("returns undefined when only non-voice-clone providers are enabled", () => {
@@ -880,6 +948,26 @@ describe("getProviderReadiness", () => {
     expect(getProviderReadiness(makeConfig({ provider: "cosyvoice", apiKey: "" }))).toBe("ready");
     expect(getProviderReadiness(makeConfig({ provider: "heygem", apiKey: "" }))).toBe("ready");
   });
+
+  it("returns needs-config for elevenlabs-tts when apiKey, voiceId or model is empty", () => {
+    expect(
+      getProviderReadiness(makeConfig({ provider: "elevenlabs-tts", apiKey: "", voiceId: "vid", model: "m" })),
+    ).toBe("needs-config");
+    expect(
+      getProviderReadiness(makeConfig({ provider: "elevenlabs-tts", apiKey: "key", voiceId: "", model: "m" })),
+    ).toBe("needs-config");
+    expect(
+      getProviderReadiness(makeConfig({ provider: "elevenlabs-tts", apiKey: "key", voiceId: "vid", model: "" })),
+    ).toBe("needs-config");
+  });
+
+  it("returns ready for elevenlabs-tts with apiKey, voiceId and model", () => {
+    expect(
+      getProviderReadiness(
+        makeConfig({ provider: "elevenlabs-tts", apiKey: "key", voiceId: "vid", model: "m", baseUrl: "" }),
+      ),
+    ).toBe("ready");
+  });
 });
 
 describe("useAppSettings SQLite persistence", () => {
@@ -890,7 +978,7 @@ describe("useAppSettings SQLite persistence", () => {
   function fakeDbWithProvider(): FakeLocalStoreDb {
     const db = new FakeLocalStoreDb();
     db.whenSelect(
-      `SELECT id, provider, label, base_url as baseUrl, python_path as pythonPath, model, enabled, credential_ref as credentialRef, created_at as createdAt, updated_at as updatedAt FROM provider_configs`,
+      `SELECT id, provider, label, base_url as baseUrl, python_path as pythonPath, model, voice_id as voiceId, enabled, credential_ref as credentialRef, created_at as createdAt, updated_at as updatedAt FROM provider_configs`,
       [
         {
           id: "p1",
@@ -899,6 +987,7 @@ describe("useAppSettings SQLite persistence", () => {
           baseUrl: "https://api.openai.com/v1",
           pythonPath: undefined,
           model: "gpt-4.1",
+          voiceId: undefined,
           enabled: 1,
           credentialRef: "p1",
           createdAt: "2026-01-01T00:00:00.000Z",
@@ -929,6 +1018,105 @@ describe("useAppSettings SQLite persistence", () => {
 
     expect(providerConfigs.value).toHaveLength(1);
     expect(providerConfigs.value[0].apiKey).toBe("sk-from-sqlite");
+  });
+
+  it("preserves activeVoiceSampleStorageRootId in SQLite when memory does not have it", async () => {
+    const db = new FakeLocalStoreDb();
+    db.whenSelect(
+      `SELECT id, theme, output_paths_json as outputPathsJson, rewrite_provider_config_id as rewriteProviderConfigId, active_voice_sample_storage_root_id as activeVoiceSampleStorageRootId, created_at as createdAt, updated_at as updatedAt FROM app_settings WHERE id = ?`,
+      [
+        {
+          id: "default",
+          theme: "dark",
+          outputPathsJson: JSON.stringify({ baseOutput: "/tmp/mirax" }),
+          rewriteProviderConfigId: null,
+          activeVoiceSampleStorageRootId: "root-1",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+    );
+
+    const { appSettings } = useAppSettings({ storage: createFakeStorage(), db });
+
+    expect(appSettings.activeVoiceSampleStorageRootId).toBeUndefined();
+
+    appSettings.theme = "light";
+
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const appSettingsSave = db.calls.find((c) => c.sql.includes("INSERT OR REPLACE INTO app_settings"));
+    expect(appSettingsSave?.bind).toContain("root-1");
+  });
+
+  it("keeps activeVoiceSampleStorageRootId cleared after explicit removal", async () => {
+    const db = new FakeLocalStoreDb();
+    db.whenSelect(
+      `SELECT id, theme, output_paths_json as outputPathsJson, rewrite_provider_config_id as rewriteProviderConfigId, active_voice_sample_storage_root_id as activeVoiceSampleStorageRootId, created_at as createdAt, updated_at as updatedAt FROM app_settings WHERE id = ?`,
+      [
+        {
+          id: "default",
+          theme: "dark",
+          outputPathsJson: JSON.stringify({ baseOutput: "/tmp/mirax" }),
+          rewriteProviderConfigId: null,
+          activeVoiceSampleStorageRootId: "root-1",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+    );
+
+    const snapshot = await loadAppSettingsSnapshotFromDb(db);
+    setInitialAppSettingsSnapshot(snapshot);
+
+    const { appSettings } = useAppSettings({ storage: createFakeStorage(), db });
+    expect(appSettings.activeVoiceSampleStorageRootId).toBe("root-1");
+
+    appSettings.activeVoiceSampleStorageRootId = undefined;
+    appSettings.theme = "light";
+
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const appSettingsSave = db.calls.find((c) => c.sql.includes("INSERT OR REPLACE INTO app_settings"));
+    expect(appSettingsSave?.bind).not.toContain("root-1");
+  });
+
+  it("restores activeVoiceSampleStorageRootId from SQLite initial snapshot into memory but not to browser snapshot", async () => {
+    const db = new FakeLocalStoreDb();
+    db.whenSelect(
+      `SELECT id, theme, output_paths_json as outputPathsJson, rewrite_provider_config_id as rewriteProviderConfigId, active_voice_sample_storage_root_id as activeVoiceSampleStorageRootId, created_at as createdAt, updated_at as updatedAt FROM app_settings WHERE id = ?`,
+      [
+        {
+          id: "default",
+          theme: "dark",
+          outputPathsJson: JSON.stringify({ baseOutput: "/tmp/mirax" }),
+          rewriteProviderConfigId: null,
+          activeVoiceSampleStorageRootId: "root-1",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+    );
+
+    const snapshot = await loadAppSettingsSnapshotFromDb(db);
+    setInitialAppSettingsSnapshot(snapshot);
+
+    const storage = createFakeStorage();
+    const { appSettings } = useAppSettings({ storage });
+
+    expect(appSettings.activeVoiceSampleStorageRootId).toBe("root-1");
+
+    appSettings.theme = "light";
+
+    await nextTick();
+
+    const raw = storage.getItem("mirax-ai.app-settings.v1");
+    expect(raw).toBeTruthy();
+    const parsed = JSON.parse(raw!);
+    expect(parsed.appSettings).not.toHaveProperty("activeVoiceSampleStorageRootId");
+    expect(raw).not.toContain("root-1");
   });
 
   it("persists provider metadata and secret to separate repositories", async () => {
@@ -1020,5 +1208,98 @@ describe("useAppSettings SQLite persistence", () => {
 
     expect(db.calls.some((c) => c.sql.includes("INSERT OR REPLACE INTO provider_configs"))).toBe(true);
     expect(db.calls.some((c) => c.sql.includes("INSERT OR REPLACE INTO provider_secrets"))).toBe(true);
+  });
+});
+
+describe("useAppSettings persistNow", () => {
+  beforeEach(() => {
+    setInitialAppSettingsSnapshot({});
+  });
+
+  it("awaits explicit persist to SQLite and returns when successful", async () => {
+    const db = new FakeLocalStoreDb();
+    const { addProviderConfig, persistNow } = useAppSettings({ storage: createFakeStorage(), db });
+
+    addProviderConfig({
+      id: "p1",
+      label: "ElevenLabs",
+      provider: "elevenlabs-tts",
+      apiKey: "el-secret",
+      voiceId: "vid",
+      model: "eleven_multilingual_v2",
+      enabled: true,
+    });
+
+    await persistNow();
+
+    expect(db.calls.some((c) => c.sql.includes("INSERT OR REPLACE INTO provider_configs"))).toBe(true);
+    expect(db.calls.some((c) => c.sql.includes("INSERT OR REPLACE INTO provider_secrets"))).toBe(true);
+  });
+
+  it("throws when SQLite persistence fails", async () => {
+    const db = new FakeLocalStoreDb();
+    const { addProviderConfig, persistNow } = useAppSettings({ storage: createFakeStorage(), db });
+
+    addProviderConfig({
+      id: "p1",
+      label: "ElevenLabs",
+      provider: "elevenlabs-tts",
+      apiKey: "el-secret",
+      voiceId: "vid",
+      model: "eleven_multilingual_v2",
+      enabled: true,
+    });
+
+    // Let the background watch-based persist finish before forcing the next one to fail.
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    db.failNext = true;
+
+    await expect(persistNow()).rejects.toThrow("本地保存失败，请重试");
+  });
+
+  it("restores ElevenLabs provider metadata and secret after app restart", async () => {
+    const db = new FakeLocalStoreDb();
+    db.whenSelect(
+      `SELECT id, provider, label, base_url as baseUrl, python_path as pythonPath, model, voice_id as voiceId, enabled, credential_ref as credentialRef, created_at as createdAt, updated_at as updatedAt FROM provider_configs`,
+      [
+        {
+          id: "el-1",
+          provider: "elevenlabs-tts",
+          label: "ElevenLabs",
+          baseUrl: undefined,
+          pythonPath: undefined,
+          model: "eleven_multilingual_v2",
+          voiceId: "pNInz6obpgDQGcFmaJgB",
+          enabled: 1,
+          credentialRef: "el-1",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+    );
+    db.whenSelect(
+      `SELECT credential_ref as credentialRef, api_key as apiKey, created_at as createdAt, updated_at as updatedAt FROM provider_secrets WHERE credential_ref = ? LIMIT 1`,
+      [
+        {
+          credentialRef: "el-1",
+          apiKey: "el-restart-secret",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+    );
+
+    const snapshot = await loadAppSettingsSnapshotFromDb(db);
+    setInitialAppSettingsSnapshot(snapshot);
+
+    const { providerConfigs } = useAppSettings({ storage: createFakeStorage() });
+
+    expect(providerConfigs.value).toHaveLength(1);
+    const config = providerConfigs.value[0];
+    expect(config.provider).toBe("elevenlabs-tts");
+    expect(config.apiKey).toBe("el-restart-secret");
+    expect(config.voiceId).toBe("pNInz6obpgDQGcFmaJgB");
+    expect(config.model).toBe("eleven_multilingual_v2");
   });
 });

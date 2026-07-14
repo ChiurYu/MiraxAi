@@ -141,7 +141,7 @@ export function createDefaultOpenAiTransport(): OpenAiCompatibleTransport {
 
 function buildSystemPrompt(): string {
   return `You are a short-video script rewriter for Chinese e-commerce content.
-Rewrite the provided transcript into a polished, fluent 口播 script.
+Rewrite the provided transcript into a polished, fluent 口播 script according to the writing constraints and fact boundary in the user message.
 Return ONLY a JSON object with exactly these keys:
 - "script": string (the rewritten script)
 - "titleSuggestions": string[] (3 suggested titles)
@@ -149,15 +149,61 @@ Return ONLY a JSON object with exactly these keys:
 No markdown fences, no explanation.`;
 }
 
+function buildGoalInstruction(goal?: string): string {
+  switch (goal?.trim()) {
+    case "保持原意":
+      return "保留原始事实与核心卖点，不编造信息，仅做表达优化。";
+    case "更口语化":
+      return "改成自然口播表达，句子更短、更顺口，适合短视频口播。";
+    case "更专业":
+      return "表达清晰、结构化、准确，不夸大或虚构产品信息。";
+    case "自定义":
+      return "保持安全默认，不引入未明确指定的改写方向，仅做表达优化。";
+    default:
+      return goal
+        ? `用户选择「${goal}」；保持安全默认，仅基于已有事实进行表达优化。`
+        : "保持安全默认，仅基于已有事实进行表达优化。";
+  }
+}
+
+function buildPresetInstruction(preset?: string): string {
+  switch (preset?.trim()) {
+    case "小红书种草风格 (Emoji Enhanced)":
+      return "使用亲切、种草感强的表达，适当加入 emoji 氛围，突出使用场景与真实感受，不虚构体验。";
+    case "B站测评硬核风格":
+      return "使用评测向、有理有据的表达，结构清晰、信息密度高，不编造参数或测试数据。";
+    case "高端奢侈品发布语调":
+      return "使用克制、优雅、有质感的表达，避免过度营销感，不虚构品牌背景或资质。";
+    default:
+      return preset
+        ? `用户选择「${preset}」；保持通用短视频口播风格，不编造未提及信息。`
+        : "保持通用短视频口播风格，不编造未提及信息。";
+  }
+}
+
+function buildLengthInstruction(targetLength?: number): string {
+  if (!targetLength || targetLength <= 0) {
+    return "目标长度：不强制精确字数，以自然表达为准。";
+  }
+  return `目标长度：约 ${targetLength} 个汉字（允许自然波动，以表达完整为准）。`;
+}
+
 function buildUserPrompt(input: RewriteScriptInput): string {
+  const goalLabel = input.activeGoal?.trim() || "未指定";
+  const presetLabel = input.activePreset?.trim() || "未指定";
   const lines = [
     `Product: ${input.productName}`,
     `Selling points: ${input.sellingPoints.join(", ") || "general"}`,
+    "",
+    "原始文案：",
+    input.transcript,
+    "",
+    "写作约束：",
+    `- 改写目标：${goalLabel} — ${buildGoalInstruction(input.activeGoal)}`,
+    `- 风格模板：${presetLabel} — ${buildPresetInstruction(input.activePreset)}`,
+    `- ${buildLengthInstruction(input.targetLength)}`,
+    "- 事实边界：只能基于 Product、Selling points 和原始文案中明确出现的信息进行改写，不得编造产品参数、价格、资质、效果、销量、用户评价等未提及的内容。",
   ];
-  if (input.activeGoal) lines.push(`Goal: ${input.activeGoal}`);
-  if (input.activePreset) lines.push(`Template: ${input.activePreset}`);
-  if (input.targetLength) lines.push(`Target length: ${input.targetLength} characters`);
-  lines.push("", "Transcript:", input.transcript);
   return lines.join("\n");
 }
 

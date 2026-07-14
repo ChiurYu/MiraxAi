@@ -52,6 +52,8 @@ export interface AppSettingsSnapshot {
   section?: SettingsSection;
 }
 
+export type AppSettingsSnapshotSource = "sqlite" | "browser";
+
 export interface UseAppSettingsOptions {
   storage?: Storage;
   persistSection?: boolean;
@@ -113,7 +115,7 @@ export function findEnabledTranscribeProviderConfig(
 export function findEnabledSpeechProviderConfig(
   configs: ApiKeyProviderConfig[],
 ): ApiKeyProviderConfig | undefined {
-  return configs.find((c) => c.enabled && c.provider === "cosyvoice");
+  return configs.find((c) => c.enabled && (c.provider === "cosyvoice" || c.provider === "elevenlabs-tts" || c.provider === "bailian-qwen-tts" || c.provider === "bailian-cosyvoice"));
 }
 
 /**
@@ -122,7 +124,7 @@ export function findEnabledSpeechProviderConfig(
 export function findEnabledVoiceCloneProviderConfig(
   configs: ApiKeyProviderConfig[],
 ): ApiKeyProviderConfig | undefined {
-  return findEnabledSpeechProviderConfig(configs);
+  return configs.find((c) => c.enabled && (c.provider === "cosyvoice" || c.provider === "bailian-qwen-tts" || c.provider === "bailian-cosyvoice"));
 }
 
 /**
@@ -146,6 +148,9 @@ function createState() {
     verifiedProviderIds: ref<Set<string>>(new Set()),
     // 当前 session 内测试连接失败的 provider id 集合；不进入持久化 snapshot。
     failedProviderIds: ref<Set<string>>(new Set()),
+    // 标记 activeVoiceSampleStorageRootId 是否被显式设置过；
+    // 浏览器快照故意不带该字段，因此未触碰时允许 persistToDb 从 SQLite 合并既有值。
+    activeVoiceSampleStorageRootIdTouched: false,
     loaded: false,
   };
 }
@@ -198,6 +203,8 @@ export type ProviderReadiness = "disabled" | "needs-config" | "ready";
  * - whisper：enabled + 非空 baseUrl + 非空 model + 非空 apiKey。
  * - local-whisper：enabled + 非空 model；apiKey / baseUrl 不需要。
  * - cosyvoice / heygem：enabled + 非空 baseUrl；apiKey 可选。
+ * - elevenlabs-tts：enabled + 非空 apiKey + 非空 voiceId + 非空 model；baseUrl 不需要。
+ * - bailian-qwen-tts / bailian-cosyvoice：enabled + 非空 apiKey + 非空业务空间 baseUrl + 非空 model。
  */
 export function getProviderReadiness(config: ApiKeyProviderConfig): ProviderReadiness {
   if (!config.enabled) {
@@ -236,6 +243,20 @@ export function getProviderReadiness(config: ApiKeyProviderConfig): ProviderRead
     case "cosyvoice":
     case "heygem": {
       if (!trimmedBaseUrl) {
+        return "needs-config";
+      }
+      return "ready";
+    }
+    case "elevenlabs-tts": {
+      const trimmedVoiceId = config.voiceId?.trim() ?? "";
+      if (!trimmedApiKey || !trimmedVoiceId || !trimmedModel) {
+        return "needs-config";
+      }
+      return "ready";
+    }
+    case "bailian-qwen-tts":
+    case "bailian-cosyvoice": {
+      if (!trimmedApiKey || !trimmedBaseUrl || !trimmedModel) {
         return "needs-config";
       }
       return "ready";
@@ -287,24 +308,33 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
   }
 
   function createSnapshot(): AppSettingsSnapshot {
+    const { activeVoiceSampleStorageRootId: _omitActiveRoot, ...appSettingsWithoutActiveRoot } = appSettings;
     return {
-      appSettings: { ...appSettings },
+      appSettings: appSettingsWithoutActiveRoot,
       sidecarConfig: { ...sidecarConfig },
       providerConfigs: providerConfigs.value.map((config) => sanitizeProviderConfigForStorage(config)),
       section: resolveSectionForSnapshot(),
     };
   }
 
-  function restore(snapshot: Partial<AppSettingsSnapshot>) {
+  function restore(snapshot: Partial<AppSettingsSnapshot>, source: AppSettingsSnapshotSource = "browser") {
     if (snapshot.appSettings) {
+      const { activeVoiceSampleStorageRootId: memoryActiveRoot, ...appSettingsWithoutActiveRoot } = snapshot.appSettings;
       Object.assign(appSettings, {
         ...createDefaultAppSettings(),
-        ...snapshot.appSettings,
+        ...appSettingsWithoutActiveRoot,
         outputPaths: {
           ...createDefaultAppSettings().outputPaths,
-          ...(snapshot.appSettings.outputPaths ?? {}),
+          ...(appSettingsWithoutActiveRoot.outputPaths ?? {}),
         },
       });
+
+      // 仅 SQLite 初始 snapshot 可恢复 activeVoiceSampleStorageRootId；
+      // 浏览器 localStorage snapshot 必须显式丢弃该字段，即使被手工注入。
+      if (source === "sqlite" && memoryActiveRoot !== undefined) {
+        appSettings.activeVoiceSampleStorageRootId = memoryActiveRoot;
+        state.activeVoiceSampleStorageRootIdTouched = true;
+      }
     }
 
     if (snapshot.sidecarConfig) {
@@ -326,6 +356,7 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
           baseUrl: sanitizeBaseUrlForStorage(config.baseUrl),
           pythonPath: config.pythonPath,
           model: config.model,
+          voiceId: config.voiceId,
           enabled: config.enabled ?? true,
         }),
       );
@@ -338,7 +369,7 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
 
   function load() {
     if (initialSnapshot) {
-      restore(initialSnapshot);
+      restore(initialSnapshot, "sqlite");
       initialSnapshot = undefined;
       saveStatus.value = "已恢复设置";
       return;
@@ -352,7 +383,7 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
     try {
       const raw = storage.getItem(APP_SETTINGS_STORAGE_KEY);
       if (raw) {
-        restore(JSON.parse(raw) as Partial<AppSettingsSnapshot>);
+        restore(JSON.parse(raw) as Partial<AppSettingsSnapshot>, "browser");
       }
       saveStatus.value = "已恢复设置";
     } catch {
@@ -360,8 +391,8 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
     }
   }
 
-  async function persistToDb() {
-    if (!db) return;
+  async function persistToDb(): Promise<boolean> {
+    if (!db) return false;
 
     try {
       const appSettingsRepo = createAppSettingsRepository(db);
@@ -370,11 +401,19 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
       const providerSecretsRepo = createProviderSecretsRepository(db);
       const now = new Date().toISOString();
 
+      let activeVoiceSampleStorageRootId = appSettings.activeVoiceSampleStorageRootId;
+      // 若内存未显式设置该字段，则从 SQLite 读取既有值，避免无关设置保存把它覆盖为 NULL。
+      if (activeVoiceSampleStorageRootId === undefined && !state.activeVoiceSampleStorageRootIdTouched) {
+        const existing = await appSettingsRepo.getById("default");
+        activeVoiceSampleStorageRootId = existing?.activeVoiceSampleStorageRootId;
+      }
+
       await appSettingsRepo.save({
         id: "default",
         theme: appSettings.theme,
         outputPathsJson: JSON.stringify(appSettings.outputPaths),
         rewriteProviderConfigId: appSettings.rewriteProviderConfigId,
+        activeVoiceSampleStorageRootId,
         createdAt: now,
         updatedAt: now,
       });
@@ -399,6 +438,7 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
           baseUrl: sanitizeBaseUrlForStorage(config.baseUrl),
           pythonPath: config.pythonPath,
           model: config.model,
+          voiceId: config.voiceId,
           enabled: config.enabled,
           credentialRef,
           createdAt: now,
@@ -417,8 +457,32 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
       }
 
       saveStatus.value = "设置已保存";
+      return true;
     } catch {
       saveStatus.value = "设置保存失败";
+      return false;
+    }
+  }
+
+  async function persistNow(): Promise<void> {
+    if (db) {
+      const ok = await persistToDb();
+      if (!ok) {
+        throw new Error("本地保存失败，请重试");
+      }
+      return;
+    }
+
+    if (!storage) {
+      throw new Error("无可用存储");
+    }
+
+    try {
+      storage.setItem(APP_SETTINGS_STORAGE_KEY, JSON.stringify(createSnapshot()));
+      saveStatus.value = "设置已保存";
+    } catch {
+      saveStatus.value = "设置保存失败";
+      throw new Error("本地保存失败，请重试");
     }
   }
 
@@ -519,6 +583,13 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
   );
 
   watch(
+    () => appSettings.activeVoiceSampleStorageRootId,
+    () => {
+      state.activeVoiceSampleStorageRootIdTouched = true;
+    },
+  );
+
+  watch(
     [() => ({ ...appSettings }), () => ({ ...sidecarConfig }), providerConfigs, settingsSection],
     persist,
     { deep: true },
@@ -535,6 +606,7 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
     failedProviderIds,
     load,
     persist,
+    persistNow,
     restore,
     addProviderConfig,
     updateProviderConfig,

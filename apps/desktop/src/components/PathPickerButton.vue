@@ -9,8 +9,9 @@ const props = withDefaults(
     filters?: { name: string; extensions: string[] }[];
     placeholder?: string;
     disabled?: boolean;
+    directory?: boolean;
   }>(),
-  { disabled: false },
+  { disabled: false, directory: false },
 );
 
 const emit = defineEmits<{
@@ -57,6 +58,11 @@ async function pickPath() {
   errorMessage.value = "";
 
   if (!isTauriAvailable()) {
+    if (props.directory) {
+      status.value = props.modelValue ? "selected" : "empty";
+      errorMessage.value = "Tauri 环境不可用，无法选择目录";
+      return;
+    }
     const fallback = window.prompt(props.label, props.modelValue ?? "");
     if (fallback !== null) {
       const trimmed = fallback.trim();
@@ -74,7 +80,8 @@ async function pickPath() {
     const dialog = await import("@tauri-apps/plugin-dialog");
     const selected = await dialog.open({
       multiple: false,
-      filters: props.filters,
+      directory: props.directory,
+      filters: props.directory ? undefined : props.filters,
     });
 
     if (selected === null) {
@@ -104,6 +111,7 @@ async function pickPath() {
         :value="modelValue"
         :placeholder="placeholder ?? '请输入路径或点击右侧选择文件'"
         :disabled="disabled"
+        :readonly="directory"
         @input="onInputChange"
       />
       <button

@@ -1,5 +1,7 @@
 export * from "./connectionTest.js";
+export * from "./baiLianTtsProvider.js";
 export * from "./cosyVoiceProvider.js";
+export * from "./elevenLabsTtsProvider.js";
 export * from "./heygemProvider.js";
 export * from "./localWhisperProvider.js";
 export * from "./mock.js";

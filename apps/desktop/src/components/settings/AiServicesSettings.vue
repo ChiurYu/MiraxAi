@@ -17,8 +17,24 @@ const PROVIDER_OPTIONS: { value: ApiKeyProvider; label: string }[] = [
   { value: "whisper", label: "Whisper (OpenAI API)" },
   { value: "local-whisper", label: "本地 Whisper (faster-whisper)" },
   { value: "cosyvoice", label: "CosyVoice" },
+  { value: "elevenlabs-tts", label: "ElevenLabs TTS" },
+  { value: "bailian-qwen-tts", label: "百炼 Qwen-TTS 声音复刻" },
+  { value: "bailian-cosyvoice", label: "百炼 CosyVoice 声音复刻" },
   { value: "heygem", label: "HeyGem" },
   { value: "custom", label: "自定义" },
+];
+
+const ELEVENLABS_MODEL_OPTIONS: { value: string; label: string }[] = [
+  { value: "eleven_multilingual_v2", label: "eleven_multilingual_v2" },
+];
+
+const BAILIAN_QWEN_MODEL_OPTIONS: { value: string; label: string }[] = [
+  { value: "qwen3-tts-vc-2026-01-22", label: "qwen3-tts-vc-2026-01-22（中文声音复刻）" },
+];
+
+const BAILIAN_COSYVOICE_MODEL_OPTIONS: { value: string; label: string }[] = [
+  { value: "cosyvoice-v3.5-flash", label: "cosyvoice-v3.5-flash（快速验证）" },
+  { value: "cosyvoice-v3.5-plus", label: "cosyvoice-v3.5-plus（更高质量）" },
 ];
 
 const FILTER_OPTIONS: { value: "all" | "enabled" | "needs-config" | "failed"; label: string }[] = [
@@ -67,6 +83,7 @@ const {
   markProviderFailed,
   clearProviderFailed,
   isProviderFailed,
+  persistNow,
 } = useAppSettings();
 
 const drawerOpen = ref(false);
@@ -74,12 +91,24 @@ const editingConfig = ref<ApiKeyProviderConfig | null>(null);
 const editingApiKey = ref("");
 const testMessages = ref<Record<string, string>>({});
 const filter = ref<"all" | "enabled" | "needs-config" | "failed">("all");
+const saving = ref(false);
+const drawerError = ref("");
 
 const apiKeyFieldName = computed(() =>
   editingConfig.value ? `mirax-provider-api-key-${editingConfig.value.id}` : "mirax-provider-api-key",
 );
 
+const originalConfig = computed(() =>
+  editingConfig.value ? providerConfigs.value.find((c) => c.id === editingConfig.value!.id) : undefined,
+);
+
+const hasExistingApiKey = computed(() => Boolean(originalConfig.value?.apiKey?.trim()));
+
 const isLocalWhisper = computed(() => editingConfig.value?.provider === "local-whisper");
+const isElevenLabsTts = computed(() => editingConfig.value?.provider === "elevenlabs-tts");
+const isBaiLianQwenTts = computed(() => editingConfig.value?.provider === "bailian-qwen-tts");
+const isBaiLianCosyVoice = computed(() => editingConfig.value?.provider === "bailian-cosyvoice");
+const isBaiLianTts = computed(() => isBaiLianQwenTts.value || isBaiLianCosyVoice.value);
 
 watch(
   () => editingConfig.value?.provider,
@@ -91,6 +120,25 @@ watch(
       }
       if (!editingConfig.value.pythonPath?.trim()) {
         editingConfig.value.pythonPath = DEFAULT_PYTHON_PATH;
+      }
+    }
+    if (provider === "elevenlabs-tts") {
+      if (!editingConfig.value.voiceId?.trim()) {
+        editingConfig.value.voiceId = "pNInz6obpgDQGcFmaJgB";
+      }
+      if (!editingConfig.value.model?.trim()) {
+        editingConfig.value.model = "eleven_multilingual_v2";
+      }
+      editingConfig.value.baseUrl = undefined;
+    }
+    if (provider === "bailian-qwen-tts") {
+      if (!editingConfig.value.model?.trim()) {
+        editingConfig.value.model = "qwen3-tts-vc-2026-01-22";
+      }
+    }
+    if (provider === "bailian-cosyvoice") {
+      if (!editingConfig.value.model?.trim()) {
+        editingConfig.value.model = "cosyvoice-v3.5-flash";
       }
     }
   },
@@ -115,6 +163,9 @@ function isConnectionFailed(config: ApiKeyProviderConfig): boolean {
 function statusMetaFor(config: ApiKeyProviderConfig) {
   if (isConnectionFailed(config)) return FAILED_META;
   if (isConnectionPassed(config)) return PASSED_META;
+  if ((config.provider === "elevenlabs-tts" || config.provider === "bailian-qwen-tts" || config.provider === "bailian-cosyvoice") && getProviderReadiness(config) === "ready") {
+    return { label: "已就绪", icon: CheckCircle2, className: "ready" };
+  }
   return STATUS_META[getProviderReadiness(config)];
 }
 
@@ -149,10 +200,11 @@ function closeDrawer() {
   drawerOpen.value = false;
   editingConfig.value = null;
   editingApiKey.value = "";
+  drawerError.value = "";
 }
 
-function saveProvider() {
-  if (!editingConfig.value) return;
+async function saveProvider() {
+  if (!editingConfig.value || saving.value) return;
 
   const original = providerConfigs.value.find((c) => c.id === editingConfig.value!.id);
   const apiKey = editingApiKey.value.trim() || original?.apiKey || "";
@@ -171,7 +223,17 @@ function saveProvider() {
   }
   clearProviderVerified(editingConfig.value.id);
   clearProviderFailed(editingConfig.value.id);
-  closeDrawer();
+
+  saving.value = true;
+  drawerError.value = "";
+  try {
+    await persistNow();
+    closeDrawer();
+  } catch (error) {
+    drawerError.value = error instanceof Error ? error.message : "本地保存失败，请重试";
+  } finally {
+    saving.value = false;
+  }
 }
 
 async function testProvider(config: ApiKeyProviderConfig) {
@@ -344,7 +406,7 @@ function deleteProvider(id: string) {
             {{ config.enabled ? "停用" : "启用" }}
           </button>
           <button type="button" class="secondary" @click="startEditProvider(config)">编辑</button>
-          <button type="button" class="secondary" @click="testProvider(config)">测试连接</button>
+          <button type="button" class="secondary" :disabled="config.provider === 'elevenlabs-tts' || config.provider === 'bailian-qwen-tts' || config.provider === 'bailian-cosyvoice'" @click="testProvider(config)">测试连接</button>
           <button type="button" class="ghost-button danger" @click="deleteProvider(config.id)">
             <Trash2 :size="14" />
           </button>
@@ -371,11 +433,18 @@ function deleteProvider(id: string) {
         >
           <span class="field-label">Base URL</span>
           <input
-            v-if="!isLocalWhisper"
+            v-if="!isLocalWhisper && !isElevenLabsTts"
             v-model="editingConfig.baseUrl"
-            placeholder="https://api.openai.com/v1"
+            :placeholder="isBaiLianTts ? 'https://<业务空间ID>.cn-beijing.maas.aliyuncs.com/api/v1' : 'https://api.openai.com/v1'"
           />
-          <input v-else disabled value="本地 faster-whisper，无需 Base URL" />
+          <input v-else-if="isLocalWhisper" disabled value="本地 faster-whisper，无需 Base URL" />
+          <input v-else disabled value="ElevenLabs 官方 API，无需 Base URL" />
+        </label>
+        <label v-if="isElevenLabsTts" class="field"
+        >
+          <span class="field-label">Voice ID</span>
+          <input v-model="editingConfig.voiceId" placeholder="pNInz6obpgDQGcFmaJgB" />
+          <span class="field-hint">在 ElevenLabs 声音库中选择的 Voice ID。</span>
         </label>
         <label class="field"
         >
@@ -383,10 +452,21 @@ function deleteProvider(id: string) {
           <select v-if="isLocalWhisper" v-model="editingConfig.model">
             <option v-for="option in LOCAL_WHISPER_MODEL_OPTIONS" :key="option.value" :value="option.value">{{ option.label }}</option>
           </select>
+          <select v-else-if="isElevenLabsTts" v-model="editingConfig.model">
+            <option v-for="option in ELEVENLABS_MODEL_OPTIONS" :key="option.value" :value="option.value">{{ option.label }}</option>
+          </select>
+          <select v-else-if="isBaiLianQwenTts" v-model="editingConfig.model">
+            <option v-for="option in BAILIAN_QWEN_MODEL_OPTIONS" :key="option.value" :value="option.value">{{ option.label }}</option>
+          </select>
+          <select v-else-if="isBaiLianCosyVoice" v-model="editingConfig.model">
+            <option v-for="option in BAILIAN_COSYVOICE_MODEL_OPTIONS" :key="option.value" :value="option.value">{{ option.label }}</option>
+          </select>
           <input v-else v-model="editingConfig.model" placeholder="gpt-4.1" />
           <span v-if="isLocalWhisper" class="field-hint">
             tiny：速度快，适合快速 dogfood；base：中文质量更好，但在 CPU 上会明显变慢，适合短素材或离线验收。
           </span>
+          <span v-else-if="isBaiLianQwenTts" class="field-hint">使用本地样本直接复刻；推荐 10–20 秒、单声道、24 kHz 以上的清晰人声。</span>
+          <span v-else-if="isBaiLianCosyVoice" class="field-hint">克隆时需手工上传同一份样本到 OSS，并粘贴短期 HTTPS 签名 URL。</span>
         </label>
         <label v-if="isLocalWhisper" class="field"
         >
@@ -402,10 +482,13 @@ function deleteProvider(id: string) {
             type="password"
             :name="apiKeyFieldName"
             autocomplete="new-password"
-            placeholder="已保存在本机，可留空保留，输入新值则替换"
+            :placeholder="hasExistingApiKey ? '已保存在本机，不会回显；留空将保留当前 Key' : '已保存在本机，可留空保留，输入新值则替换'"
           />
           <span class="field-hint">
             API Key 仅保存在本机 SQLite，不会进入 snapshot 或 localStorage。
+          </span>
+          <span v-if="hasExistingApiKey" class="field-hint preserved-key-hint">
+            API Key 已保存在本机，不会回显；留空将保留当前 Key。
           </span>
         </label>
         <div v-else class="field">
@@ -415,8 +498,17 @@ function deleteProvider(id: string) {
       </form>
 
       <template #actions>
-        <button v-if="editingConfig" type="button" class="primary" @click="saveProvider">保存</button>
-        <button type="button" class="ghost-button" @click="closeDrawer">取消</button>
+        <div v-if="drawerError" class="drawer-error">{{ drawerError }}</div>
+        <button
+          v-if="editingConfig"
+          type="button"
+          class="primary"
+          :disabled="saving"
+          @click="saveProvider"
+        >
+          {{ saving ? "保存中…" : "保存" }}
+        </button>
+        <button type="button" class="ghost-button" :disabled="saving" @click="closeDrawer">取消</button>
       </template>
     </AppDrawer>
   </div>
@@ -614,5 +706,19 @@ function deleteProvider(id: string) {
   font-size: 11px;
   line-height: 1.5;
   color: var(--mx-text-tertiary);
+}
+
+.preserved-key-hint {
+  color: var(--mx-info);
+}
+
+.drawer-error {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--mx-radius-md);
+  background: var(--mx-error-bg);
+  color: var(--mx-error);
+  font-size: 12px;
+  line-height: 1.5;
 }
 </style>

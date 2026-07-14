@@ -10,6 +10,9 @@ export const LOCAL_STORE_SCHEMA_TABLES = [
   "publish_tasks",
   "workbench_drafts",
   "task_history",
+  "voice_sample_storage_roots",
+  "voice_samples",
+  "project_voice_clones",
 ] as const;
 
 export const LOCAL_STORE_MIGRATIONS = [
@@ -120,8 +123,47 @@ export const LOCAL_STORE_MIGRATIONS = [
     status TEXT NOT NULL,
     created_at TEXT NOT NULL
   );`,
+  `CREATE TABLE IF NOT EXISTS voice_sample_storage_roots (
+    id TEXT PRIMARY KEY,
+    path TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );`,
+  `CREATE TABLE IF NOT EXISTS voice_samples (
+    id TEXT PRIMARY KEY,
+    storage_root_id TEXT NOT NULL,
+    relative_path TEXT NOT NULL,
+    original_file_name TEXT NOT NULL,
+    mime_type TEXT NOT NULL,
+    size_bytes INTEGER NOT NULL,
+    consented_at TEXT NOT NULL,
+    consent_policy_version TEXT NOT NULL,
+    state TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );`,
+  `CREATE TABLE IF NOT EXISTS project_voice_clones (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL,
+    sample_id TEXT NOT NULL,
+    provider_config_id TEXT NOT NULL,
+    provider TEXT NOT NULL,
+    remote_voice_id TEXT,
+    request_started_at TEXT,
+    remote_created_at TEXT,
+    state TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );`,
   `ALTER TABLE app_settings ADD COLUMN rewrite_provider_config_id TEXT;`,
   `ALTER TABLE provider_configs ADD COLUMN python_path TEXT;`,
+  `ALTER TABLE provider_configs ADD COLUMN voice_id TEXT;`,
+  `ALTER TABLE app_settings ADD COLUMN active_voice_sample_storage_root_id TEXT;`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_project_voice_clones_one_active ON project_voice_clones(project_id) WHERE state = 'active';`,
+  `CREATE TRIGGER IF NOT EXISTS trg_project_voice_clone_activate
+    BEFORE UPDATE OF state ON project_voice_clones
+    WHEN NEW.state = 'active' AND OLD.state = 'remote-created'
+    BEGIN
+      UPDATE project_voice_clones SET state = 'replaced'
+      WHERE project_id = NEW.project_id AND state = 'active' AND id <> NEW.id;
+    END;`,
 ] as const;
 
 export function createLocalStoreMigrationSql(): string {
