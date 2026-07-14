@@ -65,7 +65,8 @@ packages/
   media-pipeline/   FFmpeg 命令构建
   provider-ai/      AI Provider 适配
 docs/
-  superpowers/      项目状态、计划与实现记录
+  codex/            Codex 活动项目状态、后续计划与迁移设计
+  superpowers/      历史计划与设计档案
   product-architecture/
   reverse-engineering/
 ```
@@ -167,7 +168,7 @@ OpenAI `whisper-1` API 不是免费能力。
 
 当前详细进度见：
 
-- `docs/superpowers/PROJECT-STATE.md`
+- `docs/codex/PROJECT-STATE.md`
 
 ## 安全说明
 

@@ -1,32 +1,26 @@
 # Mirax AI — Codex 总控约定
 
-本文件是 **项目专用** 配置；通用流程见 `~/.codex/skills/cmux-agent-dispatch/SKILL.md`。
+## Codex 默认工作流
 
-## 自动调度
+Codex 默认直接负责规划、实现、验证和进度同步。新任务按以下顺序恢复上下文：
 
-用户说「开始干活 / 继续执行 / 继续完成工作 / 继续验收 / 自动调度 / 用 cmux 派工 / 只负责下任务和验收」→ Codex invoke `cmux-agent-dispatch`。
+1. `AGENTS.md`
+2. `CLAUDE.md`
+3. `docs/codex/PROJECT-STATE.md`
+4. `PROJECT-STATE.md` 明确指向的当前计划
 
-| 项 | 值 |
-|----|-----|
-| 计划目录 | `docs/superpowers/plans/` |
-| 计划选取 | 文件名 `YYYY-MM-DD-*.md` 中**日期最新**者；同日期按文件名字典序；**不用 mtime** |
-| 差距参考（非执行队列） | `docs/reverse-engineering/legacy-ui-gap-list.md` |
-| 工位规范 | `CLAUDE.md` |
-| 运行时状态 | `.codex/dispatch-state.json`（Phase 0 生成；cmux ref 在 Phase 1.5 写入） |
-| Heartbeat automation id | `mirax-dispatch` |
-| 产品名（UI / 新文档） | Mirax AI |
+当前计划只从 `PROJECT-STATE.md` 读取，不按目录中的最新日期自动猜测。后续新计划写入 `docs/codex/plans/`；`docs/superpowers/` 只作为历史档案。
 
-验收通过且步骤对应 gap-list 行时，更新 `legacy-ui-gap-list.md` 的「状态」列。
+只有用户明确要求「用 cmux 派工」「交给 Claude Code」或「只负责下任务和验收」时，Codex 才切换为总控委派。委派使用当前可用的 `cmux` / `cmux-workspace` 能力和普通 terminal Claude Code；不得依赖额外的自动调度 skill，不得使用 `Claude Code · React` agent-session 路线。
 
 ## 进度管理
 
-Codex 作为总控给出 Claude / cmux 提示词、收到 worker 完成报告或完成本地提交后，必须同步项目进度文档，避免遗忘已完成与未完成事项：
-
-- 更新 `docs/superpowers/PROJECT-STATE.md`，明确区分「已完成」「当前阶段」「下一步」「仍需规划」。
+- `docs/codex/PROJECT-STATE.md` 是活动进度唯一事实源。
+- 完成实现或验收后，由 Codex 更新当前计划与项目状态，明确区分「已完成」「当前阶段」「下一步」「仍需规划」。
 - 已完成的能力不要继续作为下一步安排；例如 SQLite、rewrite provider selection、已验收的 mock 链路等完成后应从待办中移除或标记为已完成。
 - 新发现但未实现的能力缺口，只记录为待规划/下一步候选；不要写成已完成。
-- 给用户下一段提示词前，先确认提示词对应的任务是否已在 `PROJECT-STATE.md` 中有状态记录。
-- 只在验收证据明确时更新 `legacy-ui-gap-list.md` 状态列；不确定时保留原状态。
+- Codex Memories 只辅助召回；与仓库状态冲突时，以仓库和 `PROJECT-STATE.md` 为准。
+- 只有验收证据明确时才更新 `docs/reverse-engineering/legacy-ui-gap-list.md` 状态列；不确定时保留原状态。
 
 ## cmux Claude Code 终端路由
 

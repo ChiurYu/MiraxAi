@@ -6,7 +6,7 @@
 | --- | --- | --- |
 | 项目约定 | `AGENTS.md` | 调度、计划目录、gap-list 更新约束。 |
 | 工位约定 | `CLAUDE.md` | monorepo、包职责、命令和协作约定。 |
-| 项目状态 | `docs/superpowers/PROJECT-STATE.md` | 当前阶段、已完成阶段和下一步。 |
+| 项目状态 | `docs/codex/PROJECT-STATE.md` | 当前阶段、已完成阶段和下一步。 |
 | 路线图 spec | `docs/superpowers/specs/2026-06-13-mirax-evidence-driven-roadmap-design.md` | 阶段 3 目标、完成标准和证据规则。 |
 
 ## 功能卡

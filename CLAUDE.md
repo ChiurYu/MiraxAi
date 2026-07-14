@@ -166,5 +166,6 @@ Tauri 2 桌面壳 + Vue 3 单页应用。
 - Claude/Kimi 工位接到任务后，只修改任务指定文件。
 - 默认不要 `git commit`、不要 `git push`，由总控统一 review、验证、提交。
 - 代码改动后至少运行任务要求的局部测试；影响共享包或桌面端主流程时还要运行 `pnpm typecheck`。
-- 涉及第一版任务进度时，更新 `docs/superpowers/plans/2026-06-12-mirax-first-usable-release.md`。
+- Claude/Kimi 默认只汇报完成项、验证结果、修改文件和阻塞；由 Codex review 后同步 `docs/codex/PROJECT-STATE.md`。
+- 只有任务明确授权时，worker 才修改计划 checkbox 或项目状态文件。
 - 涉及旧版功能对齐时，参考 `docs/reverse-engineering/legacy-ui-gap-list.md` 和 `docs/reverse-engineering/demo-video-coverage.md`。
