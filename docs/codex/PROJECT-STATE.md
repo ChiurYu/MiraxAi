@@ -17,6 +17,12 @@ Mirax AI 目前处在 **first usable release / 真实能力逐步接入** 阶段
 
 ## 已完成
 
+- [x] **Codex 工作流接管**
+  - 活动状态源已迁移到 `docs/codex/PROJECT-STATE.md`，未来计划写入 `docs/codex/plans/`。
+  - `docs/superpowers/plans/` 与 `docs/superpowers/specs/` 作为历史证据保留。
+  - Superpowers plugin 已卸载，活动入口不再依赖 Superpowers skills 或已缺失的旧自动调度 skill。
+  - Codex Memories 只作为辅助召回；项目状态与当前仓库事实优先。
+
 - [x] **新版 UI 主体**
   - Workbench 8 个阶段页面已完成。
   - 声音库、形象库、素材库、任务中心、账号管理、设置页已完成基础 UI。
